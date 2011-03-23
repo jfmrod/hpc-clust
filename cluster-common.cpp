@@ -311,9 +311,10 @@ void eseqcluster::init(int count) {
     incluster.add(list<int>());
     incluster[i].push_back(i);
     inter.add(list<int>());
+//    inter.add(eintarray());
 //    inter[i].reserve(3000);
   }
-  smatrix.reserve((long int)(count)*(long int)(count)/(long int)(2000));
+  smatrix.reserve((long int)(count)*(long int)(count)/(long int)(200));
   mergecount=0;
 }
 
@@ -322,69 +323,42 @@ void eseqcluster::merge(int x,int y)
 {
   ldieif(x==y,"should not happen!");
   ldieif(scount[x]==0 || scount[y]==0,"also should not happen");
-  int i;
-//  cout << "merging: " << x << "("<<scount[x]<<") - " << y << "("<<scount[y]<<")";
-//  flush(cout);
-  ldieif(scount[x]==0 || scount[y]==0,"something wrong!!!");
+
   scount[x]+=scount[y];
   scount[y]=0;
 
-//  cout << " updating_parents";
-//  flush(cout);
-//  for (i=0; i<scluster.size(); ++i)
-//    if (scluster[i]==y) scluster[i]=x;
-
-  
   list<int>::iterator it;
   for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
     scluster[*it]=x;
     incluster[x].push_back(*it);
   }
-//  cout << " adding_incluster";
-//  flush(cout);
 
-//  cout << " clearing_incluster";
-//  flush(cout);
 //  incluster[y].clear();
 
-//  cout << " sum_inter_distances: "<<inter[y].size();
-//  flush(cout);
-
   estr tmpstr,tmpstr2;
-//  eseqcount tmps,tmps2;
-//  tmps.x=x; tmps2.x=y;
 
-  int j;
+  int i,j;
   for (it=inter[y].begin(); it!=inter[y].end(); ++it){
     j=scluster[*it];
+//  for (i=0; i<inter[y].size(); ++i){
+//    j=scluster[inter[y][i]];
     if (x==j || y==j) continue;
-//    ldieif(x==j || y==j,"something very wrong");
     xy2estr(x,j,tmpstr);
     xy2estr(y,j,tmpstr2);
 
-    ebasichashmap<estr,int>::iter it2=smatrix.get(tmpstr2);
-//    tmps.y=i; tmps2.y=i;
-//    if(!smatrix.exists(tmpstr2)) continue;
-    if(it2==smatrix.end()) continue;
-//    ldieif(!smatrix.exists(tmpstr2),"something wrong: "+estr(y)+" -> "+estr(j));
+    ebasichashmap<estr,int>::iter tmpit2=smatrix.get(tmpstr2);
+    if(tmpit2==smatrix.end()) continue;
 
-    ebasichashmap<estr,int>::iter it=smatrix.get(tmpstr);
-//    if (smatrix.exists(tmpstr))
-    if (it!=smatrix.end())
-      *it=*it2;
-//      smatrix[tmpstr]+=smatrix[tmpstr2];
+    ebasichashmap<estr,int>::iter tmpit=smatrix.get(tmpstr);
+    if (tmpit!=smatrix.end())
+      *tmpit+=*tmpit2;
     else{
-//      smatrix.add(tmpstr,smatrix[tmpstr2]);
-      smatrix.add(tmpstr,*it2);
+      smatrix.add(tmpstr,*tmpit2);
       inter[x].push_back(j);
     }
-    smatrix.erase(it2);
-//    smatrix.erase(tmpstr2);
+    smatrix.erase(tmpit2);
   }
-//  inter[y].clear();
   ++mergecount;
-//  cout << " done" << endl;
-//  flush(cout);
 }
 
 void eseqcluster::add(eseqdist& sdist){
@@ -532,7 +506,7 @@ void eseqcluster::add(eseqdist& sdist){
 */
 void eseqcluster::save(const estr& filename,const estrarray& arr)
 {
-  int i,j;
+  int i;
   estr otustr;
   estrhashof<eintarray> otus;
 
@@ -545,7 +519,7 @@ void eseqcluster::save(const estr& filename,const estrarray& arr)
   int otucount=0;
   efile f2(filename);
   for (i=0; i<incluster.size(); ++i){
-    if (incluster[i].size()==0) continue;
+    if (scount[i]==0) continue;
     f2.write(">OTU"+estr(otucount)+"\n");
     for (it=incluster[i].begin(); it!=incluster[i].end(); ++it)
       f2.write(arr.keys(*it)+"\n");

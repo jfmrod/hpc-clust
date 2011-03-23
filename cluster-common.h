@@ -140,8 +140,9 @@ class eseqcluster
   ebasicstrhashof<int> smatrix;
 
 //  ebasicarray<eintarray> inter;
-//  ebasicarray<eintarray> incluster;
   ebasicarray<list<int> > inter;
+
+//  ebasicarray<eintarray> incluster;
   ebasicarray<list<int> > incluster;
 
   void check(ebasicarray<eseqdist>& dists);

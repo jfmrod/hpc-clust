@@ -10,12 +10,26 @@
 int emain()
 { 
   estr ofile="cluster.dat";
+  estr dfile;
   float t=0.90;
   epregister(t);
   epregister(ofile);
+  epregister(dfile);
 //  estr outfile="cooc_distances.dat";
 //  epregister(outfile);
   eparseArgs(argvc,argv);
+
+  epregisterClass(eseqdist);
+  epregisterClassSerializeMethod(eseqdist);
+  epregisterClassProperty(eseqdist,dist);
+  epregisterClassProperty(eseqdist,x);
+  epregisterClassProperty(eseqdist,y);
+
+  epregisterClass(ebasicarray<eseqdist>);
+  epregisterClassInheritance(ebasicarray<eseqdist>,ebasearray);
+  epregisterClassMethod(ebasicarray<eseqdist>,subset);
+  epregisterClassSerializeMethod(ebasicarray<eseqdist>);
+
 
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <seqali>");
 
@@ -29,18 +43,32 @@ int emain()
 
   etimer t1;
   t1.reset();
-  for (i=0; i<10; ++i)
-    calc_dists_nogap(arr,mindists,i,10,0.9);
+
+  efile df(dfile);
+  if (dfile.len()==0 || !df.exists()){
+    cout << "# computing distances" << endl;
+    for (i=0; i<10; ++i)
+      calc_dists_nogap(arr,mindists,i,10,0.9);
+    if (dfile.len()){
+      cout << "# saving distances to file: "<<dfile << endl;
+      estr str;
+      mindists.serial(str);
+      df.write(str);
+      df.close();
+    }
+  }else{
+    cout << "# loading distances from file: "<<dfile << endl;
+    estr str;
+    df.read(str);
+    ldieif(mindists.unserial(str,0)==-1,"problem loading distance file: "+dfile);
+    df.close();
+  } 
 
 //  calc_dists_nogap(arr,mindists,0,1,0.9);
 //  calc_dists(arr,mindists,0,1,0.9);
 
-
-
-  cout << "# time calculating distances: " << t1.lap() << endl;
-//  calc_dists2(arr,mindists,0,1,0.9);
-  cout << "# distances within threshold: "<<mindists.size() << endl;
-
+  cout << "# time calculating distances: " << t1.lap()*0.001 << endl;
+  cout << "# distances within threshold: " << mindists.size() << endl;
 
   eseqcluster cluster;
   cluster.init(arr.size());
@@ -52,7 +80,7 @@ int emain()
     if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount<<" " << cluster.smatrix.size() << endl; }
     cluster.add(mindists[i]);
   }
-  cout << "# time clustering: " << t1.lap() << endl;
+  cout << "# time clustering: " << t1.lap()*0.001 << endl;
 
   cluster.save(ofile,arr);
   cout << "# done writing "<<ofile << endl;
