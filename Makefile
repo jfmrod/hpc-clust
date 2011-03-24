@@ -1,5 +1,5 @@
 LDLIBS=`eutils-config --libs`
-CXXFLAGS:=${CXXFLAGS} -pthread -march=nocona -mtune=nocona -O3 # -pg # -g
+CXXFLAGS:=${CXXFLAGS} -pthread -march=nocona -mtune=nocona -O3 # -g # -pg # -g
 #CXXFLAGS:=${CXXFLAGS} -pthread -pg # -g
 
 all: cluster cluster-fast cluster-dist cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-nj

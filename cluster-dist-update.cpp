@@ -62,7 +62,6 @@ long int itotaldists=0;
 eintarray cdists;
 eseqcluster cluster;
 int tbucket=100000;
-float tdists;
 
 ebasicarray<float> cmins;
 
@@ -77,9 +76,8 @@ void getDistances(edcserver& server)
     totaldists+=server.getClient(i).result.get<int>();
   }
   itotaldists=totaldists;
-  tdists=t1.lap();
   cout << "# total distances under threshold: " << totaldists << endl;
-  cout << "# time calculating distance: "<< tdists <<endl;
+  cout << "# time calculating distance: "<< t1.lap() <<endl;
 
   server.onAllReady=serverDistanceThreshold;
   cout << "# getting distances" << endl;
@@ -91,9 +89,8 @@ void getDistances(edcserver& server)
 
 float mindist;
 float mdist;
-//long int totalmergedists=0;
+long int totalmergedists=0;
 
-/*
 void serverMergeResults(edcserver& server)
 {
   int i;
@@ -116,7 +113,6 @@ void serverMergeResults(edcserver& server)
     server.getClient(i).call("nodeGetCount",evararray(tbucket));
   }
 }
-*/
 
 void serverDistanceThreshold(edcserver& server)
 {
@@ -190,6 +186,7 @@ void serverCluster(edcserver& server)
 
 //  for (i=mindists.size()-1; i>=0 && (mindists[i].dist>=mindist || totaldists<=0); --i){
   for (i=mindists.size()-1; i>=0; --i){
+    ldieif(mindists[i].count==0,"not right");
     if ((i+totaldists)%100000==0) {
       cout << (i+totaldists)/100000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount<<" " << cluster.smatrix.size() << endl;
     }
@@ -199,18 +196,10 @@ void serverCluster(edcserver& server)
   mindists.clear();
   cout << endl;
 
-//  cout << "# totaldists: " << totaldists << " totalmergedists: " << totalmergedists<< " mindists.size: " << mindists.size() << " cluster.smatrix.size: " << cluster.smatrix.size() << " otus: "<< arr.size()-cluster.mergecount << endl;
-  cout << "# totaldists: " << totaldists << " mindists.size: " << mindists.size() << " cluster.smatrix.size: " << cluster.smatrix.size() << " otus: "<< arr.size()-cluster.mergecount << endl;
+  cout << "# totaldists: " << totaldists << " totalmergedists: " << totalmergedists<< " mindists.size: " << mindists.size() << " cluster.smatrix.size: " << cluster.smatrix.size() << " otus: "<< arr.size()-cluster.mergecount << endl;
 
   ++step;
   if (totaldists>0){
-    server.onAllReady=serverDistanceThreshold;
-    cout << "# getting next "<<tbucket<<" seqs from each node: "<<step<<" remaining dists: " << totaldists<< endl;
-    for (i=0; i<server.sockets.size(); ++i){
-      if (cdists[i]<=0) continue;
-      server.getClient(i).call("nodeGetCount",evararray(tbucket));
-    }
-/*
     server.onAllReady=serverMergeResults;
     for (i=0; i<server.sockets.size(); ++i){
       if (cdists[i]<=0) continue;
@@ -218,12 +207,10 @@ void serverCluster(edcserver& server)
     }
     for (i=0; i<cluster.smerge.size(); ++i)
       cluster.smerge[i]=-1;
-*/
     return;
   }
-  cout << "# time computing distances: "<< tdists <<endl;
   cout << "# time clustering: "<< t1.lap() <<endl;
-  cout << "# total distances: "<< itotaldists << endl;
+  cout << "# merge improvement: "<< (float)totalmergedists/(float)itotaldists << endl;
 
   cluster.save(ofile,arr);
   cout << "# done writing: "<<ofile << endl;
@@ -260,7 +247,7 @@ ebasicarray<eseqdist> nodeGetThres(float minthres)
   ebasicarray<eseqdist> tmparr;
   ldieif(nodePos-i<0 || nodePos>mindists.size(),"out of bounds: "+estr(nodePos-i)+" " + estr(nodePos));
   for (j=nodePos-i; j<nodePos; ++j){
-//    if (mindists[j].count)
+    if (mindists[j].count)
       tmparr.add(mindists[j]);
   }
   nodePos-=i;
@@ -269,13 +256,6 @@ ebasicarray<eseqdist> nodeGetThres(float minthres)
 //  return(mindists.subset(pos-i,i));
 }
 
-ebasicarray<eseqdist> nodeGetCount(int maxcount)
-{
-  nodePos-=maxcount;
-  if (nodePos<0){ maxcount+=nodePos; nodePos=0; }
-  return(mindists.subset(nodePos,maxcount));
-}
-/*
 ebasicarray<eseqdist> nodeGetCount(int maxcount)
 {
   int i;
@@ -297,7 +277,7 @@ ebasicarray<eseqdist> nodeGetCount(int maxcount)
 //  cout << "pos: " << pos << " maxcount: " << maxcount << " thres: " << minthres<<" result: " << tmparr.size() << endl;
 //  return(mindists.subset(pos-i,i));
 }
-*/
+
 
 int nodeComputeDistances(int node,int tnodes,float thres)
 {
@@ -308,8 +288,8 @@ int nodeComputeDistances(int node,int tnodes,float thres)
   return(nodePos);
 }
 
-/*
 eintarray scluster;
+
 int nodeUpdate(eintarray& smerge)
 {
   int count=0;
@@ -341,7 +321,7 @@ int nodeUpdate(eintarray& smerge)
   }
   return(count);
 }
-*/
+
 
 int emain()
 {
@@ -373,17 +353,33 @@ int emain()
   epregisterFunc(nodeGetCount);
   epregisterFunc(nodeGetThres);
   epregisterFunc(nodeComputeDistances);
-//  epregisterFunc(nodeUpdate);
+  epregisterFunc(nodeUpdate);
 
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <file>");
 
-  int i,i2,j;
+  int j,i2;
+
+//  for (i=0; i<arr.size()*(arr.size()+1)/2-arr.size(); ++i)
+//    dist_mat.add(0.0);
+
+/*
+  ethread thread;
+  thread.wait();
+  evararray vararr;
+
+  vararr.add(new int(0));
+  vararr.add(new int(arr.size()/4));
+  vararr.add(dist_mat);
+  vararr.add(arr);
+  thread.run(efunc(calc,vararr));
+*/
+  int i;
 
   if (host.len()>0){
     load_seqs(argv[1],arr);
-//    scluster.reserve(arr.size());
-//    for (i=0; i<arr.size(); ++i)
-//      scluster.add(i);
+    scluster.reserve(arr.size());
+    for (i=0; i<arr.size(); ++i)
+      scluster.add(i);
     startClient(host,12345);
     return(0);
   }else{

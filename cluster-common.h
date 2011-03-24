@@ -96,10 +96,23 @@ inline float cooc_dist(int i,int j,earray<eintarray>& neigharr)
   return(1.0-(float)common/(cooc1+cooc2-common));
 }
 
+inline void xy2estr(int x,int y,estr& str)
+{
+  str.clear();
+  if (x<y){
+    serialint(x,str);
+    serialint(y,str);
+  }else{
+    serialint(y,str);
+    serialint(x,str);
+  }
+}
+
 class eseqdist
 {
  public:
   float dist;
+//  int count;
   int x;
   int y;
 
@@ -107,7 +120,6 @@ class eseqdist
   eseqdist(int x,int y,float dist);
 
   inline bool operator<(const eseqdist& sdist) const{ return(dist<sdist.dist?true:false); }
-  inline eseqdist& operator=(const eseqdist& sdist){ dist=sdist.dist; return(*this); }
   void serial(estr& data) const;
   int unserial(const estr& data,int i);
 };
@@ -125,16 +137,9 @@ class eseqcluster
  public:
   int mergecount;
 
-  etimer tmerge;
-  float tmergetime;
-  int tmergecount;
-
-  etimer tadd;
-  float taddtime;
-  int taddcount;
-
   eintarray scount;
   eintarray scluster;
+  eintarray smerge;
 
 //  ehashmap<eseqcount,int> smatrix;
   ebasicstrhashof<int> smatrix;
@@ -152,6 +157,8 @@ class eseqcluster
   void merge(int x,int y);
   void init(int count);
   void add(eseqdist& dist);
+
+//  int update(ebasicarray<eseqdist>& dists,int s);
 
   void save(const estr& filename,const estrarray& arr);
 //  eseqdist* operator()(int x,int y);

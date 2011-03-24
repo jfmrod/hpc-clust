@@ -39,7 +39,7 @@ int emain()
 
   load_seqs(argv[1],arr);
   
-  earray<eseqdist> mindists;
+  ebasicarray<eseqdist> mindists;
 
   etimer t1;
   t1.reset();
@@ -49,6 +49,8 @@ int emain()
     cout << "# computing distances" << endl;
     for (i=0; i<10; ++i)
       calc_dists_nogap(arr,mindists,i,10,0.9);
+    heapsort(mindists);
+//    calc_dists_nogap(arr,mindists,0,1,0.9);
     if (dfile.len()){
       cout << "# saving distances to file: "<<dfile << endl;
       estr str;
@@ -76,9 +78,11 @@ int emain()
 //  cluster.check(mindists);
 //  exit(0);
 
+  int tmp;
   for (i=mindists.size()-1; i>=0; --i){
-    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount<<" " << cluster.smatrix.size() << endl; }
     cluster.add(mindists[i]);
+    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }
+//    if (i%10000==0) { tmp=cluster.update(mindists,i-1); cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << " " << tmp << endl; }
   }
   cout << "# time clustering: " << t1.lap()*0.001 << endl;
 
@@ -137,7 +141,6 @@ int emain()
   int j,i2;
 //  float dist_mat[arr.size()*arr.size()/2];
 
-  ebasicarray<float> dist_mat;
 //  ebasicarray<float> cooc_dist_mat;
 
 //  for (i=0; i<arr.size()-1; ++i)

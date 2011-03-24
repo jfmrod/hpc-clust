@@ -243,12 +243,14 @@ void load_clusters(const estr& filename,estrhashof<int>& arrind,eintarray& otuar
 
 eseqdist::eseqdist() {}
 eseqdist::eseqdist(int _x,int _y,float _dist): x(_x),y(_y),dist(_dist) {}
+//eseqdist::eseqdist(): count(1) {}
+//eseqdist::eseqdist(int _x,int _y,float _dist): x(_x),y(_y),dist(_dist),count(1) {}
 
 
 void eseqdist::serial(estr& data) const
 {
   ::serial(x,data); ::serial(y,data); ::serial(dist,data);
-//  serialint(x,data); serialint(y,data); dist.serial(data);
+//  ::serial(x,data); ::serial(y,data); ::serial(dist,data); ::serial(count,data);
 }
 
 int eseqdist::unserial(const estr& data,int i)
@@ -258,21 +260,11 @@ int eseqdist::unserial(const estr& data,int i)
   i=::unserial(y,data,i);
   if (i==-1) return(i);
   i=::unserial(dist,data,i);
+//  if (i==-1) return(i);
+//  i=::unserial(count,data,i);
   return(i);
 }
 
-
-inline void xy2estr(int x,int y,estr& str)
-{
-  str.clear();
-  if (x<y){
-    serialint(x,str);
-    serialint(y,str);
-  }else{
-    serialint(y,str);
-    serialint(x,str);
-  }
-}
 
 bool eseqcount::operator==(const eseqcount& scount) const{ return(x==scount.x&&y==scount.y || x==scount.y&&y==scount.x); }
 
@@ -303,11 +295,13 @@ void eseqcluster::init(int count) {
   int i;
   scount.reserve(count);
   scluster.reserve(count);
+  smerge.reserve(count);
   inter.reserve(count);
   incluster.reserve(count);
   for (i=0; i<count; ++i){
     scount.add(1);
     scluster.add(i);
+    smerge.add(-1);
     incluster.add(list<int>());
     incluster[i].push_back(i);
     inter.add(list<int>());
@@ -318,11 +312,47 @@ void eseqcluster::init(int count) {
   mergecount=0;
 }
 
+/*
+int eseqcluster::update(ebasicarray<eseqdist>& dists,int s)
+{
+  int count=0;
+  int i,j;
+  ebasicstrhashof<int> cmatrix;
+  ebasichashmap<estr,int>::iter it;
+  estr tmps; 
+
+  for (i=s; i>=0; --i){
+    if (dists[i].count==0) continue;
+
+    if (smerge[dists[i].x]>=0 || smerge[dists[i].y]>=0){
+      xy2estr(scluster[dists[i].x],scluster[dists[i].y],tmps);
+      it=cmatrix.get(tmps);
+      if (it==cmatrix.end())
+        cmatrix.add(tmps,i);
+      else{
+        j=*it;
+        dists[i].count+=dists[j].count;
+        dists[j].count=0;
+        *it=i;
+        ++count;
+      }
+    }
+  }
+
+  for (i=0; i<smerge.size(); ++i)
+    smerge[i]=-1;
+
+  return(count);
+}
+*/
 
 void eseqcluster::merge(int x,int y)
 {
   ldieif(x==y,"should not happen!");
   ldieif(scount[x]==0 || scount[y]==0,"also should not happen");
+
+  smerge[x]=x;
+  smerge[y]=x;
 
   scount[x]+=scount[y];
   scount[y]=0;
@@ -333,15 +363,11 @@ void eseqcluster::merge(int x,int y)
     incluster[x].push_back(*it);
   }
 
-//  incluster[y].clear();
-
   estr tmpstr,tmpstr2;
 
   int i,j;
   for (it=inter[y].begin(); it!=inter[y].end(); ++it){
     j=scluster[*it];
-//  for (i=0; i<inter[y].size(); ++i){
-//    j=scluster[inter[y][i]];
     if (x==j || y==j) continue;
     xy2estr(x,j,tmpstr);
     xy2estr(y,j,tmpstr2);
@@ -362,7 +388,8 @@ void eseqcluster::merge(int x,int y)
 }
 
 void eseqcluster::add(eseqdist& sdist){
-  tadd.reset();
+//  if (sdist.count==0) return;
+
   int x=scluster[sdist.x];
   int y=scluster[sdist.y];
   int tmp;
@@ -371,7 +398,6 @@ void eseqcluster::add(eseqdist& sdist){
   int links;
   int i;
   estr xystr;
-//  eseqcount xy;
 
   ldieif(x==y,"should not happen: "+estr(x)+","+estr(y)+" --- "+estr(sdist.x)+","+estr(sdist.y));
 
@@ -380,40 +406,26 @@ void eseqcluster::add(eseqdist& sdist){
   ebasichashmap<estr,int>::iter it;
 
   it=smatrix.get(xystr);
-//  xy.x=x; xy.y=y;
-//  if (!smatrix.exists(xystr)){
   if (it==smatrix.end()){
+//    if (scount[x]*scount[y]==sdist.count){
     if (scount[x]*scount[y]==1){
       merge(x,y);
     }else{
+//      smatrix.add(xystr,sdist.count);
       smatrix.add(xystr,1);
       inter[x].push_back(y); inter[y].push_back(x);
     }
-    ++taddcount; taddtime+=tadd.lap();
     return;
   }
 
-//  links=++smatrix[xystr];
-  links=++(*it);
+//  *it+=sdist.count;
+  ++(*it);
 
   // complete linkage
-  if (links==scount[x]*scount[y]){
-//    cout << "Merging: " << x <<" ("<<sdist.x<<") "<< " with " << y << " ("<< sdist.y<<") "<< "dist: " <<sdist.dist<<" " << links << endl;
-    tmerge.reset();
+  if (*it==scount[x]*scount[y]){
     merge(x,y);
-    ++tmergecount; tmergetime+=tmerge.lap();
     smatrix.erase(it);
-
-/*
-    i=inter[x].find(sdist.y);
-    if (i==-1)
-      i=inter[x].find(y);
-//    ldieif(i==-1,"y not found?: "+estr(y)+" ("+estr(sdist.y)+")");
-    if (i!=1)
-      inter[x].erase(i);
-*/
   }
-  ++taddcount; taddtime+=tadd.lap();
 }
 
 /*
@@ -681,7 +693,7 @@ int calc_dists(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float 
     }
   }
 
-  heapsort(dists);
+//  heapsort(dists);
   return(dists.size());
 }
 
@@ -753,7 +765,7 @@ int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tn
     }
   }
   cout << "# computed distances: " << count << endl;
-  heapsort(dists);
+//  heapsort(dists);
   return(dists.size());
 }
 
@@ -785,7 +797,7 @@ int calc_dists_nogap(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,
       if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
     }
   }
-  heapsort(dists);
+//  heapsort(dists);
   return(dists.size());
 }
 
@@ -817,7 +829,7 @@ int calc_dists_nogap(estrarray& arr,eintarray& arrgaps,earray<eseqdist>& dists,i
       if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
     }
   }
-  heapsort(dists);
+//  heapsort(dists);
   return(dists.size());
 }
 
