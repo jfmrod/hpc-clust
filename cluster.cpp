@@ -12,7 +12,9 @@ int emain()
   estr ofile="cluster.dat";
   estr dfile;
   float t=0.90;
+  int ncpus=1;
   epregister(t);
+  epregister(ncpus);
   epregister(ofile);
   epregister(dfile);
 //  estr outfile="cooc_distances.dat";
@@ -35,20 +37,40 @@ int emain()
 
   int i;
   estrarray arr;
-  eintarray arrgaps;
+  unsigned totaldists;
 
   load_seqs(argv[1],arr);
   
   ebasicarray<eseqdist> mindists;
 
+  float dtime;
   etimer t1;
   t1.reset();
+
+  etaskman taskman;
+  earray< ebasicarray<eseqdist> > dists;
 
   efile df(dfile);
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
+    taskman.createThread(ncpus);
+    taskman.wait();
+    cout << "# finished creating threads" << endl;
+//    sleep(10);
+    cout << "# finished waiting" << endl;
+//    for (i=0; i<10; ++i)
+//      calc_dists_nogap(arr,mindists,i,10,0.9);
+    for (i=0; i<10; ++i){
+      dists.add(ebasicarray<eseqdist>());
+      taskman.addTask((int (*)(estrarray&,ebasicarray<eseqdist>&,int,int,float))calc_dists_nogap,evararray(arr,dists[i],(const int&)i,10,0.9));
+    }
+    cout << "# finished adding tasks" << endl;
+    taskman.wait();
+    cout << "# finished waiting for tasks done" << endl;
+
     for (i=0; i<10; ++i)
-      calc_dists_nogap(arr,mindists,i,10,0.9);
+      mindists+=dists[i];
+
     heapsort(mindists);
 //    calc_dists_nogap(arr,mindists,0,1,0.9);
     if (dfile.len()){
@@ -69,8 +91,10 @@ int emain()
 //  calc_dists_nogap(arr,mindists,0,1,0.9);
 //  calc_dists(arr,mindists,0,1,0.9);
 
-  cout << "# time calculating distances: " << t1.lap()*0.001 << endl;
-  cout << "# distances within threshold: " << mindists.size() << endl;
+  dtime=t1.lap()*0.001;
+  totaldists=mindists.size();
+  cout << "# time calculating distances: " << dtime << endl;
+  cout << "# distances within threshold: " << totaldists << endl;
 
   eseqcluster cluster;
   cluster.init(arr.size());
@@ -84,7 +108,9 @@ int emain()
     if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }
 //    if (i%10000==0) { tmp=cluster.update(mindists,i-1); cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << " " << tmp << endl; }
   }
+  cout << "# time calculating distances: " << dtime << endl;
   cout << "# time clustering: " << t1.lap()*0.001 << endl;
+  cout << "# distances within threshold: " << totaldists << endl;
 
   cluster.save(ofile,arr);
   cout << "# done writing "<<ofile << endl;

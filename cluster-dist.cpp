@@ -4,6 +4,7 @@
 #include <eutils/edcserver.h>
 #include <eutils/esystem.h>
 #include <eutils/etimer.h>
+#include <eutils/ethread.h>
 
 #include "cluster-common.h"
 
@@ -299,12 +300,42 @@ ebasicarray<eseqdist> nodeGetCount(int maxcount)
 }
 */
 
+int nthreads=4;
+etaskman taskman;
+
 int nodeComputeDistances(int node,int tnodes,float thres)
 {
-  int tmpi;
-  nodePos=calc_dists_nogap(arr,mindists,node,tnodes,thres);
-//  nodePos=calc_dists(arr,mindists,node,tnodes,thres);
+  ebasicarray< ebasicarray<eseqdist>* > dists;
+
+  taskman.createThread(nthreads);
+  int i;
+  for (i=0; i<100; ++i){
+    dists.add(new ebasicarray<eseqdist>());
+    taskman.addTask((int (*)(estrarray&,ebasicarray<eseqdist>&,int,int,float))calc_dists_nogap,evararray(arr,*dists[i],(const int&)(node*100+i),(const int&)(100*tnodes),0.9));
+  }
+  taskman.wait();
+
+  for (i=0; i<100; ++i){
+    mindists+=*dists[i];
+    delete dists[i];
+  }
+
   heapsort(mindists);
+  nodePos=mindists.size();
+
+//  nodePos=calc_dists_nogap(arr,mindists,node,tnodes,thres);
+//  nodePos=calc_dists(arr,mindists,node,tnodes,thres);
+//  heapsort(mindists);
+  return(nodePos);
+}
+
+int nodeComputeDistances2(int node,int tnodes,float thres)
+{
+  nodePos=calc_dists_nogap(arr,mindists,node,tnodes,thres);
+  heapsort(mindists);
+  nodePos=mindists.size();
+//  nodePos=calc_dists(arr,mindists,node,tnodes,thres);
+//  heapsort(mindists);
   return(nodePos);
 }
 
@@ -348,6 +379,7 @@ int emain()
   estr host;
   epregister(host);
   epregister(ncpus);
+  epregister(nthreads);
   epregister(mindists);
   epregister(tbucket);
   epregister(ofile);
@@ -394,7 +426,7 @@ int emain()
     edcserver server;
     registerServer();
     epregister(server);
-//    server.showResult=true;
+    server.showResult=true;
     server.onIncoming=doIncoming;
 //    server.onAllReady=doAllReady;
     server.listen(12345);

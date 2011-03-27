@@ -734,6 +734,7 @@ int calc_dists_nogap(estrarray& arr,multimap<float,eseqdist>& dists,int node,int
 
 int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres)
 {
+  ldieif(arr.size()==0,"no distances in array");
   int i,i2,j;
   int start,end;
 
@@ -742,6 +743,7 @@ int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tn
 
   float tmpid;
   int count=0;
+  dists.reserve(500000);
 
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
@@ -755,6 +757,10 @@ int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tn
       if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
       ++count;
     }
+//    if (i-start==(end-start)/10)
+//      cout << "# predicted: " << dists.size()*10 << endl;
+//    if (dists.size()>dists.capacity()*2/3)
+//      dists.reserve(2*dists.capacity());
   }
   if (node==tnodes-1 && arr.size()%2==0){
     i=arr.size()/2-1;
@@ -764,7 +770,8 @@ int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tn
       ++count;
     }
   }
-  cout << "# computed distances: " << count << endl;
+//  cout << "# n: " << node << " tnodes: " << tnodes << " start: " << start << " end: " << end << " distances: " << dists.size() << endl;
+//  cout << "# computed distances: " << count << endl;
 //  heapsort(dists);
   return(dists.size());
 }
