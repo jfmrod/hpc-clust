@@ -75,7 +75,7 @@ int emain()
 //      cout << "# "<<i<< " -- " << j << " : " << tmp << endl;
       if (tmp>max) { max=tmp; jmax=j; }
     }
-    cout << i << " --- " << jmax << " : "<< otuSize(otuvec[i])<< " " << otuSize(otuvec[j])<< " "<< (otuSize(otuvec[i])+otuSize(otuvec[j]))/2.0 << " " << max << endl;
+    cout << i << " --- " << jmax << " : "<< otuSize(otuvec[i])<< " " << otuSize(otuvec2[jmax])<< " "<< (otuSize(otuvec[i])+otuSize(otuvec2[jmax]))/2.0 << " " << max << endl;
     if (max>0.95)
       ++matchcount;
   }

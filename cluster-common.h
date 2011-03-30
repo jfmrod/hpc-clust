@@ -188,7 +188,10 @@ void load_seqs(const estr& filename,estrarray& arr);
 void load_seqs(const estr& filename,estrarray& arr,eintarray& arrgaps);
 void load_seqs(const estr& filename,estrhash& arr);
 void load_seqs(const estr& filename,estrhashof<int>& arrind);
+void load_seqs(const estr& filename,estrarray& arr,estrhashof<int>& arrind);
+
 void load_clusters(const estr& filename,estrhashof<int>& arrind,eintarray& otuarr,int& otucount);
+void load_clusters(const estr& filename,estrhashof<int>& arrind,earray<eintarray>& otus);
 
 void cluster_complete(const estrhash& arr,const ebasicarray<float>& dist_mat,const eintarray& dsort,earray<eintarray>& otus,eintarray& otuarr,float t);
 void cluster_single(const estrhash& arr,const ebasicarray<float>& dist_mat,const eintarray& dsort,earray<eintarray>& otus,float t);

@@ -187,7 +187,7 @@ void serverCluster(edcserver& server)
   cout << "# Sorting array with "<<mindists.size()<< " distances" << endl;
   heapsort(mindists);
 
-  cout << "# min: " << mindists[0].dist << " minall: "<< mindist << " max: "<<mindists[mindists.size()-1].dist << endl;
+  cout << "# min: " << mindists[0].dist << " minall: "<< mindist << " max: "<<mindists[mindists.size()-1].dist << " cluster.smatrix.size(): " << cluster.smatrix.size() << endl;
 
 //  for (i=mindists.size()-1; i>=0 && (mindists[i].dist>=mindist || totaldists<=0); --i){
   for (i=mindists.size()-1; i>=0; --i){
@@ -302,23 +302,30 @@ ebasicarray<eseqdist> nodeGetCount(int maxcount)
 
 int nthreads=4;
 etaskman taskman;
+emutex mutexDists;
+int partsFinished=0;
+int partsTotal=100;
+
+void p_calc_dists_nogap(int node,int tnodes,float thres)
+{
+  ebasicarray<eseqdist> dists;
+  calc_dists_nogap(arr,dists,node,tnodes,thres);
+  mutexDists.lock();
+  ++partsFinished;
+  int avgdists=(mindists.size()+dists.size())/partsFinished;
+  if (avgdists*partsTotal+avgdists/partsFinished>mindists.capacity())
+    mindists.reserve(avgdists*partsTotal+avgdists/partsFinished);
+  mindists+=dists;
+  mutexDists.unlock();
+}
 
 int nodeComputeDistances(int node,int tnodes,float thres)
 {
-  ebasicarray< ebasicarray<eseqdist>* > dists;
-
-  taskman.createThread(nthreads);
   int i;
-  for (i=0; i<100; ++i){
-    dists.add(new ebasicarray<eseqdist>());
-    taskman.addTask((int (*)(estrarray&,ebasicarray<eseqdist>&,int,int,float))calc_dists_nogap,evararray(arr,*dists[i],(const int&)(node*100+i),(const int&)(100*tnodes),0.9));
+  for (i=0; i<partsTotal; ++i){
+    taskman.addTask(p_calc_dists_nogap,evararray((const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),0.9));
   }
   taskman.wait();
-
-  for (i=0; i<100; ++i){
-    mindists+=*dists[i];
-    delete dists[i];
-  }
 
   heapsort(mindists);
   nodePos=mindists.size();
@@ -416,6 +423,7 @@ int emain()
 //    scluster.reserve(arr.size());
 //    for (i=0; i<arr.size(); ++i)
 //      scluster.add(i);
+    taskman.createThread(nthreads);
     startClient(host,12345);
     return(0);
   }else{
@@ -426,7 +434,7 @@ int emain()
     edcserver server;
     registerServer();
     epregister(server);
-    server.showResult=true;
+//    server.showResult=true;
     server.onIncoming=doIncoming;
 //    server.onAllReady=doAllReady;
     server.listen(12345);

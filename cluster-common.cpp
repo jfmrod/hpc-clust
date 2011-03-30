@@ -210,6 +210,50 @@ void load_seqs(const estr& filename,estrhashof<int>& arrind)
   cout << "# seqs: " << arrind.size() << endl;
 }
 
+void load_seqs(const estr& filename,estrarray& arr,estrhashof<int>& arrind)
+{
+  estr line;
+  estr name;
+  efile f(filename);
+
+  int i;
+
+  while (f.readln(line)){
+    if (line.len()==0 || line[0]=='#') continue;
+	    
+    i=line.find(" ");
+    if (i==-1) continue;
+    name=line.substr(0,i);
+    line.del(0,i);
+    line.trim();
+    if (!arrind.exists(name)){
+      arrind.add(name,arrind.size());
+      arr.add(name,line);
+    }
+  }
+  cout << "# seqs: " << arrind.size() << endl;
+}
+
+void load_clusters(const estr& filename,estrhashof<int>& arrind,earray<eintarray>& otus)
+{
+  estr line;
+  estr name;
+  efile f(filename);
+
+  int i=-1;
+
+  while (f.readln(line)){
+    if (line.len()==0 || line[0]=='#') continue;
+
+    if (line[0]=='>') { otus.add(eintarray()); ++i; continue; }
+	    
+    ldieif(!arrind.exists(line),"something wrong");
+
+    otus[i].add(arrind[line]);
+  }
+  cout << "# otus: " << otus.size() << endl;
+}
+
 void load_clusters(const estr& filename,estrhashof<int>& arrind,eintarray& otuarr,int& otucount)
 {
   estr line;
@@ -305,10 +349,11 @@ void eseqcluster::init(int count) {
     incluster.add(list<int>());
     incluster[i].push_back(i);
     inter.add(list<int>());
-//    inter.add(eintarray());
-//    inter[i].reserve(3000);
   }
-  smatrix.reserve((long int)(count)*(long int)(count)/(long int)(200));
+  cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
+  cout << "# initializing smatrix with: " << (long int)(count)*(long int)(count)/(long int)(20000)<< " elements" << endl; 
+  smatrix.reserve((long int)(count)*(long int)(count)/(long int)(20000));
+//  cout << "# smatrix._hashitems = " << smatrix._hashitems << endl;
   mergecount=0;
 }
 
@@ -389,6 +434,7 @@ void eseqcluster::merge(int x,int y)
 
 void eseqcluster::add(eseqdist& sdist){
 //  if (sdist.count==0) return;
+  ldieif(sdist.x<0 || sdist.y<0 || sdist.x>=scluster.size() || sdist.y>=scluster.size(),"out of bounds: sdist.x: "+estr(sdist.x)+" sdist.y: "+estr(sdist.y)+" scluster.size(): "+estr(scluster.size()));
 
   int x=scluster[sdist.x];
   int y=scluster[sdist.y];
@@ -428,94 +474,6 @@ void eseqcluster::add(eseqdist& sdist){
   }
 }
 
-/*
-void eseqcluster::merge(int x,int y)
-{
-  ldieif(x==y,"should not happen!");
-  int i;
-  cout << "merging: " << x << " --- " << y << endl;
-  flush(cout);
-  scount[x]+=scount[y];
-  scount[y]=0;
-
-  cout << " updating cluster parents: "<< incluster[y].size() << endl;
-  flush(cout);
-  for (i=0; i<incluster[y].size(); ++i)
-    scluster[incluster[y][i]]=x;
-  cout << " adding incluster seqs: "<< incluster[y].size() << endl;
-  flush(cout);
-  incluster[x]+=incluster[y];
-  cout << " clearing array: "<< incluster[y].size() << endl;
-  flush(cout);
-  incluster[y].clear();
-
-  cout << " summing inter distances: "<< inter[y].size() << endl;
-  flush(cout);
-  estr tmpstr,tmpstr2;
-  int j;
-  for (i=0; i<inter[y].size(); ++i){
-//    j=inter[y][i];
-    j=scluster[inter[y][i]];
-    xy2estr(x,j,tmpstr);
-    xy2estr(y,j,tmpstr2);
-    if (x==j || y==j) continue;
-    if(!smatrix.exists(tmpstr2)) continue;
-//    ldieif(!smatrix.exists(tmpstr2),"something wrong: "+estr(y)+" -> "+estr(j)+" ("+estr(inter[y][i])+")");
-
-    if (smatrix.exists(tmpstr))
-      smatrix[tmpstr]+=smatrix[tmpstr2];
-    else{
-      smatrix.add(tmpstr,smatrix[tmpstr2]);
-      inter[x].add(j);
-//      inter[j].add(x);
-    }
-//    cout << "# removing: " << y << " -> " << j << " (" <<inter[y][i]<<")"<<endl;
-    smatrix.erase(tmpstr2);
-  }
-  inter[y].clear();
-  ++mergecount;
-  cout << "done merging" << endl;
-  flush(cout);
-}
-
-void eseqcluster::add(eseqdist& sdist){
-  int x=scluster[sdist.x];
-  int y=scluster[sdist.y];
-  int tmp;
-  if (x>y) { tmp=x; x=y; y=tmp; tmp=sdist.x; sdist.x=sdist.y; sdist.y=tmp; }
-
-  int links;
-  int i;
-  estr xystr;
-
-//  ldieif(x==y,"should not happen: "+estr(x)+","+estr(y)+" --- "+estr(sdist.x)+","+estr(sdist.y));
-
-  xy2estr(x,y,xystr);
-  if (!smatrix.exists(xystr)){
-    if (scount[x]*scount[y]==1){
-      merge(x,y);
-    }else{
-      smatrix.add(xystr,1);
-      inter[x].add(y); inter[y].add(x);
-    }
-    return;
-  }
-
-  links=++smatrix[xystr];
-
-  // complete linkage
-  if (links==scount[x]*scount[y]){
-//    cout << "Merging: " << x <<" ("<<sdist.x<<") "<< " with " << y << " ("<< sdist.y<<") "<< "dist: " <<sdist.dist<<" " << links << endl;
-    merge(x,y);
-    smatrix.erase(xystr);
-//    i=inter[x].find(sdist.y);
-//    if (i==-1)
-//      i=inter[x].find(y);
-//    ldieif(i==-1,"y not found?: "+estr(y)+" ("+estr(sdist.y)+")");
-//    inter[x].erase(i);
-  }
-}
-*/
 void eseqcluster::save(const estr& filename,const estrarray& arr)
 {
   int i;
@@ -540,22 +498,6 @@ void eseqcluster::save(const estr& filename,const estrarray& arr)
   f2.close();
 }
 
-/*
-eseqdist* eseqmatrix::operator()(int x,int y){
-  if (!cols[x] || !cols[y]) return(0x00);
-  int i;
-  if (x>y) 
-    { i=x; x=y; y=i; }
-  for (i=0; i<cols[x]->size(); ++i) 
-    if (cols[x]->at(i)->y==y)
-      return(cols[x]->at(i));
-  return(0x00);
-}
-*/
-
-//ebasicarray<float> mindist;
-//eintarray mindist_id,mindist_id2;
-
 inline void getXY2(int l,int w,int& x,int& y)
 {
   x=(l/w);
@@ -563,73 +505,6 @@ inline void getXY2(int l,int w,int& x,int& y)
   if (y<w-x){ y+=x; return; }
   x=w-x;
 }
-
-/*
-int calc_dists(estrarray& arr,earray<eseqdist>& dists,int node,int nodecount,float thres)
-{
-  int i,j;
-  int yend,xend;
-
-  int sq_side=(int)sqrt(arr.size()*arr.size()/(2*nodecount));
-  int sq_count=(int)sqrt(2*nodecount);
-
-  float tmpid;
-  int x,y;
-
-  cout << "# sq_side: " << sq_side << " sq_count: "<< sq_count << endl;
-
-//  for (i=0; i<nodecount; ++i){
-//    getXY2(i,sq_count,x,y);
-//    cout << "i: " << i << " x: "<< x<< " y: " <<y<<endl;
-//  }
-
-  if (node<sq_count){
-//    x=node*2,y=node*2;
-    x=node,y=node;
-    cout << "node: " << node << " x: "<< x<< " y: " <<y<<endl;
-    // compute two diagonals
-    xend=x+1==sq_count?arr.size():(x+1)*sq_side;
-    yend=y+1==sq_count?arr.size():(y+1)*sq_side;
-    for (j=y*sq_side; j<yend; ++j){
-      for (i=j+1; i<xend; ++i){
-	tmpid=dist(arr.values(i),arr.values(j));
-	if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
-
-      }
-    }
-      
-    
-*   ++x; ++y;
-   if (x<sq_count){
-      cout << "node: " << node << " x: "<< x<< " y: " <<y<<endl;
-      xend=x+1==sq_count?arr.size():(x+1)*sq_side;
-      yend=y+1==sq_count?arr.size():(y+1)*sq_side;
-      for (j=y*sq_side; j<yend; ++j){
-        for (i=j+1; i<xend; ++i){
-          tmpid=dist(arr.values(i),arr.values(j));
-          if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
-        }
-      }
-    }
-*
-  }else{
-    node-=sq_count;
-    getXY(node,sq_count,x,y);
-    // compute one square
-    cout << "node: " << node+sq_count << " x: "<< x<< " y: " <<y<<endl;
-    xend=x+1==sq_count?arr.size():(x+1)*sq_side;
-    yend=y+1==sq_count?arr.size():(y+1)*sq_side;
-    for (j=y*sq_side; j<yend; ++j){
-      for (i=x*sq_side; i<xend; ++i){
-        tmpid=dist(arr.values(i),arr.values(j));
-        if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
-      }
-    }
-  }
-  heapsort(dists);
-  return(dists.size());
-}
-*/
 
 int calc_dists(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres)
 {
@@ -644,19 +519,19 @@ int calc_dists(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,f
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist(arr.values(i),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
       tmpid=dist(arr.values(i2),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
     }
   }
   if (node==tnodes-1 && arr.size()%2==0){
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist(arr.values(i),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
     }
   }
 
@@ -677,19 +552,19 @@ int calc_dists(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float 
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist(arr.values(i),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
       tmpid=dist(arr.values(i2),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
     }
   }
   if (node==tnodes-1 && arr.size()%2==0){
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist(arr.values(i),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
     }
   }
 
@@ -789,19 +664,19 @@ int calc_dists_nogap(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap(arr.values(i),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
       tmpid=dist_nogap(arr.values(i2),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
     }
   }
   if (node==tnodes-1 && arr.size()%2==0){
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap(arr.values(i),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
     }
   }
 //  heapsort(dists);
@@ -821,19 +696,19 @@ int calc_dists_nogap(estrarray& arr,eintarray& arrgaps,earray<eseqdist>& dists,i
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap(arr.values(i),arr.values(j),arrgaps[i],arrgaps[j]);
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
       tmpid=dist_nogap(arr.values(i2),arr.values(j),arrgaps[i2],arrgaps[j]);
-      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
     }
   }
   if (node==tnodes-1 && arr.size()%2==0){
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap(arr.values(i),arr.values(j),arrgaps[i],arrgaps[j]);
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
     }
   }
 //  heapsort(dists);
