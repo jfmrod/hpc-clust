@@ -3,6 +3,139 @@
 #include <eutils/eheap.h>
 #include <math.h>
 
+eblockarray::eblockarray(): blocksize(100000), count(0) { blocks.add(new eseqdist[blocksize]); }
+
+eblockarray::~eblockarray()
+{
+  int i;
+  for (i=0; i<blocks.size(); ++i)
+    if (blocks[i]) delete blocks[i];
+}
+
+void eblockarray::add(const eseqdist& sdist)
+{
+  lastblock()[count%blocksize]=sdist;
+  ++count;
+  if (count%blocksize==0)
+    blocks.add(new eseqdist[blocksize]);
+}
+
+const eseqdist& eblockarray::operator[](int i) const
+{
+//  ldieif(i/blocksize>=blocks.size(),"out of range: blocks.size: "+estr(blocks.size())+" i/blocksize: "+estr(i/blocksize));
+  return(blocks[i/blocksize][i%blocksize]);
+}
+
+eseqdist& eblockarray::operator[](int i)
+{
+//  ldieif(i/blocksize>=blocks.size(),"out of range: blocks.size: "+estr(blocks.size())+" i/blocksize: "+estr(i/blocksize));
+  return(blocks[i/blocksize][i%blocksize]);
+}
+
+inline void addarray(eseqdist *arr1,int& i1,int n1,eseqdist *arr2,int& i2,int n2)
+{
+  for (; i1<n1 && i2<n2; ++i1,++i2)
+    arr1[i1]=arr2[i2];
+}
+
+eblockarray& eblockarray::merge(eblockarray& barr)
+{
+  int i,j,k;
+  eseqdist *tmparr;
+  if (blocksize-(count%blocksize) >= barr.count%blocksize){
+    i=count%blocksize; j=0;
+    addarray(lastblock(),i,blocksize,barr.lastblock(),j,barr.count%blocksize);    
+    count+=barr.count;
+    if (count%blocksize==0)
+      blocks.add(new eseqdist[blocksize]);
+
+    if (barr.blocks.size()>1){
+      tmparr=lastblock();
+      blocks[blocks.size()-1]=barr.blocks[0];
+      barr.blocks[0]=0x00;
+      for (j=1; j<barr.blocks.size()-1; ++j){
+        blocks.add(barr.blocks[j]);
+        barr.blocks[j]=0x00;
+      }
+      blocks.add(tmparr);
+    }
+  }else{
+    i=count%blocksize; j=0;
+    addarray(lastblock(),i,blocksize,barr.lastblock(),j,barr.count%blocksize);
+    for (k=0; k<barr.blocks.size()-1; ++k){
+      blocks.add(barr.blocks[k]);
+      barr.blocks[k]=0x00;
+    }
+
+    blocks.add(new eseqdist[blocksize]);
+    i=0;
+    addarray(lastblock(),i,blocksize,barr.lastblock(),j,barr.count%blocksize);
+    count+=barr.count;
+  }
+
+  ldieif (count/blocksize>=blocks.size() || count/blocksize+1<blocks.size(),"error in merge: "+estr(count/blocksize)+" "+estr(blocks.size()));
+
+  barr.clear();
+  return(*this);
+}
+
+void eblockarray::clear()
+{
+  int i;
+  for (i=0; i<blocks.size(); ++i)
+    if (blocks[i]) delete blocks[i];
+  blocks.clear();
+  count=0;
+  blocks.add(new eseqdist[blocksize]);
+}
+
+void eblockarray::swap(int i,int j)
+{
+  eseqdist tmp;
+  tmp=operator[](i);
+  operator[](i)=operator[](j);
+  operator[](j)=tmp;
+}
+
+void eblockarray::sort()
+{
+  int i;
+  int root,child;
+  int tmpsize;
+
+  // heapify
+  tmpsize=size();
+  for (i=size()/2; i>=0; --i){
+    root=i;
+    while (root<<1 < tmpsize){
+      child=root<<1;
+      if (child+1<tmpsize && operator[](child) < operator[](child+1))
+        ++child;
+      if (operator[](root) < operator[](child)){
+        swap(root,child);
+        root=child;
+      } else
+        break;
+    }
+  }
+
+  // build sorted array
+  for (tmpsize=size()-1; tmpsize>0; --tmpsize){
+    swap(0,tmpsize);
+    root=0;
+    while (root<<1 < tmpsize){
+      child=root<<1;
+      if (child+1<tmpsize && operator[](child) < operator[](child+1))
+        ++child;
+      if (operator[](root) < operator[](child)){
+        swap(root,child);
+        root=child;
+      } else
+        break;
+    }
+  }
+}
+
 void cluster_init(earray<eintarray>& cvec,const estrhashof<int>& arrind,const eintarray& otuarr,int otucount)
 {
   int i,j;
@@ -136,6 +269,93 @@ void load_seqs(const estr& filename,estrarray& arr,eintarray& arrgaps)
 //      arr[name]+=line;
   }
   cout << "# seqs: " << arr.size() << endl;
+}
+
+inline unsigned char nuc_compress(unsigned char c){
+  switch(c){
+   case 'A': return(0x00);
+   case 'T': return(0x01);
+   case 'U': return(0x01);
+   case 'G': return(0x02);
+   case 'C': return(0x03);
+   case 'R': return(0x04);
+   case 'Y': return(0x05);
+   case 'S': return(0x06);
+   case 'W': return(0x07);
+   case 'K': return(0x08);
+   case 'M': return(0x09);
+   case 'B': return(0x0A);
+   case 'D': return(0x0B);
+   case 'H': return(0x0C);
+   case 'V': return(0x0D);
+   case 'N': return(0x0E);
+   case '-': return(0x0F);
+  }
+  ldie("unknown nucleotide:"+estr(c));
+  return(0x0F);
+}
+
+estr seq_compress(const estr& seq)
+{
+  int i;
+  estr res;
+  res.reserve((seq.len()+1)/2);
+  char tmp;
+  for (i=0; i<seq.len()-2; i+=2){
+    tmp=nuc_compress(seq[i]);
+    tmp=tmp|(nuc_compress(seq[i+1])<<4);
+    res._str[i/2]=tmp;
+  }
+  tmp=nuc_compress(seq[i]);
+  if (i+1<seq.len())
+    tmp=tmp|(nuc_compress(seq[i+1])<<4);
+  res._str[i/2]=tmp;
+  res._strlen=(i+1)/2;
+  return(res);
+}
+
+void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen)
+{
+  estr line;
+  estr name;
+  efile f(filename);
+
+  int i;
+
+  while (f.readln(line)){
+    if (line.len()==0 || line[0]=='#') continue;
+    
+    i=line.find(" ");
+    if (i==-1) continue;
+    name=line.substr(0,i);
+    line.del(0,i);
+    line.trim();
+    seqlen=line.len();
+    arr.add(seq_compress(line.uppercase()));
+  }
+  cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
+}
+
+void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen)
+{
+  estr line;
+  estr name;
+  efile f(filename);
+
+  int i;
+
+  while (f.readln(line)){
+    if (line.len()==0 || line[0]=='#') continue;
+    
+    i=line.find(" ");
+    if (i==-1) continue;
+    name=line.substr(0,i);
+    line.del(0,i);
+    line.trim();
+    seqlen=line.len();
+    arr.add(name,seq_compress(line.uppercase()));
+  }
+  cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
 }
 
 void load_seqs(const estr& filename,estrarray& arr)
@@ -456,6 +676,7 @@ void eseqcluster::add(eseqdist& sdist){
 //    if (scount[x]*scount[y]==sdist.count){
     if (scount[x]*scount[y]==1){
       merge(x,y);
+      cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
     }else{
 //      smatrix.add(xystr,sdist.count);
       smatrix.add(xystr,1);
@@ -470,6 +691,8 @@ void eseqcluster::add(eseqdist& sdist){
   // complete linkage
   if (*it==scount[x]*scount[y]){
     merge(x,y);
+    cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
+//    cout << sdist.dist << " " << x << " " << y << endl;
     smatrix.erase(it);
   }
 }
@@ -606,6 +829,138 @@ int calc_dists_nogap(estrarray& arr,multimap<float,eseqdist>& dists,int node,int
   return(dists.size());
 }
 */
+
+int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray& dists,int seqlen,int node,int tnodes,float thres)
+{
+  ldieif(arr.size()==0,"no distances in array");
+  int i,i2,j;
+  int start,end;
+
+  start=node*(arr.size()-1)/(2*tnodes);
+  end=(node+1)*(arr.size()-1)/(2*tnodes);
+
+  float tmpid;
+  int count=0;
+//  dists.reserve(500000);
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr[i],arr[j],seqlen);
+      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      ++count;
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr[i2],arr[j],seqlen);
+      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      ++count;
+    }
+//    if (i-start==(end-start)/10)
+//      cout << "# predicted: " << dists.size()*10 << endl;
+//    if (dists.size()>dists.capacity()*2/3)
+//      dists.reserve(2*dists.capacity());
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr[i],arr[j],seqlen);
+      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      ++count;
+    }
+  }
+//  cout << "# n: " << node << " tnodes: " << tnodes << " start: " << start << " end: " << end << " distances: " << dists.size() << endl;
+//  cout << "# computed distances: " << count << endl;
+//  heapsort(dists);
+  return(dists.size());
+}
+
+int calc_dists_nogap_compressed(estrarray& arr,eblockarray& dists,int seqlen,int node,int tnodes,float thres)
+{
+  ldieif(arr.size()==0,"no distances in array");
+  int i,i2,j;
+  int start,end;
+
+  start=node*(arr.size()-1)/(2*tnodes);
+  end=(node+1)*(arr.size()-1)/(2*tnodes);
+
+  float tmpid;
+  int count=0;
+//  dists.reserve(500000);
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
+      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      ++count;
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr.values(i2),arr.values(j),seqlen);
+      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      ++count;
+    }
+//    if (i-start==(end-start)/10)
+//      cout << "# predicted: " << dists.size()*10 << endl;
+//    if (dists.size()>dists.capacity()*2/3)
+//      dists.reserve(2*dists.capacity());
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
+      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      ++count;
+    }
+  }
+//  cout << "# n: " << node << " tnodes: " << tnodes << " start: " << start << " end: " << end << " distances: " << dists.size() << endl;
+//  cout << "# computed distances: " << count << endl;
+//  heapsort(dists);
+  return(dists.size());
+}
+
+int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres)
+{
+  ldieif(arr.size()==0,"no distances in array");
+  int i,i2,j;
+  int start,end;
+
+  start=node*(arr.size()-1)/(2*tnodes);
+  end=(node+1)*(arr.size()-1)/(2*tnodes);
+
+  float tmpid;
+  int count=0;
+  dists.reserve(500000);
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
+      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      ++count;
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr.values(i2),arr.values(j),seqlen);
+      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      ++count;
+    }
+//    if (i-start==(end-start)/10)
+//      cout << "# predicted: " << dists.size()*10 << endl;
+//    if (dists.size()>dists.capacity()*2/3)
+//      dists.reserve(2*dists.capacity());
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
+      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      ++count;
+    }
+  }
+//  cout << "# n: " << node << " tnodes: " << tnodes << " start: " << start << " end: " << end << " distances: " << dists.size() << endl;
+//  cout << "# computed distances: " << count << endl;
+//  heapsort(dists);
+  return(dists.size());
+}
 
 int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres)
 {

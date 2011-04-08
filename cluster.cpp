@@ -7,6 +7,26 @@
 #include "cluster-common.h"
 
 
+emutex mutexDists;
+eblockarray mindists;
+int partsFinished=0;
+int partsTotal=100;
+estrarray arr;
+unsigned totaldists;
+
+int seqlen=0;
+
+void p_calc_dists_nogap(int node,int tnodes,float thres)
+{
+  eblockarray dists;
+  calc_dists_nogap_compressed(arr,dists,seqlen,node,tnodes,thres);
+
+  mutexDists.lock();
+  ++partsFinished;
+  mindists.merge(dists);
+  mutexDists.unlock();
+}
+
 int emain()
 { 
   estr ofile="cluster.dat";
@@ -36,43 +56,33 @@ int emain()
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <seqali>");
 
   int i;
-  estrarray arr;
-  unsigned totaldists;
-
-  load_seqs(argv[1],arr);
+  load_seqs_compressed(argv[1],arr,seqlen);
   
-  ebasicarray<eseqdist> mindists;
-
-  float dtime;
+  float dtime,stime;
   etimer t1;
   t1.reset();
 
   etaskman taskman;
-  earray< ebasicarray<eseqdist> > dists;
 
   efile df(dfile);
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
+    for (i=0; i<partsTotal; ++i)
+      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,0.9));
+
     taskman.createThread(ncpus);
+    cout << "# finished creating threads: "<<ncpus << endl;
     taskman.wait();
-    cout << "# finished creating threads" << endl;
-//    sleep(10);
-    cout << "# finished waiting" << endl;
-//    for (i=0; i<10; ++i)
-//      calc_dists_nogap(arr,mindists,i,10,0.9);
-    for (i=0; i<10; ++i){
-      dists.add(ebasicarray<eseqdist>());
-      taskman.addTask((int (*)(estrarray&,ebasicarray<eseqdist>&,int,int,float))calc_dists_nogap,evararray(arr,dists[i],(const int&)i,10,0.9));
-    }
-    cout << "# finished adding tasks" << endl;
-    taskman.wait();
-    cout << "# finished waiting for tasks done" << endl;
+    cout << "# all tasks finished" << endl;
 
-    for (i=0; i<10; ++i)
-      mindists+=dists[i];
+    cout << "# time calculating distances: " << dtime << endl;
+    cout << "# distances within threshold: " << mindists.size() << endl;
 
-    heapsort(mindists);
-//    calc_dists_nogap(arr,mindists,0,1,0.9);
+    dtime=t1.lap()*0.001;
+    mindists.sort();
+    stime=t1.lap()*0.001;
+
+/*
     if (dfile.len()){
       cout << "# saving distances to file: "<<dfile << endl;
       estr str;
@@ -80,36 +90,40 @@ int emain()
       df.write(str);
       df.close();
     }
+*/
   }else{
+
+
     cout << "# loading distances from file: "<<dfile << endl;
+
+/*
     estr str;
     df.read(str);
     ldieif(mindists.unserial(str,0)==-1,"problem loading distance file: "+dfile);
     df.close();
+*/
   } 
 
-//  calc_dists_nogap(arr,mindists,0,1,0.9);
-//  calc_dists(arr,mindists,0,1,0.9);
-
-  dtime=t1.lap()*0.001;
   totaldists=mindists.size();
-  cout << "# time calculating distances: " << dtime << endl;
-  cout << "# distances within threshold: " << totaldists << endl;
+  cout << "# time sorting distances: " << stime << endl;
 
+  cout << "# initializing cluster"<<endl;
   eseqcluster cluster;
   cluster.init(arr.size());
 
-//  cluster.check(mindists);
-//  exit(0);
-
+  cout << "# starting clustering"<<endl;
+  t1.reset();
   int tmp;
   for (i=mindists.size()-1; i>=0; --i){
     cluster.add(mindists[i]);
-    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }
+//    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }
 //    if (i%10000==0) { tmp=cluster.update(mindists,i-1); cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << " " << tmp << endl; }
   }
+  float clustime=t1.lap()*0.001;
   cout << "# time calculating distances: " << dtime << endl;
-  cout << "# time clustering: " << t1.lap()*0.001 << endl;
+  cout << "# time sorting distances: " << stime << endl;
+  cout << "# time clustering: " << clustime << endl;
+  cout << "# total time: " << dtime+clustime+stime << endl;
   cout << "# distances within threshold: " << totaldists << endl;
 
   cluster.save(ofile,arr);

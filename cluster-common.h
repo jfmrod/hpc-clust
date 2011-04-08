@@ -11,6 +11,7 @@
 
 #include <list>
 
+
 inline void getL2(int& l,int w,int x,int y)
 {
   if (y<x) { int t; t=x; x=y; y=t; }
@@ -54,6 +55,155 @@ inline float dist_nogap(const estr& s1,const estr& s2,int gc1,int gc2)
   return((float)count/(float)(s1._strlen-gc1-gc2+gcount));
 }
 
+const long int b4_m0=0x0F;
+const long int b4_m1=0x0F0;
+const long int b4_m2=0x0F00;
+const long int b4_m3=0x0F000;
+const long int b4_m4=0x0F0000;
+const long int b4_m5=0x0F00000;
+const long int b4_m6=0x0F000000;
+const long int b4_m7=0x0F0000000;
+const long int b4_m8=0x0F00000000;
+const long int b4_m9=0x0F000000000;
+const long int b4_m10=0x0F0000000000;
+const long int b4_m11=0x0F00000000000;
+const long int b4_m12=0x0F000000000000;
+const long int b4_m13=0x0F0000000000000;
+const long int b4_m14=0x0F00000000000000;
+const long int b4_m15=0x0F000000000000000;
+
+const long int b8_m0=0x00000000000000FF;
+const long int b8_m1=0x000000000000FF00;
+const long int b8_m2=0x0000000000FF0000;
+const long int b8_m3=0x00000000FF000000;
+const long int b8_m4=0x000000FF00000000;
+const long int b8_m5=0x0000FF0000000000;
+const long int b8_m6=0x00FF000000000000;
+const long int b8_m7=0xFF00000000000000;
+
+const long int b8_d0='-';
+const long int b8_d1=b8_d0 << 8;
+const long int b8_d2=b8_d0 << 16;
+const long int b8_d3=b8_d0 << 24;
+const long int b8_d4=b8_d0 << 32;
+const long int b8_d5=b8_d0 << 40;
+const long int b8_d6=b8_d0 << 48;
+const long int b8_d7=b8_d0 << 56;
+
+
+inline void dist_nogap_inc(long int a1,long int a2,long int mask,int& count,int& len){
+  if (!((a1&mask)==mask || (a2&mask)==mask)){
+    if ((a1&mask)==(a2&mask)) ++count;
+    ++len;
+  }
+}
+
+inline float dist_nogap_compressed(const estr& s1,const estr& s2,int seqlen)
+{
+  int i;
+  int count=0;
+  int len=0;
+  long int *p1=(long int*)s1._str;
+  long int *p2=(long int*)s2._str;
+  for (i=0; i<s1._strlen/8; ++i,++p1,++p2){
+    dist_nogap_inc(*p1,*p2,b4_m0,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m1,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m2,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m3,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m4,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m5,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m6,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m7,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m8,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m9,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m10,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m11,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m12,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m13,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m14,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m15,count,len);
+  }
+
+  switch (seqlen%16){
+   case 15:
+    dist_nogap_inc(*p1,*p2,b4_m14,count,len);
+   case 14:
+    dist_nogap_inc(*p1,*p2,b4_m13,count,len);
+   case 13:
+    dist_nogap_inc(*p1,*p2,b4_m12,count,len);
+   case 12:
+    dist_nogap_inc(*p1,*p2,b4_m11,count,len);
+   case 11:
+    dist_nogap_inc(*p1,*p2,b4_m10,count,len);
+   case 10:
+    dist_nogap_inc(*p1,*p2,b4_m9,count,len);
+   case 9:
+    dist_nogap_inc(*p1,*p2,b4_m8,count,len);
+   case 8:
+    dist_nogap_inc(*p1,*p2,b4_m7,count,len);
+   case 7:
+    dist_nogap_inc(*p1,*p2,b4_m6,count,len);
+   case 6:
+    dist_nogap_inc(*p1,*p2,b4_m5,count,len);
+   case 5:
+    dist_nogap_inc(*p1,*p2,b4_m4,count,len);
+   case 4:
+    dist_nogap_inc(*p1,*p2,b4_m3,count,len);
+   case 3:
+    dist_nogap_inc(*p1,*p2,b4_m2,count,len);
+   case 2:
+    dist_nogap_inc(*p1,*p2,b4_m1,count,len);
+   case 1:
+    dist_nogap_inc(*p1,*p2,b4_m0,count,len);
+  }
+  return((float)count/(float)len);
+}
+
+inline void dist_nogap_inc_dash(long int a1,long int a2,long int mask,long int dash,int& count,int& len){
+  if (!((a1&mask)==dash || (a2&mask)==dash)){
+    if ((a1&mask)==(a2&mask)) ++count;
+    ++len;
+  }
+}
+
+inline float dist_nogap(const estr& s1,const estr& s2)
+{
+  int i;
+  int count=0;
+  int len=0;
+  long int *p1=(long int*)s1._str;
+  long int *p2=(long int*)s2._str;
+  for (i=0; i<s1._strlen/8; ++i,++p1,++p2){
+    dist_nogap_inc_dash(*p1,*p2,b8_m0,b8_d0,count,len);
+    dist_nogap_inc_dash(*p1,*p2,b8_m1,b8_d1,count,len);
+    dist_nogap_inc_dash(*p1,*p2,b8_m2,b8_d2,count,len);
+    dist_nogap_inc_dash(*p1,*p2,b8_m3,b8_d3,count,len);
+    dist_nogap_inc_dash(*p1,*p2,b8_m4,b8_d4,count,len);
+    dist_nogap_inc_dash(*p1,*p2,b8_m5,b8_d5,count,len);
+    dist_nogap_inc_dash(*p1,*p2,b8_m6,b8_d6,count,len);
+    dist_nogap_inc_dash(*p1,*p2,b8_m7,b8_d7,count,len);
+  }
+
+  switch (s1._strlen%8){
+   case 7:
+    dist_nogap_inc_dash(*p1,*p2,b8_m6,b8_d6,count,len);
+   case 6:
+    dist_nogap_inc_dash(*p1,*p2,b8_m5,b8_d5,count,len);
+   case 5:
+    dist_nogap_inc_dash(*p1,*p2,b8_m4,b8_d4,count,len);
+   case 4:
+    dist_nogap_inc_dash(*p1,*p2,b8_m3,b8_d3,count,len);
+   case 3:
+    dist_nogap_inc_dash(*p1,*p2,b8_m2,b8_d2,count,len);
+   case 2:
+    dist_nogap_inc_dash(*p1,*p2,b8_m1,b8_d1,count,len);
+   case 1:
+    dist_nogap_inc_dash(*p1,*p2,b8_m0,b8_d0,count,len);
+  }
+  return((float)count/(float)len);
+}
+
+/*
 inline float dist_nogap(const estr& s1,const estr& s2)
 {
   int i;
@@ -66,6 +216,7 @@ inline float dist_nogap(const estr& s1,const estr& s2)
   }
   return((float)count/(float)len);
 }
+*/
 
 inline float dist(const estr& s1,const estr& s2)
 {
@@ -164,12 +315,50 @@ class eseqcluster
 //  eseqdist* operator()(int x,int y);
 };
 
+
+
+
+class eblockarray
+{
+ private:
+  unsigned int blocksize;
+  unsigned long count;
+ public:
+  ebasicarray<eseqdist*> blocks;
+
+  eblockarray();
+  ~eblockarray();
+
+  void clear();
+
+  void add(const eseqdist& sdist);
+  inline unsigned long int size() { return(count); }
+
+  void swap(int i,int j);
+  void sort();
+
+  eseqdist& operator[](int i);
+  const eseqdist& operator[](int i) const;
+  eblockarray& merge(eblockarray& barr);
+
+  inline eseqdist* lastblock() { return(blocks[blocks.size()-1]); }
+  inline const eseqdist* lastblock() const { return(blocks[blocks.size()-1]); }
+};
+
+
+
+
+
 int calc_dists(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);
 int calc_dists(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres);
 //int calc_dists(estrhash& arr,earray<eseqdist>& dists,int start,int end,float thres);
 //int calc_dists2(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);
 
 //int calc_dists_nogap(estrarray& arr,multimap<float,eseqdist>& dists,int node,int tnodes,float thres);
+int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
+int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray& dists,int seqlen,int node,int tnodes,float thres);
+int calc_dists_nogap_compressed(estrarray& arr,eblockarray& dists,int seqlen,int node,int tnodes,float thres);
+
 int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres);
 int calc_dists_nogap(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);
 int calc_dists_nogap(estrarray& arr,eintarray& arrgaps,earray<eseqdist>& dists,int node,int tnodes,float thres);
@@ -185,6 +374,8 @@ void cooc_calc(int start,int end,ebasicarray<float>& dist_mat,earray<eintarray>&
 //void load_seqs(const estr& filename,estrhash& arr);
 void load_accs(const estr& filename,estrarray& arr);
 void load_seqs(const estr& filename,estrarray& arr);
+void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen);
+void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen);
 void load_seqs(const estr& filename,estrarray& arr,eintarray& arrgaps);
 void load_seqs(const estr& filename,estrhash& arr);
 void load_seqs(const estr& filename,estrhashof<int>& arrind);

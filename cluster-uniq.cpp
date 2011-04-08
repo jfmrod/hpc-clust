@@ -29,6 +29,8 @@ int emain()
   estrarray dups;
   int i;
   for (i=0; i<arr.size(); ++i){
+    if (i%(arr.size()/10)==0)
+      cout << i/(arr.size()/10);
     if (!duphash.exists(arr.values(i)))
       { f.write(arr.keys(i)+"   "+arr.values(i)+"\n"); duphash.add(arr.values(i),arr.keys(i)); ++count; }
     else 
@@ -36,9 +38,10 @@ int emain()
 //    else
 //      { /* cout << "# duplicate found: " << arr.keys(i) << " == " << dups[arr.values(i)] << endl; */ arr.erase(i); --i; }
   }
+  cout << endl;
   cout << "# unique seqs: " << count << endl;
 
-  if (!dupfile.len()) dupfile=estr(argv[1])+".dups";
+  if (!dupfile.len()) dupfile=estr(argv[1])+".dup";
   efile fdups(dupfile);
   for (i=0; i<dups.size(); ++i)
     fdups.write(dups.keys(i)+"="+dups.values(i)+"\n");

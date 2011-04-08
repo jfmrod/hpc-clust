@@ -8,12 +8,15 @@
 
 #include "cluster-common.h"
 
-//estrhash arr;
 estrarray arr;
 ebasicarray<eseqdist> mindists;
 estr ofile="cluster.dat";
 etimer t1;
 
+int seqlen=0;
+
+earray<estr> nodeArr;
+eblockarray nodeDists;
 
 /*
 void load_seqs(const estr& filename,estrhash& arr)
@@ -191,9 +194,9 @@ void serverCluster(edcserver& server)
 
 //  for (i=mindists.size()-1; i>=0 && (mindists[i].dist>=mindist || totaldists<=0); --i){
   for (i=mindists.size()-1; i>=0; --i){
-    if ((i+totaldists)%100000==0) {
-      cout << (i+totaldists)/100000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount<<" " << cluster.smatrix.size() << endl;
-    }
+//    if ((i+totaldists)%100000==0) {
+//      cout << (i+totaldists)/100000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount<<" " << cluster.smatrix.size() << endl;
+//    }
     cluster.add(mindists[i]);
 //    mindists.erase(i);
   }
@@ -253,16 +256,16 @@ ebasicarray<eseqdist> nodeGetThres(float minthres)
   int i;
   int count=0;
   for (i=0; nodePos-i>0; ++i){
-    if (mindists[nodePos-i-1].dist<minthres) break;
+    if (nodeDists[nodePos-i-1].dist<minthres) break;
 //      tmparr.add(mindists[pos-i]);
   }
   
   int j;
   ebasicarray<eseqdist> tmparr;
-  ldieif(nodePos-i<0 || nodePos>mindists.size(),"out of bounds: "+estr(nodePos-i)+" " + estr(nodePos));
+  ldieif(nodePos-i<0 || nodePos>nodeDists.size(),"out of bounds: "+estr(nodePos-i)+" " + estr(nodePos));
   for (j=nodePos-i; j<nodePos; ++j){
 //    if (mindists[j].count)
-      tmparr.add(mindists[j]);
+      tmparr.add(nodeDists[j]);
   }
   nodePos-=i;
   return(tmparr);
@@ -274,7 +277,14 @@ ebasicarray<eseqdist> nodeGetCount(int maxcount)
 {
   nodePos-=maxcount;
   if (nodePos<0){ maxcount+=nodePos; nodePos=0; }
-  return(mindists.subset(nodePos,maxcount));
+
+  int j;
+  ebasicarray<eseqdist> tmparr;
+  ldieif(nodePos<0 || nodePos+maxcount>nodeDists.size(),"out of bounds: "+estr(nodePos)+" " + estr(nodePos+maxcount)+" nodeDists.size: "+estr(nodeDists.size()));
+  for (j=nodePos; j<nodePos+maxcount; ++j)
+    tmparr.add(nodeDists[j]);
+  return(tmparr);
+//  return(mindists.subset(nodePos,maxcount));
 }
 /*
 ebasicarray<eseqdist> nodeGetCount(int maxcount)
@@ -304,18 +314,18 @@ int nthreads=4;
 etaskman taskman;
 emutex mutexDists;
 int partsFinished=0;
-int partsTotal=100;
+int partsTotal=1000;
 
 void p_calc_dists_nogap(int node,int tnodes,float thres)
 {
-  ebasicarray<eseqdist> dists;
-  calc_dists_nogap(arr,dists,node,tnodes,thres);
+//  ebasicarray<eseqdist> dists;
+  eblockarray dists;
+  calc_dists_nogap_compressed(nodeArr,dists,seqlen,node,tnodes,thres);
+
   mutexDists.lock();
   ++partsFinished;
-  int avgdists=(mindists.size()+dists.size())/partsFinished;
-  if (avgdists*partsTotal+avgdists/partsFinished>mindists.capacity())
-    mindists.reserve(avgdists*partsTotal+avgdists/partsFinished);
-  mindists+=dists;
+  nodeDists.merge(dists);
+//  mindists+=dists;
   mutexDists.unlock();
 }
 
@@ -327,8 +337,9 @@ int nodeComputeDistances(int node,int tnodes,float thres)
   }
   taskman.wait();
 
-  heapsort(mindists);
-  nodePos=mindists.size();
+  nodeDists.sort();
+//  heapsort(mindists);
+  nodePos=nodeDists.size();
 
 //  nodePos=calc_dists_nogap(arr,mindists,node,tnodes,thres);
 //  nodePos=calc_dists(arr,mindists,node,tnodes,thres);
@@ -336,6 +347,7 @@ int nodeComputeDistances(int node,int tnodes,float thres)
   return(nodePos);
 }
 
+/*
 int nodeComputeDistances2(int node,int tnodes,float thres)
 {
   nodePos=calc_dists_nogap(arr,mindists,node,tnodes,thres);
@@ -345,6 +357,7 @@ int nodeComputeDistances2(int node,int tnodes,float thres)
 //  heapsort(mindists);
   return(nodePos);
 }
+*/
 
 /*
 eintarray scluster;
@@ -419,10 +432,13 @@ int emain()
   int i,i2,j;
 
   if (host.len()>0){
-    load_seqs(argv[1],arr);
+//    load_seqs(argv[1],arr);
+    load_seqs_compressed(argv[1],nodeArr,seqlen);
+
 //    scluster.reserve(arr.size());
 //    for (i=0; i<arr.size(); ++i)
 //      scluster.add(i);
+
     taskman.createThread(nthreads);
     startClient(host,12345);
     return(0);
