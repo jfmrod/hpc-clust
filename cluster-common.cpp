@@ -846,13 +846,13 @@ int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray& dists,int seqlen,
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr[i],arr[j],seqlen);
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
       ++count;
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr[i2],arr[j],seqlen);
-      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
       ++count;
     }
 //    if (i-start==(end-start)/10)
@@ -864,7 +864,7 @@ int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray& dists,int seqlen,
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr[i],arr[j],seqlen);
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
       ++count;
     }
   }
@@ -890,13 +890,13 @@ int calc_dists_nogap_compressed(estrarray& arr,eblockarray& dists,int seqlen,int
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
       ++count;
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr.values(i2),arr.values(j),seqlen);
-      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
       ++count;
     }
 //    if (i-start==(end-start)/10)
@@ -908,7 +908,7 @@ int calc_dists_nogap_compressed(estrarray& arr,eblockarray& dists,int seqlen,int
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
       ++count;
     }
   }
@@ -934,13 +934,13 @@ int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int 
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
       ++count;
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr.values(i2),arr.values(j),seqlen);
-      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
       ++count;
     }
 //    if (i-start==(end-start)/10)
@@ -952,7 +952,7 @@ int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int 
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
       ++count;
     }
   }
@@ -978,13 +978,13 @@ int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tn
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap(arr.values(i),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
       ++count;
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
       tmpid=dist_nogap(arr.values(i2),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i2,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
       ++count;
     }
 //    if (i-start==(end-start)/10)
@@ -996,7 +996,7 @@ int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tn
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap(arr.values(i),arr.values(j));
-      if (tmpid>thres) dists.add(eseqdist(i,j,tmpid));
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
       ++count;
     }
   }

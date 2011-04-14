@@ -225,8 +225,8 @@ void serverCluster(edcserver& server)
 */
     return;
   }
-  cout << "# time computing distances: "<< tdists <<endl;
-  cout << "# time clustering: "<< t1.lap() <<endl;
+  cout << "# time computing distances: "<< tdists*0.001 <<endl;
+  cout << "# time clustering: "<< t1.lap()*0.001 <<endl;
   cout << "# total distances: "<< itotaldists << endl;
 
   cluster.save(ofile,arr);
@@ -241,7 +241,7 @@ void serverCluster(edcserver& server)
 //  cout << "# done going through distances" << endl;
 }
 
-int ncpus=100;
+int ncpus=32;
 
 void doIncoming(edcserver& server)
 {
@@ -249,18 +249,18 @@ void doIncoming(edcserver& server)
     startComputation(server);
 }
 
-int nodePos;
+long int nodePos;
 
 ebasicarray<eseqdist> nodeGetThres(float minthres)
 {
-  int i;
-  int count=0;
+  long int i;
+  long int count=0;
   for (i=0; nodePos-i>0; ++i){
     if (nodeDists[nodePos-i-1].dist<minthres) break;
 //      tmparr.add(mindists[pos-i]);
   }
   
-  int j;
+  long int j;
   ebasicarray<eseqdist> tmparr;
   ldieif(nodePos-i<0 || nodePos>nodeDists.size(),"out of bounds: "+estr(nodePos-i)+" " + estr(nodePos));
   for (j=nodePos-i; j<nodePos; ++j){
@@ -278,7 +278,7 @@ ebasicarray<eseqdist> nodeGetCount(int maxcount)
   nodePos-=maxcount;
   if (nodePos<0){ maxcount+=nodePos; nodePos=0; }
 
-  int j;
+  long int j;
   ebasicarray<eseqdist> tmparr;
   ldieif(nodePos<0 || nodePos+maxcount>nodeDists.size(),"out of bounds: "+estr(nodePos)+" " + estr(nodePos+maxcount)+" nodeDists.size: "+estr(nodeDists.size()));
   for (j=nodePos; j<nodePos+maxcount; ++j)

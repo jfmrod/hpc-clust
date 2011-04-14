@@ -68,17 +68,17 @@ int emain()
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
     for (i=0; i<partsTotal; ++i)
-      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,0.9));
+      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,t));
 
     taskman.createThread(ncpus);
     cout << "# finished creating threads: "<<ncpus << endl;
     taskman.wait();
     cout << "# all tasks finished" << endl;
 
+    dtime=t1.lap()*0.001;
     cout << "# time calculating distances: " << dtime << endl;
     cout << "# distances within threshold: " << mindists.size() << endl;
 
-    dtime=t1.lap()*0.001;
     mindists.sort();
     stime=t1.lap()*0.001;
 
@@ -128,8 +128,6 @@ int emain()
 
   cluster.save(ofile,arr);
   cout << "# done writing "<<ofile << endl;
-
-  
 
 /*
   estr line;

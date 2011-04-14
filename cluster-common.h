@@ -92,20 +92,33 @@ const long int b8_d7=b8_d0 << 56;
 
 
 inline void dist_nogap_inc(long int a1,long int a2,long int mask,int& count,int& len){
-  if (!((a1&mask)==mask || (a2&mask)==mask)){
-    if ((a1&mask)==(a2&mask)) ++count;
-    ++len;
-  }
+  if ((a1&mask)==mask && (a2&mask)==mask)
+    --len;
+  else if ((a1&mask)==(a2&mask))
+    ++count;
+//  if ((a1&mask)==(a2&mask)){
+//    if ((a1&mask)!=mask)
+//      ++count;
+//    else
+//      --len;
+//  }
 }
+
+//inline void dist_nogap_inc(long int a1,long int a2,long int mask,int& count,int& len){
+//  if (!((a1&mask)==mask || (a2&mask)==mask)){
+//    if ((a1&mask)==(a2&mask)) ++count;
+//    ++len;
+//  }
+//}
 
 inline float dist_nogap_compressed(const estr& s1,const estr& s2,int seqlen)
 {
-  int i;
+  int len=seqlen;
   int count=0;
-  int len=0;
+  long int *ep1=(long int*)(s1._str)+(s1._strlen/8);
   long int *p1=(long int*)s1._str;
   long int *p2=(long int*)s2._str;
-  for (i=0; i<s1._strlen/8; ++i,++p1,++p2){
+  for (; p1!=ep1; ++p1,++p2){
     dist_nogap_inc(*p1,*p2,b4_m0,count,len);
     dist_nogap_inc(*p1,*p2,b4_m1,count,len);
     dist_nogap_inc(*p1,*p2,b4_m2,count,len);
@@ -159,21 +172,31 @@ inline float dist_nogap_compressed(const estr& s1,const estr& s2,int seqlen)
   return((float)count/(float)len);
 }
 
+
 inline void dist_nogap_inc_dash(long int a1,long int a2,long int mask,long int dash,int& count,int& len){
-  if (!((a1&mask)==dash || (a2&mask)==dash)){
-    if ((a1&mask)==(a2&mask)) ++count;
-    ++len;
+  if ((a1&mask)==(a2&mask)){
+    if ((a1&mask)!=mask)
+      ++count;
+    else
+      --len;
   }
 }
 
+//inline void dist_nogap_inc_dash(long int a1,long int a2,long int mask,long int dash,int& count,int& len){
+//  if (!((a1&mask)==dash || (a2&mask)==dash)){
+//    if ((a1&mask)==(a2&mask)) ++count;
+//    ++len;
+//  }
+//}
+
 inline float dist_nogap(const estr& s1,const estr& s2)
 {
-  int i;
   int count=0;
-  int len=0;
+  int len=s1._strlen;
+  long int *ep1=((long int*)s1._str)+(s1._strlen/8);
   long int *p1=(long int*)s1._str;
   long int *p2=(long int*)s2._str;
-  for (i=0; i<s1._strlen/8; ++i,++p1,++p2){
+  for (; p1!=ep1; ++p1,++p2){
     dist_nogap_inc_dash(*p1,*p2,b8_m0,b8_d0,count,len);
     dist_nogap_inc_dash(*p1,*p2,b8_m1,b8_d1,count,len);
     dist_nogap_inc_dash(*p1,*p2,b8_m2,b8_d2,count,len);
