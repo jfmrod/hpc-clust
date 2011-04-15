@@ -9,6 +9,7 @@
 
 emutex mutexDists;
 eblockarray mindists;
+//ebasicarray<eseqdist> mindists;
 int partsFinished=0;
 int partsTotal=100;
 estrarray arr;
@@ -19,10 +20,12 @@ int seqlen=0;
 void p_calc_dists_nogap(int node,int tnodes,float thres)
 {
   eblockarray dists;
+//  ebasicarray<eseqdist> dists;
   calc_dists_nogap_compressed(arr,dists,seqlen,node,tnodes,thres);
 
   mutexDists.lock();
   ++partsFinished;
+//  mindists+=dists;
   mindists.merge(dists);
   mutexDists.unlock();
 }
@@ -79,6 +82,7 @@ int emain()
     cout << "# time calculating distances: " << dtime << endl;
     cout << "# distances within threshold: " << mindists.size() << endl;
 
+//    heapsort(mindists);
     mindists.sort();
     stime=t1.lap()*0.001;
 

@@ -7,10 +7,41 @@
 
 
 estrarray arr;
-earray<eseqdist> mindists;
+ebasicarray<eseqdist> mindists;
 
 eseqcluster cluster;
 const int tbucket=10000;
+
+
+void loadarray(ebasicarray<eseqdist>& dists,const estr& filename)
+{
+  estr data;
+  efile f(filename);
+
+  cout << "f.size: " << f.size() << endl;
+
+  ldieif(!f.read(data),"error reading from file");
+  cout << "data.len: " << data.len() << endl;
+  long int i=0;
+  eseqdist d;
+  while (i!=-1 && data.len()){
+    i=d.unserial(data,i);
+    if (i==-1) break;
+    dists.add(d);
+    data.del(0,i);
+    i=0;
+  }
+  f.close();
+
+/*
+  estr datastr;
+  mindists.serial(datastr);
+  efile f("distances.dat2");
+  f.read(datastr);
+  f.close();
+  ldieif(mindists.unserial(datastr,0)==-1,"error reading sorted-dists.bacteria.dat");
+*/
+}
 
 
 void doClustering()
@@ -19,23 +50,18 @@ void doClustering()
   int i;
 
   cout << "# reading sorted distances to file \"sorted-dists.dat\"" << endl;
-  estr datastr;
-  mindists.serial(datastr);
-  efile f("sorted-dists.bacteria.dat");
-  f.read(datastr);
-  f.close();
-  ldieif(mindists.unserial(datastr,0)==-1,"error reading sorted-dists.bacteria.dat");
+  loadarray(mindists,"distances-sorted.dat");
+
   cout << "# done" << endl;
 
   cout << "# min: " << mindists[0].dist << " max: "<<mindists[mindists.size()-1].dist << endl;
-  for (i=mindists.size()-1; i>=0; --i){
-      if (i%tbucket==0) { cout << i/tbucket << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount<<" " << cluster.smatrix.size() << endl; }
-//    if (mindists.size()%tbucket==0) { cout << mindists.size()/tbucket << "."; flush(cout); }
-//    if (mindists.size()/tbucket==55) exit(0);
-    cluster.add(mindists[i]);
-//    mindists.erase(i);
-  }
-  cout << endl;
+
+
+  cluster.check(mindists);
+//  for (i=mindists.size()-1; i>=0; --i){
+//    cluster.add(mindists[i]);
+//  }
+//  cout << endl;
 
   cout << "# done" << endl;
 
@@ -60,10 +86,10 @@ int emain()
   epregisterClassProperty(eseqdist,x);
   epregisterClassProperty(eseqdist,y);
 
-  epregisterClass(earray<eseqdist>);
-  epregisterClassInheritance(earray<eseqdist>,ebasearray);
-  epregisterClassMethod(earray<eseqdist>,subset);
-  epregisterClassSerializeMethod(earray<eseqdist>);
+  epregisterClass(ebasicarray<eseqdist>);
+  epregisterClassInheritance(ebasicarray<eseqdist>,ebasearray);
+  epregisterClassMethod(ebasicarray<eseqdist>,subset);
+  epregisterClassSerializeMethod(ebasicarray<eseqdist>);
 
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <file>");
 

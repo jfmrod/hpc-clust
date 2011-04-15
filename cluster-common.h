@@ -344,8 +344,8 @@ class eseqcluster
 class eblockarray
 {
  private:
-  unsigned int blocksize;
-  unsigned long count;
+  long int blocksize;
+  long int count;
  public:
   ebasicarray<eseqdist*> blocks;
 
@@ -355,13 +355,13 @@ class eblockarray
   void clear();
 
   void add(const eseqdist& sdist);
-  inline unsigned long int size() { return(count); }
+  inline long int size() { return(count); }
 
-  void swap(int i,int j);
+  void swap(long int i,long int j);
   void sort();
 
-  eseqdist& operator[](int i);
-  const eseqdist& operator[](int i) const;
+  eseqdist& operator[](long int i);
+  const eseqdist& operator[](long int i) const;
   eblockarray& merge(eblockarray& barr);
 
   inline eseqdist* lastblock() { return(blocks[blocks.size()-1]); }
@@ -378,6 +378,7 @@ int calc_dists(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,f
 //int calc_dists2(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);
 
 //int calc_dists_nogap(estrarray& arr,multimap<float,eseqdist>& dists,int node,int tnodes,float thres);
+int calc_dists_nogap_compressed(earray<estr>& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray& dists,int seqlen,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(estrarray& arr,eblockarray& dists,int seqlen,int node,int tnodes,float thres);
