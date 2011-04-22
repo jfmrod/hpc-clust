@@ -659,6 +659,46 @@ int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,i
   return(dists.size());
 }
 
+int calc_dists_nogap_compressed(estrarray& arr,eblockarray<eseqdistCount>& dists,int seqlen,int node,int tnodes,float thres)
+{
+  ldieif(arr.size()==0,"no distances in array");
+  int i,i2,j;
+  int start,end;
+
+  start=node*(arr.size()-1)/(2*tnodes);
+  end=(node+1)*(arr.size()-1)/(2*tnodes);
+
+  float tmpid;
+//  dists.reserve(500000);
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
+      if (tmpid>=thres) dists.add(eseqdistCount(i,j,tmpid));
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr.values(i2),arr.values(j),seqlen);
+      if (tmpid>=thres) dists.add(eseqdistCount(i2,j,tmpid));
+    }
+//    if (i-start==(end-start)/10)
+//      cout << "# predicted: " << dists.size()*10 << endl;
+//    if (dists.size()>dists.capacity()*2/3)
+//      dists.reserve(2*dists.capacity());
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
+      if (tmpid>=thres) dists.add(eseqdistCount(i,j,tmpid));
+    }
+  }
+//  cout << "# n: " << node << " tnodes: " << tnodes << " start: " << start << " end: " << end << " distances: " << dists.size() << endl;
+//  cout << "# computed distances: " << count << endl;
+//  heapsort(dists);
+  return(dists.size());
+}
+
 int calc_dists_nogap_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres)
 {
   ldieif(arr.size()==0,"no distances in array");
@@ -669,20 +709,16 @@ int calc_dists_nogap_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int 
   end=(node+1)*(arr.size()-1)/(2*tnodes);
 
   float tmpid;
-  int count=0;
-//  dists.reserve(500000);
 
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
       if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
-      ++count;
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr.values(i2),arr.values(j),seqlen);
       if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
-      ++count;
     }
 //    if (i-start==(end-start)/10)
 //      cout << "# predicted: " << dists.size()*10 << endl;
@@ -694,7 +730,6 @@ int calc_dists_nogap_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int 
     for (j=i+1; j<arr.size(); ++j){
       tmpid=dist_nogap_compressed(arr.values(i),arr.values(j),seqlen);
       if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
-      ++count;
     }
   }
 //  cout << "# n: " << node << " tnodes: " << tnodes << " start: " << start << " end: " << end << " distances: " << dists.size() << endl;

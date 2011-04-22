@@ -15,6 +15,7 @@
 #include <eutils/ethread.h>
 
 #include "eseqcluster.h"
+#include "eseqclustercount.h"
 
 inline void getL2(int& l,int w,int x,int y)
 {
@@ -340,6 +341,7 @@ int calc_dists_nogap_compressed(earray<estr>& arr,ebasicarray<eseqdist>& dists,i
 int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
+int calc_dists_nogap_compressed(estrarray& arr,eblockarray<eseqdistCount>& dists,int seqlen,int node,int tnodes,float thres);
 
 int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres);
 int calc_dists_nogap(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);

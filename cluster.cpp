@@ -5,7 +5,7 @@
 
 #include "cluster-common.h"
 
-eseqcluster cluster;
+eseqclusterCount cluster;
 
 //eblockarray<eseqdist> mindists;
 //ebasicarray<eseqdist> mindists;
@@ -72,7 +72,7 @@ int emain()
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
     for (i=0; i<partsTotal; ++i)
-      taskman.addTask(efunc(cluster,&eseqcluster::calc),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
+      taskman.addTask(efunc(cluster,&eseqclusterCount::calc),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
 //      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,t));
 
     taskman.createThread(ncpus);
@@ -120,7 +120,9 @@ int emain()
   t1.reset();
   int tmp;
   for (i=cluster.dists.size()-1; i>=0; --i){
-    cluster.add(cluster.dists[i]);
+    cluster.add(i);
+//    cluster.update(i-1);
+    if ((arr.size()-cluster.mergecount)%1000==0) cluster.update(i-1);
 //    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }
 //    if (i%10000==0) { tmp=cluster.update(mindists,i-1); cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << " " << tmp << endl; }
   }
