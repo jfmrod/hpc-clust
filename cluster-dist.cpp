@@ -16,7 +16,7 @@ etimer t1;
 int seqlen=0;
 
 earray<estr> nodeArr;
-eblockarray nodeDists;
+eblockarray<eseqdist> nodeDists;
 //ebasicarray<eseqdist> nodeDists;
 
 /*
@@ -164,7 +164,7 @@ void serverDistanceThreshold(edcserver& server)
     serverCluster(server);
 }
 
-void savearray(eblockarray& sdist,const estr& filename)
+void savearray(eblockarray<eseqdist>& sdist,const estr& filename)
 {
   efile f(filename);
   estr tmpstr;
@@ -349,7 +349,7 @@ int partsTotal=1000;
 void p_calc_dists_nogap(int node,int tnodes,float thres)
 {
 //  ebasicarray<eseqdist> dists;
-  eblockarray dists;
+  eblockarray<eseqdist> dists;
   calc_dists_nogap_compressed(nodeArr,dists,seqlen,node,tnodes,thres);
 
   mutexDists.lock();

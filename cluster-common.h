@@ -8,9 +8,13 @@
 #include <eutils/ebasichashmap.h>
 #include <eutils/estrhash.h>
 #include <eutils/etimer.h>
+#include <eutils/eblockarray.h>
 
 #include <list>
 
+#include <eutils/ethread.h>
+
+#include "eseqcluster.h"
 
 inline void getL2(int& l,int w,int x,int y)
 {
@@ -55,31 +59,31 @@ inline float dist_nogap(const estr& s1,const estr& s2,int gc1,int gc2)
   return((float)count/(float)(s1._strlen-gc1-gc2+gcount));
 }
 
-const long int b4_m0=0x0F;
-const long int b4_m1=0x0F0;
-const long int b4_m2=0x0F00;
-const long int b4_m3=0x0F000;
-const long int b4_m4=0x0F0000;
-const long int b4_m5=0x0F00000;
-const long int b4_m6=0x0F000000;
-const long int b4_m7=0x0F0000000;
-const long int b4_m8=0x0F00000000;
-const long int b4_m9=0x0F000000000;
-const long int b4_m10=0x0F0000000000;
-const long int b4_m11=0x0F00000000000;
-const long int b4_m12=0x0F000000000000;
-const long int b4_m13=0x0F0000000000000;
-const long int b4_m14=0x0F00000000000000;
-const long int b4_m15=0x0F000000000000000;
+const long int b4_m0=0x0Fl;
+const long int b4_m1=0x0F0l;
+const long int b4_m2=0x0F00l;
+const long int b4_m3=0x0F000l;
+const long int b4_m4=0x0F0000l;
+const long int b4_m5=0x0F00000l;
+const long int b4_m6=0x0F000000l;
+const long int b4_m7=0x0F0000000l;
+const long int b4_m8=0x0F00000000l;
+const long int b4_m9=0x0F000000000l;
+const long int b4_m10=0x0F0000000000l;
+const long int b4_m11=0x0F00000000000l;
+const long int b4_m12=0x0F000000000000l;
+const long int b4_m13=0x0F0000000000000l;
+const long int b4_m14=0x0F00000000000000l;
+const long int b4_m15=0x0F000000000000000l;
 
-const long int b8_m0=0x00000000000000FF;
-const long int b8_m1=0x000000000000FF00;
-const long int b8_m2=0x0000000000FF0000;
-const long int b8_m3=0x00000000FF000000;
-const long int b8_m4=0x000000FF00000000;
-const long int b8_m5=0x0000FF0000000000;
-const long int b8_m6=0x00FF000000000000;
-const long int b8_m7=0xFF00000000000000;
+const long int b8_m0=0x00000000000000FFl;
+const long int b8_m1=0x000000000000FF00l;
+const long int b8_m2=0x0000000000FF0000l;
+const long int b8_m3=0x00000000FF000000l;
+const long int b8_m4=0x000000FF00000000l;
+const long int b8_m5=0x0000FF0000000000l;
+const long int b8_m6=0x00FF000000000000l;
+const long int b8_m7=0xFF00000000000000l;
 
 const long int b8_d0='-';
 const long int b8_d1=b8_d0 << 8;
@@ -282,22 +286,7 @@ inline void xy2estr(int x,int y,estr& str)
   }
 }
 
-class eseqdist
-{
- public:
-  float dist;
-//  int count;
-  int x;
-  int y;
-
-  eseqdist();
-  eseqdist(int x,int y,float dist);
-
-  inline bool operator<(const eseqdist& sdist) const{ return(dist<sdist.dist?true:false); }
-  void serial(estr& data) const;
-  int unserial(const estr& data,int i);
-};
-
+/*
 class eseqcount
 {
  public:
@@ -305,41 +294,10 @@ class eseqcount
   int y;
   bool operator==(const eseqcount& scount) const;
 };
-
-class eseqcluster
-{
- public:
-  int mergecount;
-
-  eintarray scount;
-  eintarray scluster;
-  eintarray smerge;
-
-//  ehashmap<eseqcount,int> smatrix;
-  ebasicstrhashof<int> smatrix;
-
-//  ebasicarray<eintarray> inter;
-  ebasicarray<list<int> > inter;
-
-//  ebasicarray<eintarray> incluster;
-  ebasicarray<list<int> > incluster;
-
-  void check(ebasicarray<eseqdist>& dists);
-
-  eseqcluster();
-
-  void merge(int x,int y);
-  void init(int count);
-  void add(eseqdist& dist);
-
-//  int update(ebasicarray<eseqdist>& dists,int s);
-
-  void save(const estr& filename,const estrarray& arr);
-//  eseqdist* operator()(int x,int y);
-};
+*/
 
 
-
+/*
 
 class eblockarray
 {
@@ -368,7 +326,7 @@ class eblockarray
   inline const eseqdist* lastblock() const { return(blocks[blocks.size()-1]); }
 };
 
-
+*/
 
 
 
@@ -380,8 +338,8 @@ int calc_dists(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,f
 //int calc_dists_nogap(estrarray& arr,multimap<float,eseqdist>& dists,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(earray<estr>& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_nogap_compressed(estrarray& arr,eblockarray& dists,int seqlen,int node,int tnodes,float thres);
+int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
+int calc_dists_nogap_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 
 int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres);
 int calc_dists_nogap(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);

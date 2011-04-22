@@ -1,14 +1,13 @@
 #include <eutils/emain.h>
 #include <eutils/efile.h>
 #include <eutils/eheap.h>
-#include <eutils/ethread.h>
 #include <eutils/etimer.h>
 
 #include "cluster-common.h"
 
+eseqcluster cluster;
 
-emutex mutexDists;
-eblockarray mindists;
+//eblockarray<eseqdist> mindists;
 //ebasicarray<eseqdist> mindists;
 int partsFinished=0;
 int partsTotal=100;
@@ -17,18 +16,20 @@ unsigned totaldists;
 
 int seqlen=0;
 
+/*
 void p_calc_dists_nogap(int node,int tnodes,float thres)
 {
-  eblockarray dists;
+  eblockarray<eseqdist> dists;
 //  ebasicarray<eseqdist> dists;
   calc_dists_nogap_compressed(arr,dists,seqlen,node,tnodes,thres);
 
   mutexDists.lock();
   ++partsFinished;
 //  mindists+=dists;
-  mindists.merge(dists);
+  cluster.dists.merge(dists);
   mutexDists.unlock();
 }
+*/
 
 int emain()
 { 
@@ -71,7 +72,8 @@ int emain()
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
     for (i=0; i<partsTotal; ++i)
-      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,t));
+      taskman.addTask(efunc(cluster,&eseqcluster::calc),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
+//      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,t));
 
     taskman.createThread(ncpus);
     cout << "# finished creating threads: "<<ncpus << endl;
@@ -80,10 +82,10 @@ int emain()
 
     dtime=t1.lap()*0.001;
     cout << "# time calculating distances: " << dtime << endl;
-    cout << "# distances within threshold: " << mindists.size() << endl;
+    cout << "# distances within threshold: " << cluster.dists.size() << endl;
 
 //    heapsort(mindists);
-    mindists.sort();
+    cluster.dists.sort();
     stime=t1.lap()*0.001;
 
 /*
@@ -108,18 +110,17 @@ int emain()
 */
   } 
 
-  totaldists=mindists.size();
+  totaldists=cluster.dists.size();
   cout << "# time sorting distances: " << stime << endl;
 
   cout << "# initializing cluster"<<endl;
-  eseqcluster cluster;
   cluster.init(arr.size());
 
   cout << "# starting clustering"<<endl;
   t1.reset();
   int tmp;
-  for (i=mindists.size()-1; i>=0; --i){
-    cluster.add(mindists[i]);
+  for (i=cluster.dists.size()-1; i>=0; --i){
+    cluster.add(cluster.dists[i]);
 //    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }
 //    if (i%10000==0) { tmp=cluster.update(mindists,i-1); cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << " " << tmp << endl; }
   }
