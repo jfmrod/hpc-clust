@@ -5,10 +5,12 @@ CXXFLAGS:=${CXXFLAGS} -pthread -g # -march=nocona -mtune=nocona -O3 # -g # -pg
 
 .PHONY: all clean
 
-all: cluster cluster-mpi cluster-fast cluster-dist cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-nj cluster-check cluster-partition
+targets=cluster cluster-mpi cluster-fast cluster-dist cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-nj cluster-check cluster-partition
+
+all: $(targets)
 
 clean:
-	rm -f cluster cluster-fast cluster-dist cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-nj cluster-check *.o
+	rm -f $(targets) *.o
 
 cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o
 
