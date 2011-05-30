@@ -1,6 +1,7 @@
 #include "cluster-common.h"
 #include <eutils/efile.h>
 #include <eutils/eheap.h>
+#include <eutils/eregexp.h>
 #include <math.h>
 
 /*
@@ -157,7 +158,7 @@ void cluster_init(earray<eintarray>& cvec,const estrhashof<int>& arrind,const ei
     cvec[j][i]=1;
   }
 }
-void cooc_init(earray<eintarray>& neigharr,const estrhash& arr,const eintarray& otuarr,estrhashof<earray<estr> >& samples,estrhash& accsample,estrhashof<int>& arrind,int otucount)
+void cooc_init(earray<eintarray>& neigharr,const estrarray& arr,const eintarray& otuarr,estrhashof<eintarray>& samples,estrhash& accsample,estrhashof<int>& arrind,int otucount)
 {
  
   int i,k,l;
@@ -170,10 +171,15 @@ void cooc_init(earray<eintarray>& neigharr,const estrhash& arr,const eintarray& 
   for (i=0; i<arr.size(); ++i)
     neigharr.add(eintarray());
 
+  estrarray tarr;
+
   cout << "# neighcount: " << neigharr.size() << endl;
   for (i=0; i<arr.size(); ++i){
     acc=arr.keys(i);
-    if (!accsample.exists(acc)) continue;
+    tarr=acc.explode(":");
+    acc=tarr[0];
+
+    if (!accsample.exists(acc)){ lwarn("Accession: "+acc+" not found in samples"); continue; }
     sample=accsample[acc];
 
     for (k=0; k<otucount; ++k)
@@ -182,7 +188,7 @@ void cooc_init(earray<eintarray>& neigharr,const estrhash& arr,const eintarray& 
     ldieif(!samples.exists(sample),"sample not found: "+sample);
     for (k=0; k<samples[sample].size(); ++k){
       if (acc==samples[sample][k]) continue;
-      l=otuarr[arrind[samples[sample][k]]];
+      l=otuarr[samples[sample][k]];
       ldieif(l<0 || l>=otucount,"Something wrong");
 //      cout << " i: " << i << " l: " << l << endl;
       ++neigharr[i][l];
@@ -192,22 +198,50 @@ void cooc_init(earray<eintarray>& neigharr,const estrhash& arr,const eintarray& 
   cout << "# neigharr.size(): " << neigharr.size() << endl;
 }
 
-void cooc_calc(int start,int end,ebasicarray<float>& dist_mat,earray<eintarray>& neigharr)
+void cooc_calc2(int node,int tnodes,ebasicarray<float>& dist_mat,earray<eintarray>& neigharr)
 {
   int c=0;
   int i,i2,j;
+  int start,end;
+
+  start=node*(neigharr.size()-1)/(2*tnodes);
+  end=(node+1)*(neigharr.size()-1)/(2*tnodes);
+
+  for (i=start; i<end; ++i){
+//    getL(c,neigharr.size(),i,i+1);
+    for (j=i+1; j<neigharr.size(); ++j)
+      dist_mat.add(cooc_dist(i,j,neigharr));
+    i2=neigharr.size()-i-2;
+    for (j=i2+1; j<neigharr.size(); ++j)
+      dist_mat.add(cooc_dist(i2,j,neigharr));
+  }
+  if (node==tnodes-1 && neigharr.size()%2==0){
+    i=neigharr.size()/2-1;
+    for (j=i+1; j<neigharr.size(); ++j)
+      dist_mat.add(cooc_dist(i,j,neigharr));
+  }
+}
+
+void cooc_calc(int node,int tnodes,ebasicarray<float>& dist_mat,earray<eintarray>& neigharr)
+{
+  int c=0;
+  int i,i2,j;
+  int start,end;
+
+  start=node*(neigharr.size()-1)/(2*tnodes);
+  end=(node+1)*(neigharr.size()-1)/(2*tnodes);
 
   for (i=start; i<end; ++i){
     getL(c,neigharr.size(),i,i+1);
     for (j=i+1; j<neigharr.size(); ++j)
       dist_mat[c++]=cooc_dist(i,j,neigharr);
-    i2=neigharr.size()-i-1;
+    i2=neigharr.size()-i-2;
     for (j=i2+1; j<neigharr.size(); ++j)
       dist_mat[c++]=cooc_dist(i2,j,neigharr);
   }
-  if (end==neigharr.size()/2 && neigharr.size()%2==1){
+  if (node==tnodes-1 && neigharr.size()%2==0){
+    i=neigharr.size()/2-1;
     getL(c,neigharr.size(),i,i+1);
-    i=neigharr.size()/2;
     for (j=i+1; j<neigharr.size(); ++j)
       dist_mat[c++]=cooc_dist(i,j,neigharr);
   }
@@ -362,6 +396,32 @@ void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen)
   cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
 }
 
+void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<int>& arrind,int& seqlen)
+{
+  estr line;
+  estr name;
+  estrarray tmps;
+  efile f(filename);
+
+  int i;
+
+  while (f.readln(line)){
+    if (line.len()==0 || line[0]=='#') continue;
+    
+    i=line.find(" ");
+    if (i==-1) continue;
+    name=line.substr(0,i);
+    line.del(0,i);
+    line.trim();
+    seqlen=line.len();
+    arr.add(name,seq_compress(line.uppercase()));
+    tmps=name.explode(":");
+    ldieif(tmps.size()<1,"\":\" not found in sequence name: "+name);
+    arrind.add(tmps[0],arrind.size());
+  }
+  cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
+}
+
 void load_seqs(const estr& filename,estrarray& arr)
 {
   estr line;
@@ -471,7 +531,7 @@ void load_clusters(const estr& filename,estrhashof<int>& arrind,earray<eintarray
 
     if (line[0]=='>') { otus.add(eintarray()); ++i; continue; }
 	    
-    ldieif(!arrind.exists(line),"something wrong");
+    ldieif(!arrind.exists(line),"something wrong: "+line);
 
     otus[i].add(arrind[line]);
   }
@@ -482,6 +542,7 @@ void load_clusters(const estr& filename,estrhashof<int>& arrind,eintarray& otuar
 {
   estr line;
   estr name;
+  estrhashof<int> otus;
   efile f(filename);
 
   int i;
@@ -489,24 +550,57 @@ void load_clusters(const estr& filename,estrhashof<int>& arrind,eintarray& otuar
   for (i=0; i<arrind.size(); ++i)
     otuarr.add(-1);
 
-  otucount=-1;
+  eregexp space(" +");
+
+  otucount=0;
+  estrarray arr;
+  estr otu,acc;
   while (f.readln(line)){
     if (line.len()==0 || line[0]=='#') continue;
+    arr=re_explode(line,space);
 
-    if (line[0]=='>') { ++otucount; continue; }
-	    
-    ldieif(!arrind.exists(line),"something wrong");
+    ldieif(arr.size()<2,"no \"\\t\" found in line: "+line);
+    otu=arr[0];
+    acc=arr[1];
 
-    otuarr[arrind[line]]=otucount;
+    arr=acc.explode(":");
+    ldieif(arr.size()<2,"no \":\" found in sequence name: "+acc);
+    acc=arr[0];
 
-//    if (!arr.exists(name)){
-//      arr.add(name,line);
-//      arr[name].reserve(1500);
-//    }else
-//      arr[name]+=line;
+//    ldieif(!arrind.exists(acc),acc+" was not found in arrind");
+    if (!otus.exists(otu)){
+      otus.add(otu,otus.size());
+      ++otucount;
+    }
+    if (!arrind.exists(acc)){
+      arrind.add(acc,arrind.size());
+      otuarr.add(0);
+    }
+
+    otuarr[arrind[acc]]=otus[otu];
   }
-  ++otucount;
   cout << "# otucount: " << otucount << endl;
+}
+
+void load_samples(const estr& filename,estrhashof<int>& arrind,estrhashof<eintarray>& samples,estrhash& accsample)
+{
+  efile f2(filename);
+  estr line;
+  estr name;
+  int i;
+
+  f2.readln(line);
+  i=line.find("--");
+  while (i!=-1){
+    name=line.substr(i+3);
+    samples.add(name,eintarray());
+    do {
+      if (!f2.readln(line)) { i=-1; break; }
+      i=line.find("--");
+      if (i==-1 && arrind.exists(line)){ samples[name].add(arrind[line]); accsample.add(line,name); }
+    } while(i==-1);
+  }  
+  cout << "# samples: " << samples.size() << endl;
 }
 
 
@@ -618,6 +712,46 @@ int calc_dists_nogap(estrarray& arr,multimap<float,eseqdist>& dists,int node,int
   return(dists.size());
 }
 */
+
+int calc_dists_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres)
+{
+  ldieif(arr.size()==0,"no distances in array");
+  long int i,i2,j;
+  long int start,end;
+
+  start=(long int)(node)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+  end=(long int)(node+1)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+//  cerr << "# start: " << start << " end: " << end << endl;
+
+  float tmpid;
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_compressed(arr[i],arr[j],seqlen);
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=dist_compressed(arr[i2],arr[j],seqlen);
+      if (tmpid>=thres) dists.add(eseqdist(i2,j,tmpid));
+    }
+//    if (i-start==(end-start)/10)
+//      cout << "# predicted: " << dists.size()*10 << endl;
+//    if (dists.size()>dists.capacity()*2/3)
+//      dists.reserve(2*dists.capacity());
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=dist_compressed(arr[i],arr[j],seqlen);
+      if (tmpid>=thres) dists.add(eseqdist(i,j,tmpid));
+    }
+  }
+//  cout << "# n: " << node << " tnodes: " << tnodes << " start: " << start << " end: " << end << " distances: " << dists.size() << endl;
+//  cout << "# computed distances: " << count << endl;
+//  heapsort(dists);
+  return(dists.size());
+}
 
 int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres)
 {

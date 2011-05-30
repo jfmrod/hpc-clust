@@ -96,6 +96,28 @@ const long int b8_d6=b8_d0 << 48;
 const long int b8_d7=b8_d0 << 56;
 
 
+inline void dist_inc(long int a1,long int a2,long int mask,int& count){
+  if ((a1&mask)==(a2&mask))
+    ++count;
+}
+
+/*
+inline void dist_tamura_inc(long int a1,long int a2,long int mask,int& P,int& Q,int& GC1,int& GC2,int& len){
+  if ((a1&mask)==mask || (a2&mask)==mask)
+    --len;
+  else if (transition)
+    ++P;
+  else if (transversion)
+    ++Q;
+  
+  if ((a1&mask)==g or c)
+    ++GC1;
+
+  if ((a2&mask)==g or c)
+    ++GC2;
+}
+*/
+
 inline void dist_nogap_inc(long int a1,long int a2,long int mask,int& count,int& len){
   if ((a1&mask)==mask && (a2&mask)==mask)
     --len;
@@ -115,6 +137,136 @@ inline void dist_nogap_inc(long int a1,long int a2,long int mask,int& count,int&
 //    ++len;
 //  }
 //}
+
+/*
+inline float dist_tamura_compressed(const estr& s1,const estr& s2,int seqlen)
+{
+  int len=seqlen;
+  int P=0; // transitions
+  int Q=0; // transversions
+  int GC1=0; // GC content seq1
+  int GC2=0; // GC content seq2
+
+  long int *ep1=(long int*)(s1._str)+(s1._strlen/8);
+  long int *p1=(long int*)s1._str;
+  long int *p2=(long int*)s2._str;
+  for (; p1!=ep1; ++p1,++p2){
+    dist_tamura_inc(*p1,*p2,b4_m0,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m1,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m2,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m3,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m4,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m5,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m6,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m7,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m8,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m9,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m10,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m11,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m12,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m13,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m14,P,Q,GC1,GC2,len);
+    dist_tamura_inc(*p1,*p2,b4_m15,P,Q,GC1,GC2,len);
+  }
+
+  switch (seqlen%16){
+   case 15:
+    dist_tamura_inc(*p1,*p2,b4_m14,P,Q,GC1,GC2,len);
+   case 14:
+    dist_tamura_inc(*p1,*p2,b4_m13,P,Q,GC1,GC2,len);
+   case 13:
+    dist_tamura_inc(*p1,*p2,b4_m12,P,Q,GC1,GC2,len);
+   case 12:
+    dist_tamura_inc(*p1,*p2,b4_m11,P,Q,GC1,GC2,len);
+   case 11:
+    dist_tamura_inc(*p1,*p2,b4_m10,P,Q,GC1,GC2,len);
+   case 10:
+    dist_tamura_inc(*p1,*p2,b4_m9,P,Q,GC1,GC2,len);
+   case 9:
+    dist_tamura_inc(*p1,*p2,b4_m8,P,Q,GC1,GC2,len);
+   case 8:
+    dist_tamura_inc(*p1,*p2,b4_m7,P,Q,GC1,GC2,len);
+   case 7:
+    dist_tamura_inc(*p1,*p2,b4_m6,P,Q,GC1,GC2,len);
+   case 6:
+    dist_tamura_inc(*p1,*p2,b4_m5,P,Q,GC1,GC2,len);
+   case 5:
+    dist_tamura_inc(*p1,*p2,b4_m4,P,Q,GC1,GC2,len);
+   case 4:
+    dist_tamura_inc(*p1,*p2,b4_m3,P,Q,GC1,GC2,len);
+   case 3:
+    dist_tamura_inc(*p1,*p2,b4_m2,P,Q,GC1,GC2,len);
+   case 2:
+    dist_tamura_inc(*p1,*p2,b4_m1,P,Q,GC1,GC2,len);
+   case 1:
+    dist_tamura_inc(*p1,*p2,b4_m0,P,Q,GC1,GC2,len);
+  }
+
+  float C=GC1/seqlen + GC2/seqlen - 2.0*GC1/seqlen*GC2/seqlen;
+  return(-1.0*C*log(1.0-(float)P/(C*len)-(float)Q/len) - 0.5*(1.0-C)*log(1.0-2.0*Q/len));
+}
+*/
+
+inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
+{
+  int len=seqlen;
+  int count=0;
+  long int *ep1=(long int*)(s1._str)+(s1._strlen/8);
+  long int *p1=(long int*)s1._str;
+  long int *p2=(long int*)s2._str;
+  for (; p1!=ep1; ++p1,++p2){
+    dist_inc(*p1,*p2,b4_m0,count);
+    dist_inc(*p1,*p2,b4_m1,count);
+    dist_inc(*p1,*p2,b4_m2,count);
+    dist_inc(*p1,*p2,b4_m3,count);
+    dist_inc(*p1,*p2,b4_m4,count);
+    dist_inc(*p1,*p2,b4_m5,count);
+    dist_inc(*p1,*p2,b4_m6,count);
+    dist_inc(*p1,*p2,b4_m7,count);
+    dist_inc(*p1,*p2,b4_m8,count);
+    dist_inc(*p1,*p2,b4_m9,count);
+    dist_inc(*p1,*p2,b4_m10,count);
+    dist_inc(*p1,*p2,b4_m11,count);
+    dist_inc(*p1,*p2,b4_m12,count);
+    dist_inc(*p1,*p2,b4_m13,count);
+    dist_inc(*p1,*p2,b4_m14,count);
+    dist_inc(*p1,*p2,b4_m15,count);
+  }
+
+  switch (seqlen%16){
+   case 15:
+    dist_inc(*p1,*p2,b4_m14,count);
+   case 14:
+    dist_inc(*p1,*p2,b4_m13,count);
+   case 13:
+    dist_inc(*p1,*p2,b4_m12,count);
+   case 12:
+    dist_inc(*p1,*p2,b4_m11,count);
+   case 11:
+    dist_inc(*p1,*p2,b4_m10,count);
+   case 10:
+    dist_inc(*p1,*p2,b4_m9,count);
+   case 9:
+    dist_inc(*p1,*p2,b4_m8,count);
+   case 8:
+    dist_inc(*p1,*p2,b4_m7,count);
+   case 7:
+    dist_inc(*p1,*p2,b4_m6,count);
+   case 6:
+    dist_inc(*p1,*p2,b4_m5,count);
+   case 5:
+    dist_inc(*p1,*p2,b4_m4,count);
+   case 4:
+    dist_inc(*p1,*p2,b4_m3,count);
+   case 3:
+    dist_inc(*p1,*p2,b4_m2,count);
+   case 2:
+    dist_inc(*p1,*p2,b4_m1,count);
+   case 1:
+    dist_inc(*p1,*p2,b4_m0,count);
+  }
+  return((float)count/(float)seqlen);
+}
 
 inline float dist_nogap_compressed(const estr& s1,const estr& s2,int seqlen)
 {
@@ -263,7 +415,7 @@ inline float cooc_dist(int i,int j,earray<eintarray>& neigharr)
   int cooc1,cooc2,common;
 
   cooc1=0; cooc2=0; common=0;
-  if (neigharr[i].size()==0 || neigharr[j].size()==0) return(1.0);
+  if (neigharr[i].size()==0 || neigharr[j].size()==0) return(2.0);
   ldieif(j>=neigharr.size(),"j larger than neigharr.size()? "+estr(j)+">"+estr(neigharr.size()));
   ldieif(i>=neigharr.size(),"i larger than neigharr.size()? "+estr(i)+">"+estr(neigharr.size()));
   ldieif(neigharr[i].size() != neigharr[j].size(),"size mismatch: "+estr(neigharr[i].size())+" != "+estr(neigharr[j].size()));
@@ -337,6 +489,8 @@ int calc_dists(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,f
 //int calc_dists2(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);
 
 //int calc_dists_nogap(estrarray& arr,multimap<float,eseqdist>& dists,int node,int tnodes,float thres);
+int calc_dists_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
+
 int calc_dists_nogap_compressed(earray<estr>& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
@@ -351,8 +505,9 @@ int calc_dists_local(estrarray& arr,ebasicarray<float>& dists,float thres);
 
 void cluster_init(earray<eintarray>& cvec,const estrhashof<int>& arrind,const eintarray& otuarr,int otucount);
 
-void cooc_init(earray<eintarray>& neigharr,const estrhash& arr,const eintarray& otuarr,estrhashof<earray<estr> >& samples,estrhash& accsample,estrhashof<int>& arrind,int otucount);
+void cooc_init(earray<eintarray>& neigharr,const estrarray& arr,const eintarray& otuarr,estrhashof<eintarray>& samples,estrhash& accsample,estrhashof<int>& arrind,int otucount);
 void cooc_calc(int start,int end,ebasicarray<float>& dist_mat,earray<eintarray>& neigharr);
+void cooc_calc2(int start,int end,ebasicarray<float>& dist_mat,earray<eintarray>& neigharr);
 
 //void load_accs(const estr& filename,estrhash& arr);
 //void load_seqs(const estr& filename,estrhash& arr);
@@ -360,10 +515,14 @@ void load_accs(const estr& filename,estrarray& arr);
 void load_seqs(const estr& filename,estrarray& arr);
 void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen);
 void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen);
+void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<int>& arrind,int& seqlen);
 void load_seqs(const estr& filename,estrarray& arr,eintarray& arrgaps);
 void load_seqs(const estr& filename,estrhash& arr);
 void load_seqs(const estr& filename,estrhashof<int>& arrind);
 void load_seqs(const estr& filename,estrarray& arr,estrhashof<int>& arrind);
+
+void load_samples(const estr& filename,estrhashof<int>& arrind,estrhashof<eintarray>& samples,estrhash& accsample);
+//void load_samples(const estr& filename,estrhashof<earray<estr> >& samples,estrhash& accsample);
 
 void load_clusters(const estr& filename,estrhashof<int>& arrind,eintarray& otuarr,int& otucount);
 void load_clusters(const estr& filename,estrhashof<int>& arrind,earray<eintarray>& otus);

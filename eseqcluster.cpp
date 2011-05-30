@@ -226,6 +226,54 @@ void eseqcluster::add(eseqdist& sdist){
   }
 }
 
+void eseqcluster::add(int ind){
+//  if (dists[ind].count==0) return;
+  ldieif(dists[ind].x<0 || dists[ind].y<0 || dists[ind].x>=scluster.size() || dists[ind].y>=scluster.size(),"out of bounds: dists[ind].x: "+estr(dists[ind].x)+" dists[ind].y: "+estr(dists[ind].y)+" scluster.size(): "+estr(scluster.size()));
+
+  int x=scluster[dists[ind].x];
+  int y=scluster[dists[ind].y];
+
+  ldieif(x<0 || y<0 || x>=scluster.size() || y>=scluster.size(),"out of bounds: dists[ind].x: "+estr(x)+" dists[ind].y: "+estr(y)+" scluster.size(): "+estr(scluster.size()));
+  int tmp;
+  if (x>y) { tmp=x; x=y; y=tmp; tmp=dists[ind].x; dists[ind].x=dists[ind].y; dists[ind].y=tmp; }
+
+  int links;
+  int i;
+  estr xystr;
+
+//  cout << x << " " << y << " " << dists[ind].dist << endl;
+  ldieif(x==y,"should not happen: "+estr(x)+","+estr(y)+" --- "+estr(dists[ind].x)+","+estr(dists[ind].y));
+
+  xy2estr(x,y,xystr);
+
+  ebasichashmap<estr,int>::iter it;
+
+  it=smatrix.get(xystr);
+  if (it==smatrix.end()){
+//    if (scount[x]*scount[y]==dists[ind].count){
+    if (scount[x]*scount[y]==1){
+      merge(x,y);
+      cout << scluster.size()-mergecount << " " << dists[ind].dist << " " << x << " " << y << endl;
+    }else{
+//      smatrix.add(xystr,dists[ind].count);
+      smatrix.add(xystr,1);
+      inter[x].push_back(y); inter[y].push_back(x);
+    }
+    return;
+  }
+
+//  *it+=dists[ind].count;
+  ++(*it);
+
+  // complete linkage
+  if (*it==scount[x]*scount[y]){
+    merge(x,y);
+    cout << scluster.size()-mergecount << " " << dists[ind].dist << " " << x << " " << y << endl;
+//    cout << dists[ind].dist << " " << x << " " << y << endl;
+    smatrix.erase(it);
+  }
+}
+
 void eseqcluster::save(const estr& filename,const estrarray& arr)
 {
   int i;

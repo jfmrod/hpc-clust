@@ -9,8 +9,12 @@
 #include "cluster-common.h"
 
 estrarray arr;
-ebasicarray<eseqdist> mindists;
+//ebasicarray<eseqdist> mindists;
 estr ofile="cluster.dat";
+
+estr distfile;
+efile fdists;
+
 etimer t1;
 
 int seqlen=0;
@@ -69,7 +73,9 @@ long int tbucket=100000;
 float tdists;
 
 ebasicarray<long int> cdists;
+ebasicarray<ebasicarray<eseqdist> > cmindists;
 ebasicarray<float> cmins;
+eintarray cpos;
 
 void getDistances(edcserver& server)
 {
@@ -78,6 +84,8 @@ void getDistances(edcserver& server)
     ldieif(server.getClient(i).result.isNull(),"not supposed to happen");
     if (server.getClient(i).result.isNull()) continue;
     cdists.add(server.getClient(i).result.get<long int>());
+    cmindists.add(ebasicarray<eseqdist>());
+    cpos.add(0);
     cout << "# client: " << i << " cdists: " << cdists[i] << endl;
     cmins.add(1.0);
     totaldists+=cdists[i];
@@ -88,7 +96,8 @@ void getDistances(edcserver& server)
   cout << "# total distances under threshold: " << totaldists << endl;
   cout << "# time calculating distance: "<< tdists <<endl;
 
-  server.onAllReady=serverDistanceThreshold;
+//  server.onAllReady=serverDistanceThreshold;
+  server.onAllReady=serverCluster;
   cout << "# getting distances" << endl;
   for (i=0; i<server.sockets.size(); ++i){
     if (cdists[i]<=0) continue;
@@ -125,6 +134,7 @@ void serverMergeResults(edcserver& server)
 }
 */
 
+/*
 void serverDistanceThreshold(edcserver& server)
 {
   int i;
@@ -137,7 +147,7 @@ void serverDistanceThreshold(edcserver& server)
     ebasicarray<eseqdist> *tmparr;
 
     tmparr=&server.getClient(i).result.get<ebasicarray<eseqdist> >();
-    mindists+=*tmparr;
+    cmindists+=*tmparr;
     if (tmparr->size()>0){
       cout << "# client: "<<i << " min: " << tmparr->at(0).dist << " max: " << tmparr->at(tmparr->size()-1).dist << " cdists: " << cdists[i] << " size: "<< tmparr->size() << endl;
       cmins[i]=tmparr->at(0).dist;
@@ -147,7 +157,7 @@ void serverDistanceThreshold(edcserver& server)
       if (mdist>cmins[i]) mdist=cmins[i];
     }
     else
-      cout << "# client: "<<i<<" empty array"<<endl; 
+      cout << "# client: "<<i<<" empty array ("<< cmindists[i].size() << ")" <<endl; 
     server.getClient(i).result.clear();
   }
 
@@ -157,11 +167,24 @@ void serverDistanceThreshold(edcserver& server)
   bool nomoredistances=true;
   for (i=0; i<server.sockets.size(); ++i){
     if (cdists[i]<=0) continue;
-    server.getClient(i).call("nodeGetThres",evararray((const float&)mdist));
+//    server.getClient(i).call("nodeGetThres",evararray((const float&)mdist));
+    server.getClient(i).call("nodeGetThres",evararray((const float&)mindist,tbucket));
     nomoredistances=false;
   }
   if (nomoredistances)
     serverCluster(server);
+}
+*/
+
+void savearray(efile& f,ebasicarray<eseqdist>& sdist)
+{
+  estr tmpstr;
+  long int i;
+  for (i=0; i<sdist.size(); ++i){
+    tmpstr.clear();
+    sdist[i].serial(tmpstr);
+    f.write(tmpstr);
+  }
 }
 
 void savearray(eblockarray<eseqdist>& sdist,const estr& filename)
@@ -186,6 +209,19 @@ void savearray(const ebasicarray<eseqdist>& sdist,const estr& filename)
   f.close();
 }
 
+
+float getmaxdist()
+{
+  int i;
+  float maxdist=-1.0;
+
+  for (i=0; i<cmindists.size(); ++i){
+    if (cpos[i]==cmindists[i].size()){ if (cdists[i]>0) return(-1.0); else continue; }
+    if (cmindists[i][cpos[i]].dist>maxdist) maxdist=cmindists[i][cpos[i]].dist;
+  }
+  return(maxdist);
+}
+
 void serverCluster(edcserver& server)
 {
   long int i;
@@ -198,9 +234,9 @@ void serverCluster(edcserver& server)
     ebasicarray<eseqdist> *tmparr;
 
     tmparr=&server.getClient(i).result.get<ebasicarray<eseqdist> >();
-    mindists+=*tmparr;
+    cmindists[i]+=*tmparr;
     if (tmparr->size()>0){
-      cout << "# client: "<<i << " min: " << tmparr->at(0).dist << " max: " << tmparr->at(tmparr->size()-1).dist << " cdists: " << cdists[i] << " size: "<< tmparr->size() << endl;
+      cout << "# client: "<<i << " min: " << tmparr->at(0).dist << " max: " << tmparr->at(tmparr->size()-1).dist << " cdists: " << cdists[i] << " size: "<< tmparr->size() << " ("<< cmindists[i].size()-cpos[i] << ")" << endl;
       cmins[i]=tmparr->at(0).dist;
       cdists[i]-=tmparr->size();
       totaldists-=tmparr->size();
@@ -208,38 +244,67 @@ void serverCluster(edcserver& server)
       if (mdist>cmins[i]) mdist=cmins[i];
     }
     else
-      cout << "# client: "<<i<<" empty array"<<endl; 
+      cout << "# client: "<<i<<" empty array ("<<cmindists[i].size()-cpos[i]<<")"<<endl; 
     server.getClient(i).result.clear();
   }
+
+//  cout << "# Sorting array with "<<mindists.size()<< " distances" << endl;
+//  heapsort(mindists);
+
 //  savearray(mindists,"distances.dat");
 
-  cout << "# Sorting array with "<<mindists.size()<< " distances" << endl;
-  heapsort(mindists);
+//  if (distfile.len())
+//    savearray(fdists,mindists);
 
-  cout << "# min: " << mindists[0].dist << " minall: "<< mindist << " max: "<<mindists[mindists.size()-1].dist << " cluster.smatrix.size(): " << cluster.smatrix.size() << endl;
+//  cout << "# min: " << mindists[0].dist << " minall: "<< mindist << " max: "<<mindists[mindists.size()-1].dist << " cluster.smatrix.size(): " << cluster.smatrix.size() << endl;
+  cout << " minall: "<< mindist << " cluster.smatrix.size(): " << cluster.smatrix.size() << endl;
 
-//  for (i=mindists.size()-1; i>=0 && (mindists[i].dist>=mindist || totaldists<=0); --i){
-  for (i=mindists.size()-1; i>=0; --i){
+  float maxdist;
+  while ((maxdist=getmaxdist())>0.0) {
+    for (i=0; i<cmindists.size(); ++i){
+      while (cpos[i]<cmindists[i].size() && cmindists[i][cpos[i]].dist==maxdist){
+        cluster.add(cmindists[i][cpos[i]]);
+        ++cpos[i];
+//        cmindists[i].erase(0);
+      }
+    }
+  }
+
+  
+
+/*
+  for (i=mindists.size()-1; i>=0 && (mindists[i].dist>=mindist || totaldists<=0); --i){
+//  for (i=mindists.size()-1; i>=0; --i){
 //    if ((i+totaldists)%100000==0) {
 //      cout << (i+totaldists)/100000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount<<" " << cluster.smatrix.size() << endl;
 //    }
     cluster.add(mindists[i]);
-//    mindists.erase(i);
+    mindists.erase(i);
   }
-  mindists.clear();
+//  mindists.clear();
   cout << endl;
+*/
 
 //  cout << "# totaldists: " << totaldists << " totalmergedists: " << totalmergedists<< " mindists.size: " << mindists.size() << " cluster.smatrix.size: " << cluster.smatrix.size() << " otus: "<< arr.size()-cluster.mergecount << endl;
-  cout << "# totaldists: " << totaldists << " mindists.size: " << mindists.size() << " cluster.smatrix.size: " << cluster.smatrix.size() << " otus: "<< arr.size()-cluster.mergecount << endl;
+  cout << "# totaldists: " << totaldists << " cluster.smatrix.size: " << cluster.smatrix.size() << " otus: "<< arr.size()-cluster.mergecount << endl;
 
   ++step;
   if (totaldists>0){
+    cout << "# getting next "<<tbucket<<" seqs from each node: "<<step<<" remaining dists: " << totaldists<< endl;
+    for (i=0; i<server.sockets.size(); ++i){
+      if (cdists[i]<=0 || cpos[i]<cmindists[i].size()) continue;
+      cpos[i]=0;
+      cmindists[i].clear(); 
+      server.getClient(i).call("nodeGetCount",evararray(tbucket));
+    }
+/*
     server.onAllReady=serverDistanceThreshold;
     cout << "# getting next "<<tbucket<<" seqs from each node: "<<step<<" remaining dists: " << totaldists<< endl;
     for (i=0; i<server.sockets.size(); ++i){
       if (cdists[i]<=0) continue;
       server.getClient(i).call("nodeGetCount",evararray(tbucket));
     }
+*/
 /*
     server.onAllReady=serverMergeResults;
     for (i=0; i<server.sockets.size(); ++i){
@@ -277,13 +342,13 @@ void doIncoming(edcserver& server)
 
 long int nodePos;
 
-ebasicarray<eseqdist> nodeGetThres(float minthres)
+ebasicarray<eseqdist> nodeGetThres(float minthres,long int maxcount)
 {
   cerr << "nodePos: " << nodePos<< endl;
   long int i;
   long int count=0;
   for (i=0; nodePos-i>0; ++i){
-    if (nodeDists[nodePos-i-1].dist<minthres) break;
+    if (nodeDists[nodePos-i-1].dist<minthres || nodeDists[nodePos-i-1].dist==minthres && i>=maxcount) break;
 //      tmparr.add(mindists[pos-i]);
   }
   
@@ -310,7 +375,7 @@ ebasicarray<eseqdist> nodeGetCount(long int maxcount)
   long int j;
   ebasicarray<eseqdist> tmparr;
   ldieif(nodePos<0 || nodePos+maxcount>nodeDists.size(),"out of bounds: "+estr(nodePos)+" " + estr(nodePos+maxcount)+" nodeDists.size: "+estr(nodeDists.size()));
-  for (j=nodePos; j<nodePos+maxcount; ++j)
+  for (j=nodePos+maxcount-1; j>=nodePos; --j)
     tmparr.add(nodeDists[j]);
   cerr << "nodePos: " << nodePos <<" nodeGetCount: " << tmparr.size() << endl;
   return(tmparr);
@@ -350,7 +415,8 @@ void p_calc_dists_nogap(int node,int tnodes,float thres)
 {
 //  ebasicarray<eseqdist> dists;
   eblockarray<eseqdist> dists;
-  calc_dists_nogap_compressed(nodeArr,dists,seqlen,node,tnodes,thres);
+  calc_dists_compressed(nodeArr,dists,seqlen,node,tnodes,thres);
+//  calc_dists_nogap_compressed(nodeArr,dists,seqlen,node,tnodes,thres);
 
   mutexDists.lock();
   ++partsFinished;
@@ -434,12 +500,14 @@ int nodeUpdate(eintarray& smerge)
 int emain()
 {
   estr host;
+
   epregister(host);
   epregister(ncpus);
   epregister(nthreads);
-  epregister(mindists);
+//  epregister(mindists);
   epregister(tbucket);
   epregister(ofile);
+  epregister(distfile);
   eparseArgs(argvc,argv);
 
   epregisterClass(eseqdist);
@@ -465,6 +533,13 @@ int emain()
 //  epregisterFunc(nodeUpdate);
 
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <file>");
+
+  if (distfile.len()){
+    fdists.open(distfile,"w");
+  }
+
+  
+
 
   int i,i2,j;
 

@@ -1,6 +1,6 @@
 LDLIBS=`eutils-config --libs`
 CC=g++
-CXXFLAGS:=${CXXFLAGS} -pthread -g # -march=nocona -mtune=nocona -O3 # -g # -pg 
+CXXFLAGS:=${CXXFLAGS} -pthread -march=nocona -mtune=nocona -O3 # -g # -pg 
 #CXXFLAGS:=${CXXFLAGS} -pthread -pg # -g
 
 .PHONY: all clean
@@ -32,9 +32,12 @@ cluster-nj: cluster-nj.o cluster-common.o eseqcluster.o eseqclustercount.o
 cluster-mpi : cluster-mpi.o cluster-common.o eseqcluster.o eseqclustercount.o
 	g++ `mpic++ --showme:compile` $(CXXFLAGS) -o $@ $^ $(LDLIBS) `mpic++ --showme:link`
 
-cluster-cooc : cluster-cooc.o
+cluster-cooc : cluster-cooc.o cluster-common.o eseqcluster.o eseqclustercount.o
+
 cluster-fast : cluster-fast.o
 
+
+cluster-cooc.o : cluster-cooc.cpp cluster-common.h eseqcluster.h eseqclustercount.h
 cluster-common.o : eseqcluster.h eseqclustercount.h cluster-common.h cluster-common.cpp
 eseqcluster.o : eseqcluster.h eseqcluster.cpp
 eseqclustercount.o : eseqclustercount.h eseqclustercount.cpp

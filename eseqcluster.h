@@ -52,7 +52,8 @@ class eseqcluster
 
   void merge(int x,int y);
   void init(int count);
-  void add(eseqdist& dist);
+  void add(int ind);
+  void add(eseqdist& sdist);
 
   void calc(estrarray& arr,int seqlen,int node,int tnodes,float thres);
 
