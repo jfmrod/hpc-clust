@@ -68,11 +68,13 @@ int emain()
 
   etaskman taskman;
 
+//  if (ncpus==1) partsTotal=1;
+
   efile df(dfile);
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
     for (i=0; i<partsTotal; ++i)
-      taskman.addTask(efunc(cluster,&eseqcluster::calc),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
+      taskman.addTask(efunc(cluster,&eseqcluster::calcGap),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
 //      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,t));
 
     taskman.createThread(ncpus);

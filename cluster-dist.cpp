@@ -342,6 +342,7 @@ void doIncoming(edcserver& server)
 
 long int nodePos;
 
+/*
 ebasicarray<eseqdist> nodeGetThres(float minthres,long int maxcount)
 {
   cerr << "nodePos: " << nodePos<< endl;
@@ -365,6 +366,7 @@ ebasicarray<eseqdist> nodeGetThres(float minthres,long int maxcount)
 //  cout << "pos: " << pos << " maxcount: " << maxcount << " thres: " << minthres<<" result: " << tmparr.size() << endl;
 //  return(mindists.subset(pos-i,i));
 }
+*/
 
 ebasicarray<eseqdist> nodeGetCount(long int maxcount)
 {
@@ -415,7 +417,8 @@ void p_calc_dists_nogap(int node,int tnodes,float thres)
 {
 //  ebasicarray<eseqdist> dists;
   eblockarray<eseqdist> dists;
-  calc_dists_compressed(nodeArr,dists,seqlen,node,tnodes,thres);
+  calc_dists_tamura_compressed(nodeArr,dists,seqlen,node,tnodes,thres);
+//  calc_dists_compressed(nodeArr,dists,seqlen,node,tnodes,thres);
 //  calc_dists_nogap_compressed(nodeArr,dists,seqlen,node,tnodes,thres);
 
   mutexDists.lock();
@@ -528,7 +531,7 @@ int emain()
 
 
   epregisterFunc(nodeGetCount);
-  epregisterFunc(nodeGetThres);
+//  epregisterFunc(nodeGetThres);
   epregisterFunc(nodeComputeDistances);
 //  epregisterFunc(nodeUpdate);
 

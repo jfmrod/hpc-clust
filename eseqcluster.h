@@ -56,6 +56,8 @@ class eseqcluster
   void add(eseqdist& sdist);
 
   void calc(estrarray& arr,int seqlen,int node,int tnodes,float thres);
+  void calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres);
+  void calcTamura(estrarray& arr,int seqlen,int node,int tnodes,float thres);
 
 //  int update(ebasicarray<eseqdist>& dists,int s);
 

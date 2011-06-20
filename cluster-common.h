@@ -11,6 +11,7 @@
 #include <eutils/eblockarray.h>
 
 #include <list>
+#include <math.h>
 
 #include <eutils/ethread.h>
 
@@ -76,6 +77,7 @@ const long int b4_m12=0x0F000000000000l;
 const long int b4_m13=0x0F0000000000000l;
 const long int b4_m14=0x0F00000000000000l;
 const long int b4_m15=0x0F000000000000000l;
+const long int b4_umask=0x1111111111111111;
 
 const long int b8_m0=0x00000000000000FFl;
 const long int b8_m1=0x000000000000FF00l;
@@ -101,23 +103,6 @@ inline void dist_inc(long int a1,long int a2,long int mask,int& count){
     ++count;
 }
 
-/*
-inline void dist_tamura_inc(long int a1,long int a2,long int mask,int& P,int& Q,int& GC1,int& GC2,int& len){
-  if ((a1&mask)==mask || (a2&mask)==mask)
-    --len;
-  else if (transition)
-    ++P;
-  else if (transversion)
-    ++Q;
-  
-  if ((a1&mask)==g or c)
-    ++GC1;
-
-  if ((a2&mask)==g or c)
-    ++GC2;
-}
-*/
-
 inline void dist_nogap_inc(long int a1,long int a2,long int mask,int& count,int& len){
   if ((a1&mask)==mask && (a2&mask)==mask)
     --len;
@@ -138,7 +123,21 @@ inline void dist_nogap_inc(long int a1,long int a2,long int mask,int& count,int&
 //  }
 //}
 
-/*
+inline void dist_tamura_inc(long int a1,long int a2,long int mask,int& P,int& Q,int& GC1,int& GC2,int& len){
+  if ((a1&mask)==mask || (a2&mask)==mask)
+    --len;
+  else if (((a1^a2)&mask)==((0x02*b4_umask)&mask))
+    ++P;
+  else if (((a1^a2)&mask)==((0x03*b4_umask)&mask))
+    ++Q;
+  
+  if ((a1&mask)==((0x02*b4_umask)&mask) || (a1&mask)==((0x03*b4_umask)&mask))
+    ++GC1;
+
+  if ((a2&mask)==((0x02*b4_umask)&mask) || (a2&mask)==((0x03*b4_umask)&mask))
+    ++GC2;
+}
+
 inline float dist_tamura_compressed(const estr& s1,const estr& s2,int seqlen)
 {
   int len=seqlen;
@@ -203,9 +202,8 @@ inline float dist_tamura_compressed(const estr& s1,const estr& s2,int seqlen)
   }
 
   float C=GC1/seqlen + GC2/seqlen - 2.0*GC1/seqlen*GC2/seqlen;
-  return(-1.0*C*log(1.0-(float)P/(C*len)-(float)Q/len) - 0.5*(1.0-C)*log(1.0-2.0*Q/len));
+  return(1+1.0*C*log(1.0-(float)P/(C*len)-(float)Q/len) + 0.5*(1.0-C)*log(1.0-2.0*Q/len));
 }
-*/
 
 inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
 {
@@ -490,6 +488,10 @@ int calc_dists(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,f
 
 //int calc_dists_nogap(estrarray& arr,multimap<float,eseqdist>& dists,int node,int tnodes,float thres);
 int calc_dists_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
+int calc_dists_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
+
+int calc_dists_tamura_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
+int calc_dists_tamura_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 
 int calc_dists_nogap_compressed(earray<estr>& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
 int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);

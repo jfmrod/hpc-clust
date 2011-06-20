@@ -37,6 +37,34 @@ int eseqdist::unserial(const estr& data,int i)
 eseqcluster::eseqcluster(){}
 
 
+void eseqcluster::calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres)
+{
+  eblockarray<eseqdist> tmpdist;
+//  ebasicarray<eseqdist> dists;
+
+  calc_dists_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
+
+  mutexDists.lock();
+//  ++partsFinished;
+//  mindists+=dists;
+  dists.merge(tmpdist);
+  mutexDists.unlock();
+}
+
+void eseqcluster::calcTamura(estrarray& arr,int seqlen,int node,int tnodes,float thres)
+{
+  eblockarray<eseqdist> tmpdist;
+//  ebasicarray<eseqdist> dists;
+
+  calc_dists_tamura_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
+
+  mutexDists.lock();
+//  ++partsFinished;
+//  mindists+=dists;
+  dists.merge(tmpdist);
+  mutexDists.unlock();
+}
+
 void eseqcluster::calc(estrarray& arr,int seqlen,int node,int tnodes,float thres)
 {
   eblockarray<eseqdist> tmpdist;
