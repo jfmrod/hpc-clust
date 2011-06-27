@@ -47,13 +47,16 @@ class eseqclusterCount
 
   void merge(int x,int y);
   void init(int count);
+
+  void add(eseqdistCount& sdist);
   void add(int ind);
 
+//  void calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres);
   void calc(estrarray& arr,int seqlen,int node,int tnodes,float thres);
 
-  int update(int ind);
-  int update(int ind,int x,int y);
-  int update(eblockarray<eseqdistCount>& dists,int s);
+  long int update(long int ind);
+  long int update(long int ind,int x,int y);
+  long int update(eblockarray<eseqdistCount>& dists,long int s);
 
   void save(const estr& filename,const estrarray& arr);
 };

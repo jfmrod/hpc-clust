@@ -28,6 +28,18 @@ int eseqdistCount::unserial(const estr& data,int i)
 
 eseqclusterCount::eseqclusterCount(){}
 
+/*
+void eseqclusterCount::calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres)
+{
+  eblockarray<eseqdistCount> tmpdist;
+
+  calc_dists_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
+
+  mutexDists.lock();
+  dists.merge(tmpdist);
+  mutexDists.unlock();
+}
+*/
 
 void eseqclusterCount::calc(estrarray& arr,int seqlen,int node,int tnodes,float thres)
 {
@@ -91,64 +103,95 @@ void eseqclusterCount::init(int count) {
   mergecount=0;
 }
 
-int eseqclusterCount::update(int s)
+long int eseqclusterCount::update(long int s)
 {
-//  int count=0;
-  int i,j;
-
-  int updcount=0;
+  int count=0;
+  int i;
+  int smergepos=0;
+  eintarray tmpsmerge;
+  int updcount;
   int updind[smerge.size()];
+
   for (i=0; i<smerge.size(); ++i)
-    updind[i]=-1;
+    tmpsmerge.add(-1);
 
-  for (i=0; i<smerge.size(); ++i){
-    if (smerge[i]>=0){
-      if (updind[smerge[i]]==-1) {
-        updind[smerge[i]]=updcount;
-        ++updcount;
+  // make sure to only update 100 entries at a time, this will force more passes but use less memory
+  do {
+    updcount=0;
+
+    for (i=0; i<smerge.size(); ++i)
+      updind[i]=-1;
+
+    for (i=0; i<tmpsmerge.size(); ++i)
+      tmpsmerge[i]=-1;
+
+    for (; smergepos<smerge.size(); ++smergepos){
+      if (smerge[smergepos]>=0 && scluster[smergepos]!=smergepos){
+        if (updind[scluster[smergepos]]==-1) {
+          updind[scluster[smergepos]]=updcount;
+          ++updcount;
+        }
+        updind[smergepos]=updind[scluster[smergepos]];
+        tmpsmerge[smergepos]=scluster[smergepos];
+        tmpsmerge[scluster[smergepos]]=scluster[smergepos];
+//        ldieif(scluster[scluster[smergepos]]!=scluster[smergepos],"something wrong??");
+        if (updcount==100) { ++smergepos; break; }
       }
-      updind[i]=updind[smerge[i]];
+/*
+      if (smerge[smergepos]>=0){
+        if (updind[smerge[smergepos]]==-1) {
+          updind[smerge[smergepos]]=updcount;
+          ++updcount;
+        }
+        updind[smergepos]=updind[smerge[smergepos]];
+        tmpsmerge[smergepos]=smerge[smergepos];
+//        if (updcount==100) break;
+      }
+*/
     }
-  }
 
-  if (updcount==0) return(0);
+    if (updcount==0) return(0);
 
-  cout << "# updating: " << updcount << " merges smerge.size: "<<smerge.size()<<endl;
+    cerr << "# updating: " << updcount << " merges smerge.size: "<<tmpsmerge.size()<<endl;
 
-  int *uarr=new int[updcount*smerge.size()];
-  ldieif (uarr==0x00,"not enough memory");
-  for (j=0; j<updcount*smerge.size(); ++j)
-    uarr[j]=-1;
+    long int *uarr=new long int[updcount*tmpsmerge.size()];
+    ldieif (uarr==0x00,"not enough memory");
+    long int li,lj;
+    for (i=0; i<updcount*tmpsmerge.size(); ++i)
+      uarr[i]=-1l;
 
-  for (i=s; i>=0; --i){
-    if (dists[i].count==0) continue;
+    for (li=s; li>=0; --li){
+      if (dists[li].count==0) continue;
 
-    if (smerge[dists[i].x]>=0){
-      j=uarr[updind[smerge[dists[i].x]]*smerge.size()+scluster[dists[i].y]];
-      if (j>=0){
-        dists[i].count+=dists[j].count;
-        dists[j].count=0;
+      if (tmpsmerge[dists[li].x]>=0){
+        lj=uarr[updind[tmpsmerge[dists[li].x]]*tmpsmerge.size()+scluster[dists[li].y]];
+        if (lj>=0){
+          dists[li].count+=dists[lj].count;
+          dists[lj].count=0;
+          ++count;
+        }
+        uarr[updind[tmpsmerge[dists[li].x]]*tmpsmerge.size()+scluster[dists[li].y]]=li;
+      }else if (tmpsmerge[dists[li].y]>=0){
+        lj=uarr[updind[tmpsmerge[dists[li].y]]*tmpsmerge.size()+scluster[dists[li].x]];
+        if (lj>=0){
+          dists[li].count+=dists[lj].count;
+          dists[lj].count=0;
+          ++count;
+        }
+        uarr[updind[tmpsmerge[dists[li].y]]*tmpsmerge.size()+scluster[dists[li].x]]=li;
       }
-      uarr[updind[smerge[dists[i].x]]*smerge.size()+scluster[dists[i].y]]=i;
-    }else if (smerge[dists[i].y]>=0){
-      j=uarr[updind[smerge[dists[i].y]]*smerge.size()+scluster[dists[i].x]];
-      if (j>=0){
-        dists[i].count+=dists[j].count;
-        dists[j].count=0;
-      }
-      uarr[updind[smerge[dists[i].y]]*smerge.size()+scluster[dists[i].x]]=i;
     }
-  }
+
+    delete uarr;
+  }while (updcount==100);
 
   for (i=0; i<smerge.size(); ++i)
     smerge[i]=-1;
 
-  delete uarr;
-  return(0);
-//  return(count);
+  return(count);
 }
 
-int eseqclusterCount::update(int s,int x,int y)
+long int eseqclusterCount::update(long int s,int x,int y)
 {
 //  int count=0;
   int i,j;
@@ -183,7 +226,7 @@ int eseqclusterCount::update(int s,int x,int y)
 //  return(count);
 }
 
-int eseqclusterCount::update(eblockarray<eseqdistCount>& dists,int s)
+long int eseqclusterCount::update(eblockarray<eseqdistCount>& dists,long int s)
 {
   int count=0;
   int i,j;
@@ -254,6 +297,58 @@ void eseqclusterCount::merge(int x,int y)
     smatrix.erase(tmpit2);
   }
   ++mergecount;
+}
+
+void eseqclusterCount::add(eseqdistCount& sdist){
+  if (sdist.count==0) return;
+  ldieif(sdist.x<0 || sdist.y<0 || sdist.x>=scluster.size() || sdist.y>=scluster.size(),"out of bounds: sdist.x: "+estr(sdist.x)+" sdist.y: "+estr(sdist.y)+" scluster.size(): "+estr(scluster.size()));
+
+  int x=scluster[sdist.x];
+  int y=scluster[sdist.y];
+
+  ldieif(x<0 || y<0 || x>=scluster.size() || y>=scluster.size(),"out of bounds: sdist.x: "+estr(x)+" sdist.y: "+estr(y)+" scluster.size(): "+estr(scluster.size()));
+  int tmp;
+  if (x>y) { tmp=x; x=y; y=tmp; tmp=sdist.x; sdist.x=sdist.y; sdist.y=tmp; }
+
+  int links;
+  int i;
+  estr xystr;
+
+//  cout << x << " " << y << " " << sdist.dist << endl;
+  ldieif(x==y,"should not happen: "+estr(x)+","+estr(y)+" --- "+estr(sdist.x)+","+estr(sdist.y));
+
+  xy2estr(x,y,xystr);
+
+  ebasichashmap<estr,int>::iter it;
+
+  it=smatrix.get(xystr);
+  if (it==smatrix.end()){
+    if (scount[x]*scount[y]==sdist.count){
+//    if (scount[x]*scount[y]==1){
+      merge(x,y);
+//      update(ind-1,x,y);
+      cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
+//      sleep(1);
+    }else{
+      smatrix.add(xystr,sdist.count);
+//      smatrix.add(xystr,1);
+      inter[x].push_back(y); inter[y].push_back(x);
+    }
+    return;
+  }
+
+  (*it)+=sdist.count;
+//  ++(*it);
+
+  // complete linkage
+  if ((*it)==scount[x]*scount[y]){
+    merge(x,y);
+//    update(ind-1,x,y);
+    cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
+//    sleep(1);
+//    cout << sdist.dist << " " << x << " " << y << endl;
+    smatrix.erase(it);
+  }
 }
 
 void eseqclusterCount::add(int ind){

@@ -12,7 +12,7 @@ all: $(targets)
 clean:
 	rm -f $(targets) *.o
 
-cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o
+cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o
 
 cluster-dist : cluster-dist.o cluster-common.o eseqcluster.o eseqclustercount.o
 
@@ -38,7 +38,8 @@ cluster-fast : cluster-fast.o
 
 
 cluster-cooc.o : cluster-cooc.cpp cluster-common.h eseqcluster.h eseqclustercount.h
-cluster-common.o : eseqcluster.h eseqclustercount.h cluster-common.h cluster-common.cpp
+cluster-common.o : eseqcluster.h eseqclustercount.h eseqclustersingle.h cluster-common.h cluster-common.cpp
 eseqcluster.o : eseqcluster.h eseqcluster.cpp
 eseqclustercount.o : eseqclustercount.h eseqclustercount.cpp
+eseqclustersingle.o : eseqcluster.h eseqclustersingle.h eseqclustersingle.cpp
 
