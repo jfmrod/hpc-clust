@@ -8,6 +8,10 @@
 
 #include "cluster-common.h"
 
+edcclient client;
+edcserver server;
+
+
 estrarray arr;
 //ebasicarray<eseqdist> mindists;
 estr ofile="cluster.dat";
@@ -28,17 +32,6 @@ void serverCluster(edcserver& server);
 void serverDistanceThreshold(edcserver& server);
 void serverMergeResults(edcserver& server);
 
-void startComputation(edcserver& server)
-{
-  t1.reset();
-  cout << "# starting distributed computation" << endl;
-
-  int i;
-  server.onAllReady=serverGetDistances;
-  for (i=0; i<server.sockets.size(); ++i)
-    server.getClient(i).call("nodeComputeDistances",evararray((const int&)i,(const int&)server.sockets.size(),0.9));
-}
-
 int step=1;
 long int totaldists=0;
 long int itotaldists=0;
@@ -48,9 +41,127 @@ float tdists;
 
 ebasicarray<long int> cdists;
 ebasicarray<ebasicarray<eseqdistCount> > cmindists;
-ebasicarray<float> cmins;
-eintarray cpos;
+earray<emutex> cmindistsMutexs;
+//ebasicarray<float> cmins;
+eintarray cpos,cend;
+eintarray cfinished;
 int lastupdate;
+int computed=0;
+
+void serverFinished(edcserverClient& sclient,const estr& msg)
+{
+  int i;
+  bool allFinished=true;
+  for (i=0; i<sclient.server->sockets.size(); ++i){
+    if (&sclient.server->getClient(i)==&sclient){
+      cout << "# client: " << i << " sent stream EOF" << endl;
+      cmindistsMutexs[i].lock();
+      cfinished[i]=1;
+      cmindistsMutexs[i].unlock();
+    }
+    if (cfinished[i]!=1) allFinished=false;
+  } 
+  if (!allFinished) return;
+
+  cout << "# time computing distances: "<< tdists*0.001 <<endl;
+  cout << "# time clustering: "<< t1.lap()*0.001 <<endl;
+  cout << "# total distances: "<< itotaldists << endl;
+
+  cluster.save(ofile,arr);
+  cout << "# done writing: "<<ofile << endl;
+
+  exit(0);
+}
+
+void serverClusterDistance(edcserver& server)
+{
+  int i,j;
+  float maxdist;
+
+  for (i=0; i<cmindists.size(); ++i)
+    cmindistsMutexs[i].lock();
+
+  do {
+    maxdist=-1.0;
+    for (i=0; i<cmindists.size(); ++i){
+      if (cpos[i]==cend[i]){ if (cfinished[i]!=1) break; else continue; }
+      if (cmindists[i][cpos[i]].dist>maxdist) { maxdist=cmindists[i][cpos[i]].dist; }
+    }
+    if (i==cmindists.size()){
+      for (j=0; j<cmindists.size(); ++j){
+        while(cpos[j]!=cend[j] && cmindists[j][cpos[j]].dist == maxdist) {
+//        cout << "+ " << idist << " " << maxdist << " " << cpos[idist] << " " << cend[idist] << endl;
+          cluster.add(cmindists[j][cpos[j]]);
+          cpos[j]=(cpos[j]+1)%cmindists[j].size();
+        }
+      }
+    }
+  }while (i==cmindists.size());
+
+  for (i=0 ; i<cmindists.size(); ++i)
+    cmindistsMutexs[i].unlock();
+
+  for (i=0 ; i<cmindists.size(); ++i){
+    if (server.getClient(i).isChoked && (cend[i]-cpos[i]+cmindists[i].size())%cmindists[i].size()<cmindists[i].size()/2){
+      cout << "# unchoking client: " << i << endl;
+      server.getClient(i).unchoke();
+    }
+  }
+}
+
+void serverRecvDistance(edcserverClient& sclient,const estr& msg)
+{
+  ebasicarray<eseqdistCount> sdists;
+  ldieif(sdists.unserial(msg,0)==-1,"problem in received msg");
+  int i,j;
+  for (i=0; i<sclient.server->sockets.size(); ++i){
+    if (&sclient.server->getClient(i)==&sclient){
+      if (cfinished[i]==-1){
+        cfinished[i]=0;
+        ++computed;
+        if (computed==cmindists.size()){
+          tdists=t1.lap();
+          cout << "# time calculating distance: "<< tdists <<endl;
+        }
+      }
+      cmindistsMutexs[i].lock();
+//      cout << "# " << i << " " << cpos[i] << " " << cend[i] << " " << sdists.size() << endl;
+      for (j=0; j<sdists.size(); ++j){
+        cmindists[i][cend[i]]=sdists[j];
+        cend[i]=(1+cend[i])%cmindists[i].size();
+      }
+      cmindistsMutexs[i].unlock();
+      if ((cpos[i]+sdists.size())%cmindists[i].size()==cend[i])
+        serverClusterDistance(*sclient.server);
+      if (cpos[i]!=cend[i] && (cpos[i]-cend[i]+cmindists[i].size())%cmindists[i].size()<=sdists.size()) {
+        cout << "# choking client: " << i << endl;
+        sclient.choke();
+      }
+      break;
+    }
+  }
+}
+
+void serverStartComputation(edcserver& server)
+{
+  t1.reset();
+  cout << "# starting distributed computation" << endl;
+
+  int i,j;
+  for (i=0; i<server.sockets.size(); ++i){
+    cmindists.add(ebasicarray<eseqdistCount>());
+    cmindistsMutexs.add(emutex());
+    for (j=0; j<10000; ++j)
+      cmindists[i].add(eseqdistCount());
+    cpos.add(0);
+    cend.add(0);
+    cfinished.add(-1);
+  }
+
+//  server.onAllReady=serverGetDistances;
+  for (i=0; i<server.sockets.size(); ++i)
+    server.getClient(i).call("nodeComputeDistances",evararray((const int&)i,(const int&)server.sockets.size(),0.9));
+}
 
 void serverGetDistances(edcserver& server)
 {
@@ -61,10 +172,10 @@ void serverGetDistances(edcserver& server)
     ldieif(server.getClient(i).result.isNull(),"not supposed to happen");
     if (server.getClient(i).result.isNull()) continue;
     cdists.add(server.getClient(i).result.get<long int>());
-    cmindists.add(ebasicarray<eseqdistCount>());
-    cpos.add(0);
+//    cmindists.add(ebasicarray<eseqdistCount>());
+//    cpos.add(0);
     cout << "# client: " << i << " cdists: " << cdists[i] << endl;
-    cmins.add(1.0);
+//    cmins.add(1.0);
     totaldists+=cdists[i];
     server.getClient(i).result.clear();
   }
@@ -72,6 +183,8 @@ void serverGetDistances(edcserver& server)
   tdists=t1.lap();
   cout << "# total distances under threshold: " << totaldists << endl;
   cout << "# time calculating distance: "<< tdists <<endl;
+
+  return; // do not go into usual chunk getting mode (testing stream mode now)
 
 //  server.onAllReady=serverDistanceThreshold;
   server.onAllReady=serverCluster;
@@ -212,10 +325,11 @@ void serverCluster(edcserver& server)
 {
   long int i;
   long int count=0;
-  mindist=0.0;
-  mdist=1.0;
+//  mindist=0.0;
+//  mdist=1.0;
   for (i=0; i<server.sockets.size(); ++i){
-    if (server.getClient(i).result.isNull()){ if (mindist<cmins[i]) mindist=cmins[i]; if (mdist>cmins[i]) mdist=cmins[i]; continue; }
+    if (server.getClient(i).result.isNull()) continue;
+//    if (server.getClient(i).result.isNull()){ if (mindist<cmins[i]) mindist=cmins[i]; if (mdist>cmins[i]) mdist=cmins[i]; continue; }
 
     ebasicarray<eseqdistCount> *tmparr;
 
@@ -223,11 +337,11 @@ void serverCluster(edcserver& server)
     cmindists[i]+=*tmparr;
     if (tmparr->size()>0){
       cout << "# client: "<<i << " min: " << tmparr->at(0).dist << " max: " << tmparr->at(tmparr->size()-1).dist << " cdists: " << cdists[i] << " size: "<< tmparr->size() << " ("<< cmindists[i].size()-cpos[i] << ")" << endl;
-      cmins[i]=tmparr->at(0).dist;
+//      cmins[i]=tmparr->at(0).dist;
       cdists[i]-=tmparr->size();
       totaldists-=tmparr->size();
-      if (mindist<cmins[i]) mindist=cmins[i];
-      if (mdist>cmins[i]) mdist=cmins[i];
+//      if (mindist<cmins[i]) mindist=cmins[i];
+//      if (mdist>cmins[i]) mdist=cmins[i];
     }
     else
       cout << "# client: "<<i<<" empty array ("<<cmindists[i].size()-cpos[i]<<")"<<endl; 
@@ -340,7 +454,7 @@ int ncpus=32;
 void doIncoming(edcserver& server)
 {
   if (server.sockets.size()==ncpus)
-    startComputation(server);
+    serverStartComputation(server);
 }
 
 long int nodePos;
@@ -430,6 +544,27 @@ void p_calc_dists_nogap(int node,int tnodes,float thres)
   mutexDists.unlock();
 }
 
+void nodeSendDistances()
+{
+  if (nodePos==-1l) return;
+
+  int j;
+  estr tmpdata;
+  ebasicarray<eseqdistCount> tmpsdists;
+  do {
+    tmpdata.clear();
+    tmpsdists.clear();
+    for (j=0; j<1000 && nodePos>=0l; ++j,--nodePos)
+      tmpsdists.add(cluster.dists[nodePos]);
+    tmpsdists.serial(tmpdata);
+  } while (client.sendMsg(2,tmpdata) && nodePos>=0l);
+
+  if (nodePos==-1l){
+    client.sendMsg(3,"");
+    client.onSend=efunc();
+  }
+}
+
 long int nodeComputeDistances(int node,int tnodes,float thres)
 {
   int i;
@@ -438,6 +573,7 @@ long int nodeComputeDistances(int node,int tnodes,float thres)
   }
   taskman.wait();
 
+  cerr << "# computing distances" << endl;
 //  savearray(nodeDists,"/state/partition1/jfmrod/distances.dat");
 
   mutexDists.lock();
@@ -447,6 +583,11 @@ long int nodeComputeDistances(int node,int tnodes,float thres)
   cerr << "partsFinished: " << partsFinished << " partsTotal: " << partsTotal<< endl;
   cerr << "nodePos: " << nodePos<< endl;
   mutexDists.unlock();
+
+  client.onSend=nodeSendDistances;
+  nodeSendDistances();
+//  client.sendMsg(2,"");
+
 //  savearray(nodeDists,"/state/partition1/jfmrod/distances-sorted.dat");
 
 //  nodePos=calc_dists_nogap(arr,mindists,node,tnodes,thres);
@@ -550,34 +691,35 @@ int emain()
 //    scluster.reserve(arr.size());
 //    for (i=0; i<arr.size(); ++i)
 //      scluster.add(i);
+    cout << "# creating " << nthreads << " threads" << endl;
 
     taskman.createThread(nthreads);
-    startClient(host,12345);
-    return(0);
+
+
+    int pipefd[2];
+    pipe(pipefd);
+    dup2(pipefd[1],1);
+
+    client.outpipe=pipefd[0];
+    getSystem()->addReadCallback(client.outpipe,efunc(client,&edcclient::sendOutput),evararray());
+
+    client.connect(host,12345);
   }else{
     load_accs(argv[1],arr);
 //    load_seqs(argv[1],arr);
     cluster.init(arr.size());
 
-    edcserver server;
     registerServer();
     epregister(server);
+    server.callbacks.add(serverRecvDistance);
+    server.callbacks.add(serverFinished);
 //    server.showResult=true;
     server.onIncoming=doIncoming;
 //    server.onAllReady=doAllReady;
     server.listen(12345);
-//    startServer(12345);
-//    epruninterpret();
-    getSystem()->run();
-    return(0);
   }
 
-//  calc(0,arr.size()/4,dist_mat,arr);
-//  calc(arr.size()/4,arr.size()/2,dist_mat,arr);
-//  calc2(dist_mat,arr);
-
-//  cout << "# distances: " << dist_mat.size() << endl;
-
+  getSystem()->run();
 
   return(0);
 }

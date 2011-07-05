@@ -126,7 +126,7 @@ int emain()
   for (i=cluster.dists.size()-1; i>=0; --i){
     cluster.add(i);
 //    cluster.update(i-1);
-    if (cluster.mergecount%10000==0 && cluster.mergecount!=lastupdate) { lastupdate=cluster.mergecount; cout << "# merged " << cluster.update(i-1) << " seqs" << endl; }
+//    if (cluster.mergecount%1000==0 && cluster.mergecount!=lastupdate) { lastupdate=cluster.mergecount; cout << "# merged " << cluster.update(i-1) << " seqs" << endl; }
 //    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }
 //    if (i%10000==0) { tmp=cluster.update(mindists,i-1); cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << " " << tmp << endl; }
   }

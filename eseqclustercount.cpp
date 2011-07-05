@@ -111,9 +111,22 @@ long int eseqclusterCount::update(long int s)
   eintarray tmpsmerge;
   int updcount;
   int updind[smerge.size()];
+  int updcount2;
+  int updind2[smerge.size()];
 
   for (i=0; i<smerge.size(); ++i)
     tmpsmerge.add(-1);
+
+  for (i=0; i<smerge.size(); ++i)
+    updind2[i]=-1;
+
+  updcount2=0;
+  for (i=0; i<scluster.size(); ++i){
+    if (updind2[scluster[i]]==-1){
+      updind2[scluster[i]]=updcount2;
+      ++updcount2;
+    }
+  }
 
   // make sure to only update 100 entries at a time, this will force more passes but use less memory
   do {
@@ -154,31 +167,31 @@ long int eseqclusterCount::update(long int s)
 
     cerr << "# updating: " << updcount << " merges smerge.size: "<<tmpsmerge.size()<<endl;
 
-    long int *uarr=new long int[updcount*tmpsmerge.size()];
+    long int *uarr=new long int[updcount*updcount2];
     ldieif (uarr==0x00,"not enough memory");
     long int li,lj;
-    for (i=0; i<updcount*tmpsmerge.size(); ++i)
+    for (i=0; i<updcount*updcount2; ++i)
       uarr[i]=-1l;
 
     for (li=s; li>=0; --li){
       if (dists[li].count==0) continue;
 
       if (tmpsmerge[dists[li].x]>=0){
-        lj=uarr[updind[tmpsmerge[dists[li].x]]*tmpsmerge.size()+scluster[dists[li].y]];
+        lj=uarr[updind[tmpsmerge[dists[li].x]]*updcount2+updind2[scluster[dists[li].y]]];
         if (lj>=0){
           dists[li].count+=dists[lj].count;
           dists[lj].count=0;
           ++count;
         }
-        uarr[updind[tmpsmerge[dists[li].x]]*tmpsmerge.size()+scluster[dists[li].y]]=li;
+        uarr[updind[tmpsmerge[dists[li].x]]*updcount2+updind2[scluster[dists[li].y]]]=li;
       }else if (tmpsmerge[dists[li].y]>=0){
-        lj=uarr[updind[tmpsmerge[dists[li].y]]*tmpsmerge.size()+scluster[dists[li].x]];
+        lj=uarr[updind[tmpsmerge[dists[li].y]]*updcount2+updind2[scluster[dists[li].x]]];
         if (lj>=0){
           dists[li].count+=dists[lj].count;
           dists[lj].count=0;
           ++count;
         }
-        uarr[updind[tmpsmerge[dists[li].y]]*tmpsmerge.size()+scluster[dists[li].x]]=li;
+        uarr[updind[tmpsmerge[dists[li].y]]*updcount2+updind2[scluster[dists[li].x]]]=li;
       }
     }
 
