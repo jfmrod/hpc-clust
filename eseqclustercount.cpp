@@ -97,8 +97,8 @@ void eseqclusterCount::init(int count) {
     inter.add(list<int>());
   }
   cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
-  cout << "# initializing smatrix with: " << (long int)(count)*(long int)(count)/(long int)(20000)<< " elements" << endl; 
-  smatrix.reserve((long int)(count)*(long int)(count)/(long int)(20000));
+  cout << "# initializing smatrix with: " << (long int)(count)*(long int)(count)/20000l/2l<< " elements" << endl; 
+  smatrix.reserve((long int)(count)*(long int)(count)/20000l/2l);
 //  cout << "# smatrix._hashitems = " << smatrix._hashitems << endl;
   mergecount=0;
 }
