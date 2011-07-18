@@ -347,6 +347,7 @@ emutex mutexDists;
 int partsFinished=0;
 int partsTotal=1000;
 
+/*
 void p_calc_dists_nogap(int node,int tnodes,float thres)
 {
 //  ebasicarray<eseqdist> dists;
@@ -359,12 +360,14 @@ void p_calc_dists_nogap(int node,int tnodes,float thres)
 //  nodeDists+=dists;
   mutexDists.unlock();
 }
+*/
 
 long int nodeComputeDistances(int node,int tnodes,float thres)
 {
   int i;
   for (i=0; i<partsTotal; ++i){
-    taskman.addTask(p_calc_dists_nogap,evararray((const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),0.9));
+    taskman.addTask(dfunc.value(),evararray(mutexDists,nodeArr,cluster.dists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres));
+//    taskman.addTask(p_calc_dists_nogap,evararray((const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),0.9));
   }
   taskman.wait();
 

@@ -28,31 +28,6 @@ int eseqdistCount::unserial(const estr& data,int i)
 
 eseqclusterCount::eseqclusterCount(){}
 
-/*
-void eseqclusterCount::calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres)
-{
-  eblockarray<eseqdistCount> tmpdist;
-
-  calc_dists_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
-
-  mutexDists.lock();
-  dists.merge(tmpdist);
-  mutexDists.unlock();
-}
-*/
-
-void eseqclusterCount::calc(estrarray& arr,int seqlen,int node,int tnodes,float thres)
-{
-  eblockarray<eseqdistCount> tmpdist;
-
-  calc_dists_nogap_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
-
-  mutexDists.lock();
-  dists.merge(tmpdist);
-  mutexDists.unlock();
-}
-
-
 
 void eseqclusterCount::check(ebasicarray<eseqdistCount>& dists)
 {

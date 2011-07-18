@@ -51,9 +51,6 @@ class eseqclusterCount
   void add(eseqdistCount& sdist);
   void add(int ind);
 
-//  void calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres);
-  void calc(estrarray& arr,int seqlen,int node,int tnodes,float thres);
-
   long int update(long int ind);
   long int update(long int ind,int x,int y);
   long int update(eblockarray<eseqdistCount>& dists,long int s);

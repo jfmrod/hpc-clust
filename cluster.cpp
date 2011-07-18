@@ -2,11 +2,16 @@
 #include <eutils/efile.h>
 #include <eutils/eheap.h>
 #include <eutils/etimer.h>
+#include <eutils/eoption.h>
 
 #include "cluster-common.h"
 
 //eseqcluster cluster;
-eseqclusterCount cluster;
+
+eblockarray<eseqdist> dists;
+
+eseqcluster clcluster; // complete linkage
+eseqclustersingle slcluster; // single linkage
 
 //eblockarray<eseqdist> mindists;
 //ebasicarray<eseqdist> mindists;
@@ -34,6 +39,24 @@ void p_calc_dists_nogap(int node,int tnodes,float thres)
 
 int emain()
 { 
+  float avgmutseq=0.0;
+  epregister(avgmutseq);
+
+  eoption<efunc> dfunc;
+
+  dfunc.choice=0;
+  dfunc.add("gap",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+  dfunc.add("nogap",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+  dfunc.add("tamura",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+  dfunc.add("gap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+  dfunc.add("nogap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+  dfunc.add("tamura+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+
+  epregisterClass(eoption<efunc>);
+  epregisterClassMethod2(eoption<efunc>,operator=,int,(const estr& val));
+
+  epregister(dfunc);
+
   estr ofile="cluster.dat";
   estr dfile;
   float t=0.90;
@@ -45,6 +68,8 @@ int emain()
 //  estr outfile="cooc_distances.dat";
 //  epregister(outfile);
   eparseArgs(argvc,argv);
+
+  cout << "# distance function: " << dfunc.key() << endl;
 
   epregisterClass(eseqdist);
   epregisterClassSerializeMethod(eseqdist);
@@ -61,13 +86,17 @@ int emain()
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <seqali>");
 
   int i;
-  load_seqs_compressed(argv[1],arr,seqlen);
+  if (avgmutseq>0.0)
+    load_seqs_mutate_compressed(argv[1],arr,seqlen,avgmutseq);
+  else
+    load_seqs_compressed(argv[1],arr,seqlen);
   
   float dtime,stime;
   etimer t1;
   t1.reset();
 
   etaskman taskman;
+  emutex mutex;
 
 //  if (ncpus==1) partsTotal=1;
 
@@ -75,7 +104,8 @@ int emain()
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
     for (i=0; i<partsTotal; ++i)
-      taskman.addTask(efunc(cluster,&eseqclusterCount::calc),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
+      taskman.addTask(dfunc.value(),evararray(mutex,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
+//      taskman.addTask(efunc(cluster,&eseqclusterCount::calc),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
 //      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,t));
 
     taskman.createThread(ncpus);
@@ -85,10 +115,10 @@ int emain()
 
     dtime=t1.lap()*0.001;
     cout << "# time calculating distances: " << dtime << endl;
-    cout << "# distances within threshold: " << cluster.dists.size() << endl;
+    cout << "# distances within threshold: " << dists.size() << endl;
 
 //    heapsort(mindists);
-    cluster.dists.sort();
+    dists.sort();
     stime=t1.lap()*0.001;
 
 /*
@@ -113,18 +143,20 @@ int emain()
 */
   } 
 
-  totaldists=cluster.dists.size();
+  totaldists=dists.size();
   cout << "# time sorting distances: " << stime << endl;
 
   cout << "# initializing cluster"<<endl;
-  cluster.init(arr.size());
+  clcluster.init(arr.size(),ofile+".cl.dat");
+  slcluster.init(arr.size(),ofile+".sl.dat");
 
   cout << "# starting clustering"<<endl;
   t1.reset();
   int tmp;
   int lastupdate=0;
-  for (i=cluster.dists.size()-1; i>=0; --i){
-    cluster.add(i);
+  for (i=dists.size()-1; i>=0; --i){
+    clcluster.add(dists[i]);
+    slcluster.add(dists[i]);
 //    cluster.update(i-1);
 //    if (cluster.mergecount%1000==0 && cluster.mergecount!=lastupdate) { lastupdate=cluster.mergecount; cout << "# merged " << cluster.update(i-1) << " seqs" << endl; }
 //    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }
@@ -137,8 +169,10 @@ int emain()
   cout << "# total time: " << dtime+clustime+stime << endl;
   cout << "# distances within threshold: " << totaldists << endl;
 
-  cluster.save(ofile,arr);
-  cout << "# done writing "<<ofile << endl;
+  clcluster.save(ofile+".cl.otu",arr);
+  cout << "# done writing complete linkage clustering to: "<<ofile+".cl" << endl;
+  slcluster.save(ofile+".sl.otu",arr);
+  cout << "# done writing single linkage clustering to: "<<ofile+".sl" << endl;
 
 /*
   estr line;

@@ -6,42 +6,9 @@
 
 eseqclustersingle::eseqclustersingle(){}
 
-void eseqclustersingle::calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres)
-{
-  eblockarray<eseqdist> tmpdist;
 
-  calc_dists_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
-
-  mutexDists.lock();
-  dists.merge(tmpdist);
-  mutexDists.unlock();
-}
-
-void eseqclustersingle::calcTamura(estrarray& arr,int seqlen,int node,int tnodes,float thres)
-{
-  eblockarray<eseqdist> tmpdist;
-
-  calc_dists_tamura_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
-
-  mutexDists.lock();
-  dists.merge(tmpdist);
-  mutexDists.unlock();
-}
-
-void eseqclustersingle::calc(estrarray& arr,int seqlen,int node,int tnodes,float thres)
-{
-  eblockarray<eseqdist> tmpdist;
-
-  calc_dists_nogap_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
-
-  mutexDists.lock();
-  dists.merge(tmpdist);
-  mutexDists.unlock();
-}
-
-
-
-void eseqclustersingle::init(int count) {
+void eseqclustersingle::init(int count,const estr& ofilename) {
+  ofile.open(ofilename,"w");
   int i;
   scount.reserve(count);
   scluster.reserve(count);
@@ -75,7 +42,9 @@ void eseqclustersingle::merge(int x,int y,float dist)
     incluster[x].push_back(*it);
   }
   ++mergecount;
-  cout << scluster.size()-mergecount << " " << dist << " " << x << " " << y << endl;
+  
+//  cout << scluster.size()-mergecount << " " << dist << " " << x << " " << y << endl;
+  ofile.write(estr(scluster.size()-mergecount)+" "+dist+" "+x+" "+y+"\n");
 }
 
 void eseqclustersingle::add(eseqdist& sdist){

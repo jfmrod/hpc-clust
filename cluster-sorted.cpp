@@ -94,7 +94,7 @@ int emain()
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <file>");
 
   load_accs(argv[1],arr);
-  cluster.init(arr.size());
+  cluster.init(arr.size(),"output.txt");
 
   doClustering();
 

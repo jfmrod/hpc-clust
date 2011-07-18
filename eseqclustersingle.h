@@ -15,6 +15,7 @@ class eseqclustersingle
 {
  public:
   int mergecount;
+  efile ofile;
 
   emutex mutexDists;
   eblockarray<eseqdist> dists;
@@ -28,13 +29,9 @@ class eseqclustersingle
   eseqclustersingle();
 
   void merge(int x,int y,float dist);
-  void init(int count);
+  void init(int count,const estr& ofile);
   void add(int ind);
   void add(eseqdist& sdist);
-
-  void calc(estrarray& arr,int seqlen,int node,int tnodes,float thres);
-  void calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres);
-  void calcTamura(estrarray& arr,int seqlen,int node,int tnodes,float thres);
 
 //  int update(ebasicarray<eseqdist>& dists,int s);
 

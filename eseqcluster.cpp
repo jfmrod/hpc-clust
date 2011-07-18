@@ -37,50 +37,6 @@ int eseqdist::unserial(const estr& data,int i)
 eseqcluster::eseqcluster(){}
 
 
-void eseqcluster::calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres)
-{
-  eblockarray<eseqdist> tmpdist;
-//  ebasicarray<eseqdist> dists;
-
-  calc_dists_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
-
-  mutexDists.lock();
-//  ++partsFinished;
-//  mindists+=dists;
-  dists.merge(tmpdist);
-  mutexDists.unlock();
-}
-
-void eseqcluster::calcTamura(estrarray& arr,int seqlen,int node,int tnodes,float thres)
-{
-  eblockarray<eseqdist> tmpdist;
-//  ebasicarray<eseqdist> dists;
-
-  calc_dists_tamura_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
-
-  mutexDists.lock();
-//  ++partsFinished;
-//  mindists+=dists;
-  dists.merge(tmpdist);
-  mutexDists.unlock();
-}
-
-void eseqcluster::calc(estrarray& arr,int seqlen,int node,int tnodes,float thres)
-{
-  eblockarray<eseqdist> tmpdist;
-//  ebasicarray<eseqdist> dists;
-
-  calc_dists_nogap_compressed(arr,tmpdist,seqlen,node,tnodes,thres);
-
-  mutexDists.lock();
-//  ++partsFinished;
-//  mindists+=dists;
-  dists.merge(tmpdist);
-  mutexDists.unlock();
-}
-
-
-
 void eseqcluster::check(ebasicarray<eseqdist>& dists)
 {
   int i;
@@ -109,7 +65,8 @@ void eseqcluster::check(ebasicarray<eseqdist>& dists)
   cout << "# no duplicates found!" << endl;
 }
 
-void eseqcluster::init(int count) {
+void eseqcluster::init(int count,const estr& ofilename) {
+  ofile.open(ofilename,"w");
   int i;
   scount.reserve(count);
   scluster.reserve(count);
@@ -233,7 +190,8 @@ void eseqcluster::add(eseqdist& sdist){
 //    if (scount[x]*scount[y]==sdist.count){
     if (scount[x]*scount[y]==1){
       merge(x,y);
-      cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
+//      cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
+      ofile.write(estr(scluster.size()-mergecount)+" "+sdist.dist+" "+x+" "+y+"\n");
     }else{
 //      smatrix.add(xystr,sdist.count);
       smatrix.add(xystr,1);
@@ -248,8 +206,8 @@ void eseqcluster::add(eseqdist& sdist){
   // complete linkage
   if (*it==scount[x]*scount[y]){
     merge(x,y);
-    cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
-//    cout << sdist.dist << " " << x << " " << y << endl;
+//    cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
+    ofile.write(estr(scluster.size()-mergecount)+" "+sdist.dist+" "+x+" "+y+"\n");
     smatrix.erase(it);
   }
 }

@@ -3,6 +3,7 @@
 
 #include <eutils/evar.h>
 #include <eutils/estr.h>
+#include <eutils/efile.h>
 #include <eutils/ethread.h>
 #include <eutils/eblockarray.h>
 #include <eutils/ebasicarray.h>
@@ -28,6 +29,8 @@ class eseqdist
 class eseqcluster
 {
  public:
+  efile ofile;
+
   int mergecount;
 
   emutex mutexDists;
@@ -51,13 +54,9 @@ class eseqcluster
   eseqcluster();
 
   void merge(int x,int y);
-  void init(int count);
+  void init(int count,const estr& ofile);
   void add(int ind);
   void add(eseqdist& sdist);
-
-  void calc(estrarray& arr,int seqlen,int node,int tnodes,float thres);
-  void calcGap(estrarray& arr,int seqlen,int node,int tnodes,float thres);
-  void calcTamura(estrarray& arr,int seqlen,int node,int tnodes,float thres);
 
 //  int update(ebasicarray<eseqdist>& dists,int s);
 

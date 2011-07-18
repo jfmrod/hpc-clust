@@ -3,6 +3,7 @@
 
 #include <eutils/evar.h>
 #include <eutils/estr.h>
+#include <eutils/ernd.h>
 #include <eutils/ebasicarray.h>
 #include <eutils/eintarray.h>
 #include <eutils/ebasichashmap.h>
@@ -438,76 +439,90 @@ inline void xy2estr(int x,int y,estr& str)
   }
 }
 
-/*
-class eseqcount
+template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
+int t_calc_dists_noise(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,float thres)
 {
- public:
-  int x;
-  int y;
-  bool operator==(const eseqcount& scount) const;
-};
-*/
+  float noise=0.025;
+  long int i,i2,j;
+  long int start,end;
+
+  start=(long int)(node)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+  end=(long int)(node+1)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+
+  float tmpid,tmpid2,tmpid3;
+  K tmpdists;
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen)+ernd.gaussian(noise);
+      if (tmpid>1.0) tmpid=1.0; else if (tmpid<0.0) tmpid=0.0;
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i2],arr[j],seqlen)+ernd.gaussian(noise);
+      if (tmpid>1.0) tmpid=1.0; else if (tmpid<0.0) tmpid=0.0;
+      if (tmpid>=thres) tmpdists.add(M(i2,j,tmpid));
+    }
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen)+ernd.gaussian(noise);
+      if (tmpid>1.0) tmpid=1.0; else if (tmpid<0.0) tmpid=0.0;
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+  }
+  mutex.lock();
+  dists+=tmpdists;
+  mutex.unlock();
+  return(tmpdists.size());
+}
 
 
-/*
-
-class eblockarray
+template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
+int t_calc_dists(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,float thres)
 {
- private:
-  long int blocksize;
-  long int count;
- public:
-  ebasicarray<eseqdist*> blocks;
+  long int i,i2,j;
+  long int start,end;
 
-  eblockarray();
-  ~eblockarray();
+  start=(long int)(node)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+  end=(long int)(node+1)*(long int)(arr.size()-1)/(long int)(2*tnodes);
 
-  void clear();
+  float tmpid,tmpid2,tmpid3;
+  K tmpdists;
 
-  void add(const eseqdist& sdist);
-  inline long int size() { return(count); }
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i2],arr[j],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(i2,j,tmpid));
+    }
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+  }
+  mutex.lock();
+  dists+=tmpdists;
+  mutex.unlock();
+  return(tmpdists.size());
+}
 
-  void swap(long int i,long int j);
-  void sort();
-
-  eseqdist& operator[](long int i);
-  const eseqdist& operator[](long int i) const;
-  eblockarray& merge(eblockarray& barr);
-
-  inline eseqdist* lastblock() { return(blocks[blocks.size()-1]); }
-  inline const eseqdist* lastblock() const { return(blocks[blocks.size()-1]); }
-};
-
-*/
 
 
+//int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres);
+//int calc_dists_nogap(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);
+//int calc_dists_nogap(estrarray& arr,eintarray& arrgaps,earray<eseqdist>& dists,int node,int tnodes,float thres);
 
-int calc_dists(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);
-int calc_dists(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres);
-//int calc_dists(estrhash& arr,earray<eseqdist>& dists,int start,int end,float thres);
-//int calc_dists2(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);
-
-//int calc_dists_nogap(estrarray& arr,multimap<float,eseqdist>& dists,int node,int tnodes,float thres);
-int calc_dists_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-
-int calc_dists_tamura_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_tamura_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-
-int calc_dists_nogap_compressed(earray<estr>& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_nogap_compressed(earray<estr>& arr,ebasicarray<eseqdistCount>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_nogap_compressed(estrarray& arr,ebasicarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_nogap_compressed(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_nogap_compressed(estrarray& arr,eblockarray<eseqdistCount>& dists,int seqlen,int node,int tnodes,float thres);
-int calc_dists_nogap_compressed(earray<estr>& arr,eblockarray<eseqdistCount>& dists,int seqlen,int node,int tnodes,float thres);
-
-int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres);
-int calc_dists_nogap(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);
-int calc_dists_nogap(estrarray& arr,eintarray& arrgaps,earray<eseqdist>& dists,int node,int tnodes,float thres);
-
-int calc_dists_local(estrarray& arr,ebasicarray<float>& dists,float thres);
+//int calc_dists_local(estrarray& arr,ebasicarray<float>& dists,float thres);
 
 void cluster_init(earray<eintarray>& cvec,const estrhashof<int>& arrind,const eintarray& otuarr,int otucount);
 
@@ -519,6 +534,10 @@ void cooc_calc2(int start,int end,ebasicarray<float>& dist_mat,earray<eintarray>
 //void load_seqs(const estr& filename,estrhash& arr);
 void load_accs(const estr& filename,estrarray& arr);
 void load_seqs(const estr& filename,estrarray& arr);
+
+
+void load_seqs_mutate_compressed(const estr& filename,estrarray& arr,int& seqlen,float avgmutseq);
+
 void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen);
 void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen);
 void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<int>& arrind,int& seqlen);
@@ -533,8 +552,8 @@ void load_samples(const estr& filename,estrhashof<int>& arrind,estrhashof<eintar
 void load_clusters(const estr& filename,estrhashof<int>& arrind,eintarray& otuarr,int& otucount);
 void load_clusters(const estr& filename,estrhashof<int>& arrind,earray<eintarray>& otus);
 
-void cluster_complete(const estrhash& arr,const ebasicarray<float>& dist_mat,const eintarray& dsort,earray<eintarray>& otus,eintarray& otuarr,float t);
-void cluster_single(const estrhash& arr,const ebasicarray<float>& dist_mat,const eintarray& dsort,earray<eintarray>& otus,float t);
+//void cluster_complete(const estrhash& arr,const ebasicarray<float>& dist_mat,const eintarray& dsort,earray<eintarray>& otus,eintarray& otuarr,float t);
+//void cluster_single(const estrhash& arr,const ebasicarray<float>& dist_mat,const eintarray& dsort,earray<eintarray>& otus,float t);
 
 
 #endif /* CLUSTER_COMMON_H */
