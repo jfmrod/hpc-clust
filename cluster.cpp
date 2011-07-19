@@ -1,6 +1,7 @@
 #include <eutils/emain.h>
 #include <eutils/efile.h>
 #include <eutils/eheap.h>
+#include <eutils/etime.h>
 #include <eutils/etimer.h>
 #include <eutils/eoption.h>
 
@@ -37,8 +38,20 @@ void p_calc_dists_nogap(int node,int tnodes,float thres)
 }
 */
 
+estr args2str(int argvc,char **argv)
+{
+  estr tmpstr;
+  int i;
+  for (i=0; i<argvc; ++i)
+    tmpstr+=estr(argv[i])+" ";
+  tmpstr.del(-1);
+  return(tmpstr);
+}
+
 int emain()
 { 
+  cout << "# " << date() << endl;
+  cout << "# " << args2str(argvc,argv) << endl;
   float avgmutseq=0.0;
   epregister(avgmutseq);
 

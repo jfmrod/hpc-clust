@@ -4,6 +4,7 @@
 #include <eutils/edcserver.h>
 #include <eutils/esystem.h>
 #include <eutils/etimer.h>
+#include <eutils/etime.h>
 #include <eutils/ethread.h>
 #include <eutils/eoption.h>
 
@@ -18,6 +19,7 @@ estrarray arr;
 //ebasicarray<eseqdist> mindists;
 estr ofile="cluster.dat";
 
+float t=0.9; // clustering threshold
 estr distfile;
 efile fdists;
 
@@ -219,7 +221,7 @@ void serverStartComputation(edcserver& server)
 
 //  server.onAllReady=serverGetDistances;
   for (i=0; i<server.sockets.size(); ++i)
-    server.getClient(i).call("nodeComputeDistances",evararray((const int&)i,(const int&)server.sockets.size(),0.9));
+    server.getClient(i).call("nodeComputeDistances",evararray((const int&)i,(const int&)server.sockets.size(),t));
 }
 
 void serverGetDistances(edcserver& server)
@@ -627,8 +629,21 @@ long int nodeUpdate(eintarray& scluster)
 }
 */
 
+estr args2str(int argvc,char **argv)
+{
+  estr tmpstr;
+  int i;
+  for (i=0; i<argvc; ++i)
+    tmpstr+=estr(argv[i])+" ";
+  tmpstr.del(-1);
+  return(tmpstr);
+}
+
 int emain()
 {
+  cout << "# " << date() << endl;
+  cout << "# " << args2str(argvc,argv) << endl;
+
   dfunc.choice=0;
   dfunc.add("nogap",t_calc_dists<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
   dfunc.add("gap",t_calc_dists<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
@@ -644,6 +659,7 @@ int emain()
 
   estr host;
 
+  epregister(t);
   epregister(host);
   epregister(ncpus);
   epregister(nthreads);
