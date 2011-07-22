@@ -48,6 +48,28 @@ estr args2str(int argvc,char **argv)
   return(tmpstr);
 }
 
+emutex mutex;
+
+/*
+void gap_calc_dists(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres)
+{
+  eblockarray<eseqdist> tmpdists;
+  t_calc_dists2<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>(arr,tmpdists,seqlen,node,tnodes,thres);
+  mutex.lock();
+  dists+=tmpdists;
+  mutex.unlock();
+}
+
+void gapnoise_calc_dists(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,int node,int tnodes,float thres)
+{
+  eblockarray<eseqdist> tmpdists;
+  t_calc_dists_noise2<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>(arr,tmpdists,seqlen,node,tnodes,thres);
+  mutex.lock();
+  dists+=tmpdists;
+  mutex.unlock();
+}
+*/
+
 int emain()
 { 
   cout << "# " << date() << endl;
@@ -58,6 +80,8 @@ int emain()
   eoption<efunc> dfunc;
 
   dfunc.choice=0;
+//  dfunc.add("gap",gap_calc_dists);
+//  dfunc.add("gap+noise",gapnoise_calc_dists);
   dfunc.add("gap",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
   dfunc.add("nogap",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
   dfunc.add("tamura",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
@@ -109,15 +133,18 @@ int emain()
   t1.reset();
 
   etaskman taskman;
-  emutex mutex;
 
 //  if (ncpus==1) partsTotal=1;
 
   efile df(dfile);
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
-    for (i=0; i<partsTotal; ++i)
+    if (partsTotal>(arr.size()-1)*arr.size()/20) partsTotal=(arr.size()-1)*arr.size()/20;
+    for (i=0; i<partsTotal; ++i){
+      
+//      taskman.addTask(dfunc.value(),evararray(arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
       taskman.addTask(dfunc.value(),evararray(mutex,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
+    }
 //      taskman.addTask(efunc(cluster,&eseqclusterCount::calc),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
 //      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,t));
 

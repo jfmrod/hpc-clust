@@ -216,9 +216,11 @@ estr seq_compress(const estr& seq)
   return(res);
 }
 
+ernd rng;
+
 inline char rndnuc()
 {
-  float tmp=ernd.uniform();
+  float tmp=rng.uniform();
   if (tmp<0.25) return('A');
   if (tmp<0.50) return('T');
   if (tmp<0.75) return('G');
@@ -229,7 +231,7 @@ estr seq_mutate_compress(estr& seq,int& nextmutation,float imutrate)
 {
   while (nextmutation<seq.len()){
     seq[nextmutation]=rndnuc();
-    nextmutation+=(int)ernd.exponential(imutrate);
+    nextmutation+=(int)rng.exponential(imutrate);
   }
   nextmutation-=seq.len();
   return(seq_compress(seq));
@@ -257,7 +259,7 @@ void load_seqs_mutate_compressed(const estr& filename,estrarray& arr,int& seqlen
     seqlen=line.len();
     if (nextmutation==-1){
       imutrate=(float)line.len()/avgmutseq;
-      nextmutation=(int)ernd.exponential(imutrate);
+      nextmutation=(int)rng.exponential(imutrate);
     }
     arr.add(seq_mutate_compress(line.uppercase(),nextmutation,imutrate));
   }

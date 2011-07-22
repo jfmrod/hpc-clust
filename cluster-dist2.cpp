@@ -44,7 +44,7 @@ eseqcluster      clcluster;
 eseqclustersingle slcluster;
 
 long int transfersize=1000;
-long int buffersize=100000;
+long int buffersize=10000;
 long int tbucket=100000;
 float tdists;
 
@@ -64,22 +64,36 @@ etimer t3;
 etimer t4;
 float t4time=0.0;
 
+int cnode=-1;
+emutex clusterMutex;
+
+void serverClusterDistance(edcserver& server);
 
 void serverFinished(edcserverClient& sclient,const estr& msg)
 {
   int i;
   bool allFinished=true;
+  bool foundSocket=false;
   for (i=0; i<sclient.server->sockets.size(); ++i){
+    foundSocket=true;
     if (&sclient.server->getClient(i)==&sclient){
-      cout << "# client: " << i << " sent stream EOF" << endl;
       cmindistsMutexs[i].lock();
       cfinished[i]=1;
-      ++finishedCount;
+      if (cpos[i]==cend[i])
+        ++finishedCount;
+      cout << "# client: " << i << " sent stream EOF. haveData: " << haveData << " finishedCount: " << finishedCount << endl;
       cmindistsMutexs[i].unlock();
     }
     if (cfinished[i]!=1) allFinished=false;
-  } 
+  }
+  ldieif(foundSocket==false,"did not find socket?!?");
   if (!allFinished) return;
+//  if (!allFinished) { serverClusterDistance(server); return; }
+
+  if (finishedCount!=cmindists.size())
+    serverClusterDistance(server);  
+
+  lassert(finishedCount!=cmindists.size());
 
   cout << "# time computing distances: "<< tdists*0.001 <<endl;
   cout << "# total time clustering: "<< t1.lap()*0.001 <<endl;
@@ -104,29 +118,45 @@ void serverClusterDistance(edcserver& server)
   for (i=0; i<cmindists.size(); ++i)
     cmindistsMutexs[i].lock();
 
-  while (haveData-finishedCount==cmindists.size()) {
+  while (haveData==cmindists.size()-finishedCount) {
     maxdist=-1.0;
     for (i=0; i<cmindists.size(); ++i){
-//      if (cpos[i]==cend[i]){ if (cfinished[i]!=1) break; else continue; }
+      if (cpos[i]==cend[i]) continue;
       if (cmindists[i][cpos[i]].dist>maxdist) { maxdist=cmindists[i][cpos[i]].dist; }
     }
-//    if (i==cmindists.size()){
-      for (j=0; j<cmindists.size(); ++j){
-        while(cpos[j]!=cend[j] && cmindists[j][cpos[j]].dist == maxdist) {
-//        cout << "+ " << idist << " " << maxdist << " " << cpos[idist] << " " << cend[idist] << endl;
-          clcluster.add(cmindists[j][cpos[j]]);
-          slcluster.add(cmindists[j][cpos[j]]);
-          cpos[j]=(cpos[j]+1)%cmindists[j].size();
+    lassert(maxdist==-1.0);
+    for (j=0; j<cmindists.size(); ++j){
+      if (cfinished[j]==1 && cpos[j]==cend[j]) continue;
+//      if (cpos[j]!=cend[j])
+//        cout << "# client "<<j<<" cpos: "<< cpos[j] << " cend: " << cend[j] << " maxdist: " << maxdist<<" cfinished: " << cfinished[j] << " haveData: " << haveData << " finishedCount: " << finishedCount << endl;
+      while(cpos[j]!=cend[j] && cmindists[j][cpos[j]].dist == maxdist) {
+//      cout << "+ " << idist << " " << maxdist << " " << cpos[idist] << " " << cend[idist] << endl;
+        clcluster.add(cmindists[j][cpos[j]]);
+        slcluster.add(cmindists[j][cpos[j]]);
+        cpos[j]=(cpos[j]+1)%cmindists[j].size();
+      }
+//      cout << "# client "<<j<<" cpos: "<< cpos[j] << " cend: " << cend[j] << " maxdist: " << maxdist<<" cfinished: " << cfinished[j] << " haveData: " << haveData << " finishedCount: " << finishedCount << endl;
+      if (cpos[j]==cend[j]){
+        --haveData;
+//        cout << "# client "<<j<<" buffer empty. cfinished: " << cfinished[j] << " haveData: " << haveData << " finishedCount: " << finishedCount << endl;
+        if (cfinished[j]==1) {
+          ++finishedCount;
+//          cout << "# client "<<j<<" still had data but finished. haveData: " << haveData << " finishedCount: " << finishedCount << endl;
         }
-        if ((cpos[j]==cend[j] || (cpos[j]-cend[j]+cmindists[j].size())%cmindists[j].size()>transfersize) && server.getClient(j).isChoked){
-          cout << "# unchoking client: " << j << endl;
-          server.getClient(j).unchoke();
-        }
-        if (cpos[j]==cend[j])
-          --haveData;
-//      }
+      }
+      if ((cpos[j]==cend[j] || (cpos[j]-cend[j]+cmindists[j].size())%cmindists[j].size()>transfersize) && server.getClient(j).isChoked){
+        cout << "# unchoking client: " << j << endl;
+        cmindistsMutexs[j].unlock();
+        server.getClient(j).unchoke();
+        server.getClient(j).doProcess();
+//        cout << "# done unchoking" << endl;
+//        if (cpos[j]==cend[j])
+//          server.getClient(j).doRecv();
+        cmindistsMutexs[j].lock();
+        if (cpos[j]!=cend[j] && cmindists[j][cpos[j]].dist == maxdist){ --j; continue; /*ugly hack*/ }
+      }
     }
-  } //while (haveData==cmindists.size());
+  }
 
   for (i=0 ; i<cmindists.size(); ++i)
     cmindistsMutexs[i].unlock();
@@ -165,40 +195,43 @@ void serverRecvDistance(edcserverClient& sclient,const estr& msg)
 //  t3.reset();
 //  ldieif(sdists.unserial(msg,0)==-1,"problem in received msg");
 //  unstime+=t3.lap();
+  bool foundServer=false;
   int i,j,count;
   for (i=0; i<sclient.server->sockets.size(); ++i){
     if (&sclient.server->getClient(i)==&sclient){
+      cmindistsMutexs[i].lock();
       if (cend[i]==cpos[i])
         ++haveData;
+      lassert(cend[i]==cpos[i] && cfinished[i]==1);
       if (cfinished[i]==-1){
         cfinished[i]=0;
         if (haveData==cmindists.size()){
           tdists=t1.lap();
-          cout << "# time calculating distance: "<< tdists <<endl;
+          cout << "# time calculating distances: "<< tdists*0.001 <<endl;
         }
       }
-      cmindistsMutexs[i].lock();
-//      cout << "# " << i << " " << cpos[i] << " " << cend[i] << " " << sdists.size() << endl;
       t3.reset();
       serverProcessDists(i,msg,count);
       unstime+=t3.lap();
-//      for (j=0; j<sdists.size(); ++j){
-//        cmindists[i][cend[i]]=sdists[j];
-//        cend[i]=(1+cend[i])%cmindists[i].size();
-//      }
-      cmindistsMutexs[i].unlock();
-      if (haveData-finishedCount==cmindists.size()){ // && (cpos[i]+count)%cmindists[i].size()==cend[i])
+//      cout << "# " << haveData << " " << finishedCount << " " << i << " " << cpos[i] << " " << cend[i] << " " << count << endl;
+      if (haveData==cmindists.size()-finishedCount && clusterMutex.trylock()){
         t3.reset();
+        cmindistsMutexs[i].unlock();
         serverClusterDistance(*sclient.server);
+        cmindistsMutexs[i].lock();
         clstrtime+=t3.lap();
+        clusterMutex.unlock();
       }
       if (cpos[i]!=cend[i] && (cpos[i]-cend[i]+cmindists[i].size())%cmindists[i].size()<=count) {
         cout << "# choking client: " << i << endl;
         sclient.choke();
       }
+      cmindistsMutexs[i].unlock();
+      foundServer=true;
       break;
     }
   }
+  lassert(!foundServer);
   t4time+=t4.lap();
 }
 
@@ -216,14 +249,14 @@ void serverStartComputation(edcserver& server)
     cpos.add(0);
     cend.add(0);
     cfinished.add(-1);
-    server.sockets[i].disableWriteCallback();
   }
 
 //  server.onAllReady=serverGetDistances;
   for (i=0; i<server.sockets.size(); ++i)
-    server.getClient(i).call("nodeComputeDistances",evararray((const int&)i,(const int&)server.sockets.size(),t));
+    server.getClient(i).call("nodeComputeDistances",evararray((const int&)i,(const int&)server.sockets.size(),(const float&)t));
 }
 
+/*
 void serverGetDistances(edcserver& server)
 {
   lastupdate=0;
@@ -259,7 +292,7 @@ void serverGetDistances(edcserver& server)
 float mindist;
 float mdist;
 //long int totalmergedists=0;
-
+*/
 /*
 void serverMergeResults(edcserver& server)
 {
@@ -568,10 +601,12 @@ void nodeMakeDists(int count,estr& msg)
   }
   *(uint32_t*)msg._str=i;
   msg._strlen=sizeof(uint32_t)*3*i+sizeof(uint32_t);
+  cerr << "# sent " << i << " dists" << endl;
 }
 
 void nodeSendDistances()
 {
+  cerr << cnode << " sending starting from nodePos: " << nodePos<< endl;
   if (nodePos==-1l) return;
 
   int j;
@@ -582,29 +617,35 @@ void nodeSendDistances()
   } while (client.sendMsg(2,tmpdata) && nodePos>=0l);
 
   if (nodePos==-1l){
-    client.sendMsg(3,"");
+    cerr << "Sending EOF: " << client.sendMsg(3,"") << endl;
     client.onSend=efunc();
   }
+  cerr << cnode << " sending ended at nodePos: " << nodePos<< endl;
 }
 
 long int nodeComputeDistances(int node,int tnodes,float thres)
 {
+  cnode=node;
+  cerr << cnode << " computing distances" << endl;
+  if ((long int)partsTotal>=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes)) partsTotal=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes);
   int i;
   for (i=0; i<partsTotal; ++i){
     taskman.addTask(dfunc.value(),evararray(mutexDists,nodeArr,nodeDists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres));
+//    taskman.addTask(dfunc.value(),evararray(nodeArr,nodeDists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres));
   }
   taskman.wait();
 
-  cerr << "# computing distances" << endl;
+  cerr << cnode << " finished computing distances" << endl;
 
   mutexDists.lock();
   nodeDists.sort();
   nodePos=nodeDists.size()-1l;
-  cerr << "partsFinished: " << partsFinished << " partsTotal: " << partsTotal<< endl;
-  cerr << "nodePos: " << nodePos<< endl;
+  cerr << cnode << " partsFinished: " << partsFinished << " partsTotal: " << partsTotal<< endl;
+  cerr << cnode << " nodePos: " << nodePos<< endl;
   mutexDists.unlock();
 
   client.onSend=nodeSendDistances;
+  client.enableWriteCallback();
   nodeSendDistances();
   return(nodePos+1l);
 }
@@ -645,12 +686,14 @@ int emain()
   cout << "# " << args2str(argvc,argv) << endl;
 
   dfunc.choice=0;
+//  dfunc.add("gap",gap_calc_dists);
+//  dfunc.add("gap+noise",gapnoise_calc_dists);
   dfunc.add("nogap",t_calc_dists<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
   dfunc.add("gap",t_calc_dists<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
   dfunc.add("tamura",t_calc_dists<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
-  dfunc.add("gap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
-  dfunc.add("nogap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
-  dfunc.add("tamura+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+  dfunc.add("gap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+  dfunc.add("nogap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+  dfunc.add("tamura+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
 
   epregisterClass(eoption<efunc>);
   epregisterClassMethod2(eoption<efunc>,operator=,int,(const estr& val));
@@ -727,6 +770,7 @@ int emain()
     getSystem()->addReadCallback(client.outpipe,efunc(client,&edcclient::sendOutput),evararray());
 
     client.connect(host,12345);
+    cerr << " waiting for command" << endl;
   }else{
     load_accs(argv[1],arr);
 //    load_seqs(argv[1],arr);

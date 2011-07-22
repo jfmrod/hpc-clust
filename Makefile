@@ -1,4 +1,5 @@
 LDLIBS=`eutils-config --libs`
+LDFLAGS:=${LDFLAGS} -pthread
 CC=g++
 CXXFLAGS:=${CXXFLAGS} -pthread -march=nocona -mtune=nocona -O3 # -g # -pg 
 #CXXFLAGS:=${CXXFLAGS} -pthread -pg # -g

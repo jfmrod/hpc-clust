@@ -442,6 +442,7 @@ inline void xy2estr(int x,int y,estr& str)
 template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
 int t_calc_dists_noise(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,float thres)
 {
+  ernd rng;
   float noise=0.025;
   long int i,i2,j;
   long int start,end;
@@ -454,13 +455,13 @@ int t_calc_dists_noise(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tno
 
   for (i=start; i<end; ++i){
     for (j=i+1; j<arr.size(); ++j){
-      tmpid=fdist(arr[i],arr[j],seqlen)+ernd.gaussian(noise);
+      tmpid=fdist(arr[i],arr[j],seqlen)+rng.gaussian(noise);
       if (tmpid>1.0) tmpid=1.0; else if (tmpid<0.0) tmpid=0.0;
       if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
     }
     i2=arr.size()-i-2;
     for (j=i2+1; j<arr.size(); ++j){
-      tmpid=fdist(arr[i2],arr[j],seqlen)+ernd.gaussian(noise);
+      tmpid=fdist(arr[i2],arr[j],seqlen)+rng.gaussian(noise);
       if (tmpid>1.0) tmpid=1.0; else if (tmpid<0.0) tmpid=0.0;
       if (tmpid>=thres) tmpdists.add(M(i2,j,tmpid));
     }
@@ -468,7 +469,7 @@ int t_calc_dists_noise(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tno
   if (node==tnodes-1 && arr.size()%2==0){
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
-      tmpid=fdist(arr[i],arr[j],seqlen)+ernd.gaussian(noise);
+      tmpid=fdist(arr[i],arr[j],seqlen)+rng.gaussian(noise);
       if (tmpid>1.0) tmpid=1.0; else if (tmpid<0.0) tmpid=0.0;
       if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
     }
@@ -513,7 +514,71 @@ int t_calc_dists(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,fl
   mutex.lock();
   dists+=tmpdists;
   mutex.unlock();
-  return(tmpdists.size());
+  return(0);
+}
+
+template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
+void t_calc_dists_noise2(T& arr,K& tmpdists,int seqlen,int node,int tnodes,float thres)
+{
+  float noise=0.025;
+  long int i,i2,j;
+  long int start,end;
+  ernd rng;
+
+  start=(long int)(node)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+  end=(long int)(node+1)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+
+  float tmpid,tmpid2,tmpid3;
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen)+rng.gaussian(noise);
+      if (tmpid>=thres) { if (tmpid>1.0) tmpid=1.0; tmpdists.add(M(i,j,tmpid)); }
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i2],arr[j],seqlen)+rng.gaussian(noise);
+      if (tmpid>=thres) { if (tmpid>1.0) tmpid=1.0; tmpdists.add(M(i2,j,tmpid)); }
+    }
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen)+rng.gaussian(noise);
+      if (tmpid>=thres) { if (tmpid>1.0) tmpid=1.0; tmpdists.add(M(i,j,tmpid)); }
+    }
+  }
+}
+
+template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
+void t_calc_dists2(T& arr,K& tmpdists,int seqlen,int node,int tnodes,float thres)
+{
+  long int i,i2,j;
+  long int start,end;
+
+  start=(long int)(node)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+  end=(long int)(node+1)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+
+  float tmpid,tmpid2,tmpid3;
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i2],arr[j],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(i2,j,tmpid));
+    }
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+  }
 }
 
 
