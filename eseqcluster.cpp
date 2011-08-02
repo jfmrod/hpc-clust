@@ -47,7 +47,7 @@ void eseqcluster::check(ebasicarray<eseqdist>& dists)
     if (i%(dists.size()/10)==0) { cout << i*10/dists.size(); flush(cout); }
     xy2estr(dists[i].x,dists[i].y,xystr);
 
-    ebasichashmap<estr,int>::iter it;
+    ebasicstrhashof<int>::iter it;
 
 //    cout << dists[i].dist << " " << dists[i].x << " " << dists[i].y;
     it=smatrix.get(xystr);
@@ -148,10 +148,10 @@ void eseqcluster::merge(int x,int y)
     xy2estr(x,j,tmpstr);
     xy2estr(y,j,tmpstr2);
 
-    ebasichashmap<estr,int>::iter tmpit2=smatrix.get(tmpstr2);
+    ebasicstrhashof<int>::iter tmpit2=smatrix.get(tmpstr2);
     if(tmpit2==smatrix.end()) continue;
 
-    ebasichashmap<estr,int>::iter tmpit=smatrix.get(tmpstr);
+    ebasicstrhashof<int>::iter tmpit=smatrix.get(tmpstr);
     if (tmpit!=smatrix.end())
       *tmpit+=*tmpit2;
     else{
@@ -163,7 +163,7 @@ void eseqcluster::merge(int x,int y)
   ++mergecount;
 }
 
-void eseqcluster::add(eseqdist& sdist){
+void eseqcluster::add(const eseqdist& sdist){
 //  if (sdist.count==0) return;
   ldieif(sdist.x<0 || sdist.y<0 || sdist.x>=scluster.size() || sdist.y>=scluster.size(),"out of bounds: sdist.x: "+estr(sdist.x)+" sdist.y: "+estr(sdist.y)+" scluster.size(): "+estr(scluster.size()));
 
@@ -172,7 +172,7 @@ void eseqcluster::add(eseqdist& sdist){
 
   ldieif(x<0 || y<0 || x>=scluster.size() || y>=scluster.size(),"out of bounds: sdist.x: "+estr(x)+" sdist.y: "+estr(y)+" scluster.size(): "+estr(scluster.size()));
   int tmp;
-  if (x>y) { tmp=x; x=y; y=tmp; tmp=sdist.x; sdist.x=sdist.y; sdist.y=tmp; }
+  if (x>y) { tmp=x; x=y; y=tmp; }
 
   int links;
   int i;
@@ -183,7 +183,7 @@ void eseqcluster::add(eseqdist& sdist){
 
   xy2estr(x,y,xystr);
 
-  ebasichashmap<estr,int>::iter it;
+  ebasicstrhashof<int>::iter it;
 
   it=smatrix.get(xystr);
   if (it==smatrix.end()){
@@ -212,6 +212,7 @@ void eseqcluster::add(eseqdist& sdist){
   }
 }
 
+/*
 void eseqcluster::add(int ind){
 //  if (dists[ind].count==0) return;
   ldieif(dists[ind].x<0 || dists[ind].y<0 || dists[ind].x>=scluster.size() || dists[ind].y>=scluster.size(),"out of bounds: dists[ind].x: "+estr(dists[ind].x)+" dists[ind].y: "+estr(dists[ind].y)+" scluster.size(): "+estr(scluster.size()));
@@ -232,7 +233,7 @@ void eseqcluster::add(int ind){
 
   xy2estr(x,y,xystr);
 
-  ebasichashmap<estr,int>::iter it;
+  ebasicstrhashof<int>::iter it;
 
   it=smatrix.get(xystr);
   if (it==smatrix.end()){
@@ -259,6 +260,7 @@ void eseqcluster::add(int ind){
     smatrix.erase(it);
   }
 }
+*/
 
 void eseqcluster::save(const estr& filename,const estrarray& arr)
 {

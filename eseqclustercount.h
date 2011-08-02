@@ -1,5 +1,5 @@
-#ifndef ESEQCLUSTER_MERGE_H
-#define ESEQCLUSTER_MERGE_H
+#ifndef ESEQCLUSTERCOUNT_H
+#define ESEQCLUSTERCOUNT_H
 
 #include <eutils/evar.h>
 #include <eutils/estr.h>
@@ -20,10 +20,24 @@ class eseqdistCount
   eseqdistCount();
   eseqdistCount(int x,int y,float dist);
 
-  inline bool operator<(const eseqdistCount& sdist) const{ return(dist<sdist.dist?true:false); }
+  inline bool operator==(const eseqdistCount& sdist) const{ return(x==sdist.x && y==sdist.y || x==sdist.y && y==sdist.x); }
+  inline bool operator<(const eseqdistCount& sdist) const{ return(dist<sdist.dist); }
+  inline bool operator>(const eseqdistCount& sdist) const{ return(dist>sdist.dist); }
   void serial(estr& data) const;
   int unserial(const estr& data,int i);
 };
+
+inline unsigned int hash_lookup3_eseqdistCount(const eseqdistCount& dist)
+{
+  int tmp[2];
+  if (dist.x<dist.y)
+    { tmp[0]=dist.x; tmp[1]=dist.y; }
+  else
+    { tmp[1]=dist.x; tmp[0]=dist.y; }
+  return(hash_lookup3(tmp,sizeof(int)*2,0));
+}
+
+typedef ebasichashmap<eseqdistCount,int,hash_lookup3_eseqdistCount> eseqdisthash;
 
 class eseqclusterCount
 {
@@ -37,7 +51,7 @@ class eseqclusterCount
   eintarray scluster;
   eintarray smerge;
 
-  ebasicstrhashof<int> smatrix;
+  eseqdisthash smatrix;
   ebasicarray<list<int> > inter;
   ebasicarray<list<int> > incluster;
 
@@ -58,6 +72,7 @@ class eseqclusterCount
   void save(const estr& filename,const estrarray& arr);
 };
 
+ostream& operator<<(ostream& strm,const eseqdistCount& sdist);
 
 #endif
 

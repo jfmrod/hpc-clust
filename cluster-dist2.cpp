@@ -8,6 +8,8 @@
 #include <eutils/ethread.h>
 #include <eutils/eoption.h>
 
+#include "eseqclusteravg.h"
+
 #include "cluster-common.h"
 
 edcclient client;
@@ -40,8 +42,10 @@ int step=1;
 long int totaldists=0;
 long int itotaldists=0;
 
-eseqcluster      clcluster;
+//eseqcluster      clcluster;
+eseqclusteravg      avgcluster;
 eseqclustersingle slcluster;
+
 
 long int transfersize=1000;
 long int buffersize=10000;
@@ -60,8 +64,7 @@ int finishedCount=0;
 
 float unstime=0.0;
 float clstrtime=0.0;
-etimer t3;
-etimer t4;
+etimer t3,t4,t5;
 float t4time=0.0;
 
 int cnode=-1;
@@ -102,8 +105,10 @@ void serverFinished(edcserverClient& sclient,const estr& msg)
   cout << "# time receiving: " << t4time*0.001 << endl;
   cout << "# total distances: "<< itotaldists << endl;
 
-  clcluster.save(ofile+".cl.otu",arr);
-  cout << "# done writing complete linkage otu file: "<<ofile<<".cl.otu" << endl;
+//  clcluster.save(ofile+".cl.otu",arr);
+//  cout << "# done writing complete linkage otu file: "<<ofile<<".cl.otu" << endl;
+  avgcluster.save(ofile+".avg.otu",arr);
+  cout << "# done writing average linkage otu file: "<<ofile<<".avg.otu" << endl;
   slcluster.save(ofile+".sl.otu",arr);
   cout << "# done writing single linkage otu file: "<<ofile<<".sl.otu" << endl;
 
@@ -131,7 +136,8 @@ void serverClusterDistance(edcserver& server)
 //        cout << "# client "<<j<<" cpos: "<< cpos[j] << " cend: " << cend[j] << " maxdist: " << maxdist<<" cfinished: " << cfinished[j] << " haveData: " << haveData << " finishedCount: " << finishedCount << endl;
       while(cpos[j]!=cend[j] && cmindists[j][cpos[j]].dist == maxdist) {
 //      cout << "+ " << idist << " " << maxdist << " " << cpos[idist] << " " << cend[idist] << endl;
-        clcluster.add(cmindists[j][cpos[j]]);
+        avgcluster.add(cmindists[j][cpos[j]]);
+//        clcluster.add(cmindists[j][cpos[j]]);
         slcluster.add(cmindists[j][cpos[j]]);
         cpos[j]=(cpos[j]+1)%cmindists[j].size();
       }
@@ -144,7 +150,8 @@ void serverClusterDistance(edcserver& server)
 //          cout << "# client "<<j<<" still had data but finished. haveData: " << haveData << " finishedCount: " << finishedCount << endl;
         }
       }
-      if ((cpos[j]==cend[j] || (cpos[j]-cend[j]+cmindists[j].size())%cmindists[j].size()>transfersize) && server.getClient(j).isChoked){
+      if (cpos[j]==cend[j] && server.getClient(j).isChoked){
+//      if ((cpos[j]==cend[j] || (cpos[j]-cend[j]+cmindists[j].size())%cmindists[j].size()>transfersize) && server.getClient(j).isChoked){
         cout << "# unchoking client: " << j << endl;
         cmindistsMutexs[j].unlock();
         server.getClient(j).unchoke();
@@ -213,15 +220,17 @@ void serverRecvDistance(edcserverClient& sclient,const estr& msg)
       t3.reset();
       serverProcessDists(i,msg,count);
       unstime+=t3.lap();
+      t4time+=t4.lap();
 //      cout << "# " << haveData << " " << finishedCount << " " << i << " " << cpos[i] << " " << cend[i] << " " << count << endl;
       if (haveData==cmindists.size()-finishedCount && clusterMutex.trylock()){
-        t3.reset();
+        t5.reset();
         cmindistsMutexs[i].unlock();
         serverClusterDistance(*sclient.server);
         cmindistsMutexs[i].lock();
-        clstrtime+=t3.lap();
+        clstrtime+=t5.lap();
         clusterMutex.unlock();
       }
+      t4.reset();
       if (cpos[i]!=cend[i] && (cpos[i]-cend[i]+cmindists[i].size())%cmindists[i].size()<=count) {
         cout << "# choking client: " << i << endl;
         sclient.choke();
@@ -774,7 +783,8 @@ int emain()
   }else{
     load_accs(argv[1],arr);
 //    load_seqs(argv[1],arr);
-    clcluster.init(arr.size(),ofile+".cl.dat");
+    avgcluster.init(arr.size(),ofile+".avg.dat");
+//    clcluster.init(arr.size(),ofile+".cl.dat");
     slcluster.init(arr.size(),ofile+".sl.dat");
 
     registerServer();

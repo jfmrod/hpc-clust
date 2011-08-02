@@ -13,10 +13,10 @@ all: $(targets)
 clean:
 	rm -f $(targets) *.o
 
-cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o
+cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o
 
 cluster-dist : cluster-dist.o cluster-common.o eseqcluster.o eseqclustercount.o
-cluster-dist2 : cluster-dist2.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o
+cluster-dist2 : cluster-dist2.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o
 
 
 cluster-partition : cluster-partition.o cluster-common.o eseqcluster.o eseqclustercount.o
@@ -44,4 +44,5 @@ cluster-common.o : eseqcluster.h eseqclustercount.h eseqclustersingle.h cluster-
 eseqcluster.o : eseqcluster.h eseqcluster.cpp
 eseqclustercount.o : eseqclustercount.h eseqclustercount.cpp
 eseqclustersingle.o : eseqcluster.h eseqclustersingle.h eseqclustersingle.cpp
+eseqclusteravg.o : eseqcluster.h eseqclusteravg.h eseqclusteravg.cpp
 

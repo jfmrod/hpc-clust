@@ -26,6 +26,15 @@ int eseqdistCount::unserial(const estr& data,int i)
 }
 
 
+
+ostream& operator<<(ostream& stream,const eseqdistCount& sdist)
+{
+  stream << "("<<sdist.x<<","<<sdist.y<<","<<sdist.dist<<","<<sdist.count<<")";
+  return(stream);
+}
+
+
+
 eseqclusterCount::eseqclusterCount(){}
 
 
@@ -36,18 +45,19 @@ void eseqclusterCount::check(ebasicarray<eseqdistCount>& dists)
   bool duplicate=false;
   for (i=0; i<dists.size(); ++i){
     if (i%(dists.size()/10)==0) { cout << i*10/dists.size(); flush(cout); }
-    xy2estr(dists[i].x,dists[i].y,xystr);
+//    xy2estr(dists[i].x,dists[i].y,xystr);
 
-    ebasichashmap<estr,int>::iter it;
+    eseqdisthash::iter it;
 
 //    cout << dists[i].dist << " " << dists[i].x << " " << dists[i].y;
-    it=smatrix.get(xystr);
+//    it=smatrix.get(xystr);
+    it=smatrix.get(dists[i]);
     if (it != smatrix.end()) {
       cout << "duplicate found: "+estr(dists[i].x)+","+dists[i].y << endl;
 //      cout << " *";
       duplicate=true;
     }else
-      smatrix.add(xystr,1);
+      smatrix.add(dists[i],1);
 //    cout << endl;
   }
   smatrix.clear();
@@ -218,18 +228,27 @@ long int eseqclusterCount::update(eblockarray<eseqdistCount>& dists,long int s)
 {
   int count=0;
   int i,j;
-  ebasicstrhashof<int> cmatrix;
-  ebasichashmap<estr,int>::iter it;
-  estr tmps; 
+  int tmp;
+  eseqdisthash cmatrix;
+  eseqdisthash::iter it;
+//  ebasicstrhashof<int> cmatrix;
+//  ebasichashmap<estr,int>::iter it;
+//  estr tmps; 
 
   for (i=s; i>=0; --i){
     if (dists[i].count==0) continue;
 
     if (smerge[dists[i].x]>=0 || smerge[dists[i].y]>=0){
-      xy2estr(scluster[dists[i].x],scluster[dists[i].y],tmps);
-      it=cmatrix.get(tmps);
+      dists[i].x=scluster[dists[i].x];
+      dists[i].y=scluster[dists[i].y];
+      if (dists[i].x>dists[i].y) { tmp=dists[i].x; dists[i].x=dists[i].y; dists[i].y=tmp; }
+
+//      xy2estr(scluster[dists[i].x],scluster[dists[i].y],tmps);
+//      it=cmatrix.get(tmps);
+      it=cmatrix.get(dists[i]);
       if (it==cmatrix.end())
-        cmatrix.add(tmps,i);
+//        cmatrix.add(tmps,i);
+        cmatrix.add(dists[i],i);
       else{
         j=*it;
         dists[i].count+=dists[j].count;
@@ -265,21 +284,28 @@ void eseqclusterCount::merge(int x,int y)
 
   estr tmpstr,tmpstr2;
 
+  eseqdistCount tmpdist,tmpdist2;
+  tmpdist.x=x;
+  tmpdist2.x=y;
   int i,j;
   for (it=inter[y].begin(); it!=inter[y].end(); ++it){
     j=scluster[*it];
     if (x==j || y==j) continue;
-    xy2estr(x,j,tmpstr);
-    xy2estr(y,j,tmpstr2);
+    tmpdist.y=j;
+    tmpdist2.y=j;
+//    xy2estr(x,j,tmpstr);
+//    xy2estr(y,j,tmpstr2);
 
-    ebasichashmap<estr,int>::iter tmpit2=smatrix.get(tmpstr2);
+//    ebasichashmap<estr,int>::iter tmpit2=smatrix.get(tmpstr2);
+    eseqdisthash::iter tmpit2=smatrix.get(tmpdist2);
     if(tmpit2==smatrix.end()) continue;
 
-    ebasichashmap<estr,int>::iter tmpit=smatrix.get(tmpstr);
+//    ebasichashmap<estr,int>::iter tmpit=smatrix.get(tmpstr);
+    eseqdisthash::iter tmpit=smatrix.get(tmpdist);
     if (tmpit!=smatrix.end())
       *tmpit+=*tmpit2;
     else{
-      smatrix.add(tmpstr,*tmpit2);
+      smatrix.add(tmpdist,*tmpit2);
       inter[x].push_back(j);
     }
     smatrix.erase(tmpit2);
@@ -291,54 +317,65 @@ void eseqclusterCount::add(eseqdistCount& sdist){
   if (sdist.count==0) return;
   ldieif(sdist.x<0 || sdist.y<0 || sdist.x>=scluster.size() || sdist.y>=scluster.size(),"out of bounds: sdist.x: "+estr(sdist.x)+" sdist.y: "+estr(sdist.y)+" scluster.size(): "+estr(scluster.size()));
 
-  int x=scluster[sdist.x];
-  int y=scluster[sdist.y];
+  eseqdistCount tmpdist;
+  tmpdist.x=scluster[sdist.x];
+  tmpdist.y=scluster[sdist.y];
+  tmpdist.count=sdist.count;
+  tmpdist.dist=sdist.dist;
 
-  ldieif(x<0 || y<0 || x>=scluster.size() || y>=scluster.size(),"out of bounds: sdist.x: "+estr(x)+" sdist.y: "+estr(y)+" scluster.size(): "+estr(scluster.size()));
+//  int x=scluster[sdist.x];
+//  int y=scluster[sdist.y];
+
+  ldieif(tmpdist.x<0 || tmpdist.y<0 || tmpdist.x>=scluster.size() || tmpdist.y>=scluster.size(),"out of bounds: sdist.x: "+estr(tmpdist.x)+" sdist.y: "+estr(tmpdist.y)+" scluster.size(): "+estr(scluster.size()));
   int tmp;
-  if (x>y) { tmp=x; x=y; y=tmp; tmp=sdist.x; sdist.x=sdist.y; sdist.y=tmp; }
+  if (tmpdist.x>tmpdist.y) { tmp=tmpdist.x; tmpdist.x=tmpdist.y; tmpdist.y=tmp; }
 
   int links;
   int i;
   estr xystr;
 
 //  cout << x << " " << y << " " << sdist.dist << endl;
-  ldieif(x==y,"should not happen: "+estr(x)+","+estr(y)+" --- "+estr(sdist.x)+","+estr(sdist.y));
+  ldieif(tmpdist.x==tmpdist.y,"should not happen: "+estr(tmpdist.x)+","+estr(tmpdist.y)+" --- "+estr(sdist.x)+","+estr(sdist.y));
 
-  xy2estr(x,y,xystr);
+//  xy2estr(x,y,xystr);
 
-  ebasichashmap<estr,int>::iter it;
+//  ebasichashmap<estr,int>::iter it;
+  eseqdisthash::iter it;
 
-  it=smatrix.get(xystr);
+//  it=smatrix.get(xystr);
+
+  it=smatrix.get(tmpdist);
   if (it==smatrix.end()){
-    if (scount[x]*scount[y]==sdist.count){
+    if (scount[tmpdist.x]*scount[tmpdist.y]==tmpdist.count){
 //    if (scount[x]*scount[y]==1){
-      merge(x,y);
+      merge(tmpdist.x,tmpdist.y);
 //      update(ind-1,x,y);
-      cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
+      cout << scluster.size()-mergecount << " " << tmpdist.dist << " " << tmpdist.x << " " << tmpdist.y << endl;
 //      sleep(1);
     }else{
-      smatrix.add(xystr,sdist.count);
+      smatrix.add(tmpdist,sdist.count);
+//      smatrix.add(xystr,sdist.count);
 //      smatrix.add(xystr,1);
-      inter[x].push_back(y); inter[y].push_back(x);
+      inter[tmpdist.x].push_back(tmpdist.y); inter[tmpdist.y].push_back(tmpdist.x);
     }
     return;
   }
 
-  (*it)+=sdist.count;
+  (*it)+=tmpdist.count;
 //  ++(*it);
 
   // complete linkage
-  if ((*it)==scount[x]*scount[y]){
-    merge(x,y);
+  if ((*it)==scount[tmpdist.x]*scount[tmpdist.y]){
+    merge(tmpdist.x,tmpdist.y);
 //    update(ind-1,x,y);
-    cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
+    cout << scluster.size()-mergecount << " " << tmpdist.dist << " " << tmpdist.x << " " << tmpdist.y << endl;
 //    sleep(1);
 //    cout << sdist.dist << " " << x << " " << y << endl;
     smatrix.erase(it);
   }
 }
 
+/*
 void eseqclusterCount::add(int ind){
   if (dists[ind].count==0) return;
   ldieif(dists[ind].x<0 || dists[ind].y<0 || dists[ind].x>=scluster.size() || dists[ind].y>=scluster.size(),"out of bounds: sdist.x: "+estr(dists[ind].x)+" sdist.y: "+estr(dists[ind].y)+" scluster.size(): "+estr(scluster.size()));
@@ -390,6 +427,7 @@ void eseqclusterCount::add(int ind){
     smatrix.erase(it);
   }
 }
+*/
 
 void eseqclusterCount::save(const estr& filename,const estrarray& arr)
 {

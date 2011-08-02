@@ -6,11 +6,13 @@
 #include <eutils/eoption.h>
 
 #include "cluster-common.h"
+#include "eseqclusteravg.h"
 
 //eseqcluster cluster;
 
 eblockarray<eseqdist> dists;
 
+eseqclusteravg avgcluster; // avg linkage
 eseqcluster clcluster; // complete linkage
 eseqclustersingle slcluster; // single linkage
 
@@ -94,7 +96,7 @@ int emain()
 
   epregister(dfunc);
 
-  estr ofile="cluster.dat";
+  estr ofile="cluster-results";
   estr dfile;
   float t=0.90;
   int ncpus=1;
@@ -189,12 +191,14 @@ int emain()
   cout << "# initializing cluster"<<endl;
   clcluster.init(arr.size(),ofile+".cl.dat");
   slcluster.init(arr.size(),ofile+".sl.dat");
+  avgcluster.init(arr.size(),ofile+".avg.dat");
 
   cout << "# starting clustering"<<endl;
   t1.reset();
   int tmp;
   int lastupdate=0;
   for (i=dists.size()-1; i>=0; --i){
+    avgcluster.add(dists[i]);
     clcluster.add(dists[i]);
     slcluster.add(dists[i]);
 //    cluster.update(i-1);
@@ -213,6 +217,9 @@ int emain()
   cout << "# done writing complete linkage clustering to: "<<ofile+".cl" << endl;
   slcluster.save(ofile+".sl.otu",arr);
   cout << "# done writing single linkage clustering to: "<<ofile+".sl" << endl;
+  avgcluster.save(ofile+".avg.otu",arr);
+  cout << "# done writing average linkage clustering to: "<<ofile+".avg" << endl;
+
 
 /*
   estr line;

@@ -56,7 +56,7 @@ class eseqcluster
   void merge(int x,int y);
   void init(int count,const estr& ofile);
   void add(int ind);
-  void add(eseqdist& sdist);
+  void add(const eseqdist& sdist);
 
 //  int update(ebasicarray<eseqdist>& dists,int s);
 
