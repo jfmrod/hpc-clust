@@ -443,7 +443,7 @@ template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
 int t_calc_dists_noise(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,float thres)
 {
   ernd rng;
-  float noise=0.025;
+  float noise=0.0125;
   long int i,i2,j;
   long int start,end;
 
@@ -517,6 +517,7 @@ int t_calc_dists(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,fl
   return(0);
 }
 
+/*
 template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
 void t_calc_dists_noise2(T& arr,K& tmpdists,int seqlen,int node,int tnodes,float thres)
 {
@@ -581,7 +582,7 @@ void t_calc_dists2(T& arr,K& tmpdists,int seqlen,int node,int tnodes,float thres
   }
 }
 
-
+*/
 
 //int calc_dists_nogap(estrarray& arr,ebasicarray<eseqdist>& dists,int node,int tnodes,float thres);
 //int calc_dists_nogap(estrarray& arr,earray<eseqdist>& dists,int node,int tnodes,float thres);

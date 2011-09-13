@@ -42,8 +42,8 @@ int step=1;
 long int totaldists=0;
 long int itotaldists=0;
 
-//eseqcluster      clcluster;
-eseqclusteravg      avgcluster;
+eseqcluster      clcluster;
+//eseqclusteravg      avgcluster;
 eseqclustersingle slcluster;
 
 
@@ -69,6 +69,17 @@ float t4time=0.0;
 
 int cnode=-1;
 emutex clusterMutex;
+
+
+void writeDistance(efile& f,eseqdist& sdist)
+{
+  estr tmpstr;
+  long int i;
+  sdist.serial(tmpstr);
+  f.write(tmpstr);
+}
+
+
 
 void serverClusterDistance(edcserver& server);
 
@@ -105,10 +116,10 @@ void serverFinished(edcserverClient& sclient,const estr& msg)
   cout << "# time receiving: " << t4time*0.001 << endl;
   cout << "# total distances: "<< itotaldists << endl;
 
-//  clcluster.save(ofile+".cl.otu",arr);
-//  cout << "# done writing complete linkage otu file: "<<ofile<<".cl.otu" << endl;
-  avgcluster.save(ofile+".avg.otu",arr);
-  cout << "# done writing average linkage otu file: "<<ofile<<".avg.otu" << endl;
+  clcluster.save(ofile+".cl.otu",arr);
+  cout << "# done writing complete linkage otu file: "<<ofile<<".cl.otu" << endl;
+//  avgcluster.save(ofile+".avg.otu",arr);
+//  cout << "# done writing average linkage otu file: "<<ofile<<".avg.otu" << endl;
   slcluster.save(ofile+".sl.otu",arr);
   cout << "# done writing single linkage otu file: "<<ofile<<".sl.otu" << endl;
 
@@ -136,9 +147,10 @@ void serverClusterDistance(edcserver& server)
 //        cout << "# client "<<j<<" cpos: "<< cpos[j] << " cend: " << cend[j] << " maxdist: " << maxdist<<" cfinished: " << cfinished[j] << " haveData: " << haveData << " finishedCount: " << finishedCount << endl;
       while(cpos[j]!=cend[j] && cmindists[j][cpos[j]].dist == maxdist) {
 //      cout << "+ " << idist << " " << maxdist << " " << cpos[idist] << " " << cend[idist] << endl;
-        avgcluster.add(cmindists[j][cpos[j]]);
+//        avgcluster.add(cmindists[j][cpos[j]]);
+        writeDistance(fdists,cmindists[j][cpos[j]]);
 //        clcluster.add(cmindists[j][cpos[j]]);
-        slcluster.add(cmindists[j][cpos[j]]);
+//        slcluster.add(cmindists[j][cpos[j]]);
         cpos[j]=(cpos[j]+1)%cmindists[j].size();
       }
 //      cout << "# client "<<j<<" cpos: "<< cpos[j] << " cend: " << cend[j] << " maxdist: " << maxdist<<" cfinished: " << cfinished[j] << " haveData: " << haveData << " finishedCount: " << finishedCount << endl;
@@ -363,14 +375,6 @@ void serverDistanceThreshold(edcserver& server)
     serverCluster(server);
 }
 */
-
-void writeDistance(efile& f,eseqdist& sdist)
-{
-  estr tmpstr;
-  long int i;
-  sdist.serial(tmpstr);
-  f.write(tmpstr);
-}
 
 void savearray(efile& f,ebasicarray<eseqdist>& sdist)
 {
@@ -755,16 +759,14 @@ int emain()
 
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <file>");
 
-  if (distfile.len()){
-    fdists.open(distfile,"w");
-  }
-
-  
+ 
 
 
   int i,i2,j;
 
   if (host.len()>0){
+    distfile="";
+
     load_seqs_compressed(argv[1],nodeArr,seqlen);
 
     cout << "# creating " << nthreads << " threads" << endl;
@@ -781,10 +783,13 @@ int emain()
     client.connect(host,12345);
     cerr << " waiting for command" << endl;
   }else{
+    ldieif(!distfile.len(),"no distance file specified");
+    fdists.open(distfile,"w");
+
     load_accs(argv[1],arr);
 //    load_seqs(argv[1],arr);
-    avgcluster.init(arr.size(),ofile+".avg.dat");
-//    clcluster.init(arr.size(),ofile+".cl.dat");
+//    avgcluster.init(arr.size(),ofile+".avg.dat");
+    clcluster.init(arr.size(),ofile+".cl.dat");
     slcluster.init(arr.size(),ofile+".sl.dat");
 
     registerServer();

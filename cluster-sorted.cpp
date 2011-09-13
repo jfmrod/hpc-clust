@@ -5,79 +5,47 @@
 
 #include "cluster-common.h"
 
-
 estrarray arr;
-ebasicarray<eseqdist> mindists;
-
-eseqcluster cluster;
-const int tbucket=10000;
+eseqcluster cl;
 
 
-void loadarray(ebasicarray<eseqdist>& dists,const estr& filename)
+void readDistance(efile& f,eseqdist& sdist)
 {
-  estr data;
-  efile f(filename);
-
-  cout << "f.size: " << f.size() << endl;
-
-  ldieif(!f.read(data),"error reading from file");
-  cout << "data.len: " << data.len() << endl;
-  long int i=0;
-  eseqdist d;
-  while (i!=-1 && data.len()){
-    i=d.unserial(data,i);
-    if (i==-1) break;
-    dists.add(d);
-    data.del(0,i);
-    i=0;
-  }
-  f.close();
-
-/*
-  estr datastr;
-  mindists.serial(datastr);
-  efile f("distances.dat2");
-  f.read(datastr);
-  f.close();
-  ldieif(mindists.unserial(datastr,0)==-1,"error reading sorted-dists.bacteria.dat");
-*/
+  estr tmpstr;
+  long int i;
+  sdist.serial(tmpstr);
+  f.write(tmpstr);
 }
 
-
-void doClustering()
+void doClustering(const estr& seqsfile,const estr& inputfile)
 {
+  load_accs(seqsfile,arr);
+  cl.init(arr.size(),"output.txt");
+
   cout << "# starting clustering " << endl;
-  int i;
+  int i,lasti;
 
-  cout << "# reading sorted distances to file \"sorted-dists.dat\"" << endl;
-  loadarray(mindists,"distances-sorted.dat");
+  efile f(inputfile);
 
-  cout << "# done" << endl;
-
-  cout << "# min: " << mindists[0].dist << " max: "<<mindists[mindists.size()-1].dist << endl;
-
-
-  cluster.check(mindists);
-//  for (i=mindists.size()-1; i>=0; --i){
-//    cluster.add(mindists[i]);
-//  }
-//  cout << endl;
-
-  cout << "# done" << endl;
-
-//  while (1) {
-//    datastr.clear();
-//    mindists.serial(datastr);
-//    mindists.clear();
-//    mindists.unserial(datastr,0);
-//  }
+  estr data;
+  eseqdist sdist;
+  while (f.read(data,1024)){
+    lasti=0;
+    for (i=sdist.unserial(data,0); i!=-1; i=sdist.unserial(data,i)){
+//      cout << i << " "<< data.len() << " " <<  sdist.dist << endl;
+      cl.add(sdist);
+      lasti=i;
+    }
+//    cout << i << " " << lasti<<" "<< data.len() << endl;
+    data=data.substr(lasti);
+  }
 }
 
 
 int emain()
 {
-  estr host;
-  epregister(mindists);
+  estr inputfile;
+  epregister(inputfile);
   eparseArgs(argvc,argv);
 
   epregisterClass(eseqdist);
@@ -86,17 +54,9 @@ int emain()
   epregisterClassProperty(eseqdist,x);
   epregisterClassProperty(eseqdist,y);
 
-  epregisterClass(ebasicarray<eseqdist>);
-  epregisterClassInheritance(ebasicarray<eseqdist>,ebasearray);
-  epregisterClassMethod(ebasicarray<eseqdist>,subset);
-  epregisterClassSerializeMethod(ebasicarray<eseqdist>);
+  ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" <seqs> <dists>");
 
-  ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <file>");
-
-  load_accs(argv[1],arr);
-  cluster.init(arr.size(),"output.txt");
-
-  doClustering();
+  doClustering(argv[1],argv[2]);
 
   return(0);
 }
