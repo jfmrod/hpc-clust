@@ -36,7 +36,7 @@ class eseqclusteravg
 
   eseqclusteravg();
 
-  void init(int count,const estr& filename);
+  void init(int count,const estr& filename,const estr& seqsfile);
 
   void merge(const eseqdistCount& dist);
 

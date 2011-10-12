@@ -7,8 +7,9 @@
 eseqclustersingle::eseqclustersingle(){}
 
 
-void eseqclustersingle::init(int count,const estr& ofilename) {
+void eseqclustersingle::init(int count,const estr& ofilename,const estr& seqsfile) {
   ofile.open(ofilename,"w");
+  ofile.write("# seqsfile: "+seqsfile);
   int i;
   scount.reserve(count);
   scluster.reserve(count);

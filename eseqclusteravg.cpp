@@ -35,8 +35,9 @@ void eseqclusteravg::check(ebasicarray<eseqdistCount>& dists)
   cout << "# no duplicates found!" << endl;
 }
 
-void eseqclusteravg::init(int count,const estr& filename) {
+void eseqclusteravg::init(int count,const estr& filename,const estr& seqsfile) {
   ofile.open(filename,"w");
+  ofile.write("# seqsfile: "+seqsfile);
   int i;
   incmaxdist=0.0;
   lastdist=0.0;
@@ -205,7 +206,7 @@ void eseqclusteravg::merge(const eseqdistCount& sdist)
         }
       }
 */
-      tmpit->dist=(tmpit->dist*tmpit->count+tmpit2->dist*tmpit2->count)/(tmpit->count+tmpit2->count);
+      tmpit->dist=((double)tmpit->dist*tmpit->count+(double)tmpit2->dist*tmpit2->count)/(double)(tmpit->count+tmpit2->count);
       tmpit->count+=tmpit2->count;
     }else{
       tmpdist.dist=tmpit2->dist;
@@ -235,12 +236,12 @@ float eseqclusteravg::getIncompleteMaxDist(float newdist)
 //    lassert(scount[it->x]==0 || scount[it->y]==0);
     if (scount[it->x]==0 || scount[it->y]==0) continue;
     if (scount[it->x]*scount[it->y]!=it->count){
-      tmpdist=(it->count*it->dist+(scount[it->x]*scount[it->y]-it->count)*newdist)/(scount[it->x]*scount[it->y]);
+      tmpdist=((double)it->count*it->dist+(double)(scount[it->x]*scount[it->y]-it->count)*newdist)/(double)(scount[it->x]*scount[it->y]);
       if (tmpdist>maxdist) { maxdist=tmpdist; maxit=it; }
     }
   }
   if (maxit!=smatrix.end()){
-    cout << "# maxit: " << *maxit << " scount[x]: " << scount[maxit->x] << " scount[y]: "<< scount[maxit->y] << " nextthres: " << (completemerges.size()?estr( (scount[maxit->x]*scount[maxit->y]*completemerges.begin()->dist-maxit->count*maxit->dist)/(scount[maxit->x]*scount[maxit->y]-maxit->count)):estr("n/a")) << endl;
+    cout << "# maxit: " << *maxit << " scount[x]: " << scount[maxit->x] << " scount[y]: "<< scount[maxit->y] << " nextthres: " << (completemerges.size()?estr( ((double)scount[maxit->x]*scount[maxit->y]*completemerges.begin()->dist-(double)maxit->count*maxit->dist)/(double)(scount[maxit->x]*scount[maxit->y]-maxit->count)):estr("n/a")) << endl;
   }
   return(maxdist);
 }
@@ -324,7 +325,7 @@ void eseqclusteravg::add(const eseqdist& sdist){
     return;
   }
 
-  it->dist=(it->dist*it->count+tmpdist.dist*tmpdist.count)/(it->count+tmpdist.count);
+  it->dist=((double)it->dist*it->count+(double)tmpdist.dist*tmpdist.count)/(double)(it->count+tmpdist.count);
   it->count+=tmpdist.count;
 
   // complete linkage
@@ -334,11 +335,11 @@ void eseqclusteravg::add(const eseqdist& sdist){
       ofile.write(estr(scluster.size()-mergecount)+" "+it->dist+" "+it->x+" "+it->y+"\n");
       merge(*it);
       smatrix.erase(it);
-      incmaxdist=getIncompleteMaxDist(sdist.dist);
-      while (completemerges.size() && completemerges.begin()->dist>=incmaxdist){
-        mergeComplete(incmaxdist);
-        incmaxdist=getIncompleteMaxDist(sdist.dist);
-      }
+//      incmaxdist=getIncompleteMaxDist(sdist.dist);
+//      while (completemerges.size() && completemerges.begin()->dist>=incmaxdist){
+//        mergeComplete(incmaxdist);
+//        incmaxdist=getIncompleteMaxDist(sdist.dist);
+//      }
     }else{
       completemerges.insert(*it);
 //      cout << "# " << scluster.size()-mergecount << " " << tmpdist.dist << " " << tmpdist.x << " " << tmpdist.y << " " << smatrix.size() << " " << completemerges.size() << " " << incmaxdist << endl;

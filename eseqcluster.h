@@ -54,7 +54,7 @@ class eseqcluster
   eseqcluster();
 
   void merge(int x,int y);
-  void init(int count,const estr& ofile);
+  void init(int count,const estr& ofile,const estr& seqsfile);
   void add(int ind);
   void add(const eseqdist& sdist);
 

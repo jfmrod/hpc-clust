@@ -23,7 +23,7 @@ cluster-partition : cluster-partition.o cluster-common.o eseqcluster.o eseqclust
 
 cluster2 : cluster2.o cluster-common.o eseqcluster.o eseqclustercount.o
 
-cluster-sorted : cluster-sorted.o cluster-common.o eseqcluster.o eseqclustercount.o
+cluster-sorted : cluster-sorted.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o
 cluster-uniq : cluster-uniq.o cluster-common.o eseqcluster.o eseqclustercount.o
 
 
