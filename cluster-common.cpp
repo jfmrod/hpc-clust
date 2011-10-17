@@ -173,30 +173,6 @@ void load_seqs(const estr& filename,estrarray& arr,eintarray& arrgaps)
   cout << "# seqs: " << arr.size() << endl;
 }
 
-inline unsigned char nuc_compress(unsigned char c){
-  switch(c){
-   case 'A': return(0x00);
-   case 'T': return(0x01);
-   case 'U': return(0x01);
-   case 'G': return(0x02);
-   case 'C': return(0x03);
-   case 'R': return(0x04);
-   case 'Y': return(0x05);
-   case 'S': return(0x06);
-   case 'W': return(0x07);
-   case 'K': return(0x08);
-   case 'M': return(0x09);
-   case 'B': return(0x0A);
-   case 'D': return(0x0B);
-   case 'H': return(0x0C);
-   case 'V': return(0x0D);
-   case 'N': return(0x0E);
-   case '-': return(0x0F);
-  }
-  ldie("unknown nucleotide:"+estr(c));
-  return(0x0F);
-}
-
 estr seq_compress(const estr& seq)
 {
   int i;

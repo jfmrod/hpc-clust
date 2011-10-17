@@ -20,6 +20,30 @@
 #include "eseqclustersingle.h"
 #include "eseqclustercount.h"
 
+inline unsigned char nuc_compress(unsigned char c){
+  switch(c){
+   case 'A': return(0x00u);
+   case 'T': return(0x01u);
+   case 'U': return(0x01u);
+   case 'G': return(0x02u);
+   case 'C': return(0x03u);
+   case 'R': return(0x04u);
+   case 'Y': return(0x05u);
+   case 'S': return(0x06u);
+   case 'W': return(0x07u);
+   case 'K': return(0x08u);
+   case 'M': return(0x09u);
+   case 'B': return(0x0Au);
+   case 'D': return(0x0Bu);
+   case 'H': return(0x0Cu);
+   case 'V': return(0x0Du);
+   case 'N': return(0x0Eu);
+   case '-': return(0x0Fu);
+  }
+  ldie("unknown nucleotide:"+estr(c));
+  return(0x0F);
+}
+
 inline void getL2(int& l,int w,int x,int y)
 {
   if (y<x) { int t; t=x; x=y; y=t; }

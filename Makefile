@@ -2,17 +2,17 @@ LDLIBS=`eutils-config --libs`
 LDFLAGS:=${LDFLAGS} -pthread
 CC=g++
 CXXFLAGS:=${CXXFLAGS} -pthread -march=nocona -mtune=nocona -O3 # -g # -pg 
-#CXXFLAGS:=${CXXFLAGS} -pthread -pg # -g
 
 .PHONY: all clean
 
-targets=cluster cluster-fast cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-check cluster-partition cluster-dist2
+targets=cluster-partition2 cluster cluster-profile cluster-fast cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-check cluster-partition cluster-dist2 cluster-evolve
 
 all: $(targets)
 
 clean:
 	rm -f $(targets) *.o
 
+cluster-evolve: cluster-evolve.o
 cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o
 
 cluster-dist : cluster-dist.o cluster-common.o eseqcluster.o eseqclustercount.o
@@ -20,6 +20,7 @@ cluster-dist2 : cluster-dist2.o cluster-common.o eseqcluster.o eseqclustercount.
 
 
 cluster-partition : cluster-partition.o cluster-common.o eseqcluster.o eseqclustercount.o
+cluster-partition2 : cluster-partition2.o cluster-common.o eseqcluster.o eseqclustercount.o
 
 cluster2 : cluster2.o cluster-common.o eseqcluster.o eseqclustercount.o
 
@@ -36,6 +37,7 @@ cluster-mpi : cluster-mpi.o cluster-common.o eseqcluster.o eseqclustercount.o
 
 cluster-cooc : cluster-cooc.o cluster-common.o eseqcluster.o eseqclustercount.o
 
+cluster-profile : cluster-profile.o
 cluster-fast : cluster-fast.o
 
 
