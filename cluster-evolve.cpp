@@ -83,6 +83,27 @@ void mutateseq(estr& seqstr,int p)
     seqstr[p]='C';
 }
 
+
+void generateChimeras(estrarray& chimeras,estrarray& seqs,float percentage)
+{
+  int i,j,l,cutpos;
+
+  estr chimseq;
+  for (i=0; i<seqs.size()*percentage; ++i){
+    chimseq.clear();
+    j=rnd.uniform()*seqs.size();
+    do l=rnd.uniform()*seqs.size(); while (l==j);
+    cutpos=rnd.uniform()*seqs[j].len();
+    chimseq=seqs[j].substr(0,cutpos);
+    chimseq+=seqs[l].substr(cutpos);
+    chimeras.add(estr("CHIMERA_")+i+"|cutpos="+cutpos+seqs.keys(j)+"|"+seqs.keys(l),chimseq);
+  }
+}
+
+
+
+
+
 void generateCoalescenceTree(earray<eintarray>& seqs,int popsize)
 {
   int i,j,g,npopsize;
@@ -204,14 +225,14 @@ void mutateSeqLength(estr& seqstr,double mutrate,int length)
 {
   long int nextmut,i;
 
-  nextmut=rnd.uniform()*rnd.exponential(1.0/mutrate); // this ensures that the first mutation is randomly distributed
-  for (i=0; i<length; ++i){
+  nextmut=rnd.uniform()*rnd.exponential((double)length/mutrate); // this ensures that the first mutation is randomly distributed
+//  for (i=0; i<length; ++i){
     while (nextmut<seqstr.len()) {
       mutateseq(seqstr,nextmut);
-      nextmut+=rnd.exponential(1.0/mutrate);
+      nextmut+=rnd.exponential((double)length/mutrate);
     }
     nextmut-=seqstr.len();
-  }
+//  }
 }
 
 
@@ -262,8 +283,12 @@ ostream& operator<<(ostream& stream,const ebranch& b)
 
 void makeRandomPhylogeneticTree2(const estr& initseq,estrarray& seqs,double mutrate,int popsize)
 {
-  const double brate=1.5e-9;  // speciation every 1 500 000 000  generations which gives around 3% divergence between species ancestors at time of divergence which gives around 6% divergence between extant individuals of the two species populations
+  const double brate=1.0e-2*1.0/popsize;  // speciation every 1 500 000 000  generations which gives around 3% divergence between species ancestors at time of divergence which gives around 6% divergence between extant individuals of the two species populations
+//  const double brate=1.5e-9;  // speciation every 1 500 000 000  generations which gives around 3% divergence between species ancestors at time of divergence which gives around 6% divergence between extant individuals of the two species populations
   const double drate=brate/popsize;
+
+//  mutrate=mutrate*brate/1.5e-9; // correct the mutation rate given we are not using real generation times for the branches
+  mutrate=mutrate*brate/1.5e-7; // correct the mutation rate given we are not using real generation times for the branches
 
   multiset<ebranch*,cmp_btime> birth;
   multiset<ebranch*,cmp_dtime> death;
@@ -280,7 +305,7 @@ void makeRandomPhylogeneticTree2(const estr& initseq,estrarray& seqs,double mutr
 
   
   ebranch *b,*d,*p;
-  while (btime<1000000000000000ul && cspecies>0){
+  while (btime<(double)popsize*1.0e2l*1.0e4l && cspecies>0){ // get at least 100 fixations of the most common ancestor
     b=(*birth.begin());
     d=(*death.begin());
     lassert(!b->extant || !d->extant);
@@ -593,9 +618,9 @@ int emain()
   profileLoad(argv[1]);
   profileInitSeq(initseq,profile);
 
-  estrarray seqs;
+  estrarray mcaseqs,seqs;
   earray<estr> popseqs;
-  makeRandomPhylogeneticTree2(initseq,seqs,mutrate,popsize);
+  makeRandomPhylogeneticTree2(initseq,mcaseqs,mutrate,popsize);
 
 //  for (i=0; i<seqs.size(); ++i)
 //    printf("%-5s %s\n",seqs.keys(i)._str,seqs[i]._str);
@@ -604,16 +629,23 @@ int emain()
 
   estr info;
   earray<eintarray> ctree;
-  for (i=0; i<seqs.size(); ++i){
+  for (i=0; i<mcaseqs.size(); ++i){
     ctree.clear(); popseqs.clear();
     generateCoalescenceTree(ctree,100);
-    generateSequencesWithCTree(ctree,seqs[i],mutrate*0.03/4.0*1.0e10/1.0e2/2.0,popseqs); // although we are simulating only 100 sequences in the coalescence tree, we want it to represent the mutations of an evolving population with around 10^9 individuals, thus we need a higher mutation rate. Since species level divergence is around 3%, we are adjusting the number of mutations to be 3% on average for the population
-    printf("# %-30s %s\n",seqs.keys(i)._str,seqs[i]._str);
+    generateSequencesWithCTree(ctree,mcaseqs[i],mutrate*0.03/4.0*1.0e10/1.0e2/2.0,popseqs); // although we are simulating only 100 sequences in the coalescence tree, we want it to represent the mutations of an evolving population with around 10^9 individuals, thus we need a higher mutation rate. Since species level divergence is around 3%, we are adjusting the number of mutations to be 3% on average for the population
+    printf("# %-30s %s\n",mcaseqs.keys(i)._str,mcaseqs[i]._str);
     for (j=0; j<popseqs.size(); ++j){
-      info=seqs.keys(i)+"|"+estr(j);
+      info=mcaseqs.keys(i)+"|"+estr(j);
       printf("%-30s %s\n",info._str,popseqs[j]._str);
+      seqs.add(info,popseqs[j]);
     }
   }
+
+  estrarray chimeras;
+  generateChimeras(chimeras,seqs,0.05);
+
+  for (i=0; i<chimeras.size(); ++i)
+      printf("%-30s %s\n",chimeras.keys(i)._str,chimeras.values(i)._str);
 
   exit(0);
 
