@@ -32,7 +32,7 @@ cluster-cmp: cluster-cmp.o cluster-common.o eseqcluster.o eseqclustercount.o
 cluster-check: cluster-check.o cluster-common.o eseqcluster.o eseqclustercount.o
 cluster-nj: cluster-nj.o cluster-common.o eseqcluster.o eseqclustercount.o
 
-cluster-mpi : cluster-mpi.o cluster-common.o eseqcluster.o eseqclustercount.o
+cluster-mpi : cluster-mpi.cpp cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o
 	g++ `mpic++ --showme:compile` $(CXXFLAGS) -o $@ $^ $(LDLIBS) `mpic++ --showme:link`
 
 cluster-cooc : cluster-cooc.o cluster-common.o eseqcluster.o eseqclustercount.o
