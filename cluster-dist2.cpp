@@ -88,9 +88,9 @@ void serverFinished(edcserverClient& sclient,const estr& msg)
   int i;
   bool allFinished=true;
   bool foundSocket=false;
-  for (i=0; i<sclient.server->sockets.size(); ++i){
+  for (i=0; i<sclient.server.sockets.size(); ++i){
     foundSocket=true;
-    if (&sclient.server->getClient(i)==&sclient){
+    if (&sclient.server.getClient(i)==&sclient){
       cmindistsMutexs[i].lock();
       cfinished[i]=1;
       if (cpos[i]==cend[i])
@@ -216,8 +216,8 @@ void serverRecvDistance(edcserverClient& sclient,const estr& msg)
 //  unstime+=t3.lap();
   bool foundServer=false;
   int i,j,count;
-  for (i=0; i<sclient.server->sockets.size(); ++i){
-    if (&sclient.server->getClient(i)==&sclient){
+  for (i=0; i<sclient.server.sockets.size(); ++i){
+    if (&sclient.server.getClient(i)==&sclient){
       cmindistsMutexs[i].lock();
       if (cend[i]==cpos[i])
         ++haveData;
@@ -237,7 +237,7 @@ void serverRecvDistance(edcserverClient& sclient,const estr& msg)
       if (haveData==cmindists.size()-finishedCount && clusterMutex.trylock()){
         t5.reset();
         cmindistsMutexs[i].unlock();
-        serverClusterDistance(*sclient.server);
+        serverClusterDistance(sclient.server);
         cmindistsMutexs[i].lock();
         clstrtime+=t5.lap();
         clusterMutex.unlock();
@@ -524,8 +524,10 @@ void serverCluster(edcserver& server)
 
 int ncpus=32;
 
-void doIncoming(edcserver& server)
+void doIncoming(esocket& socket)
 {
+  edcserver& server(dynamic_cast<edcserver&>(socket));
+  cout << "server.sockets.size(): " << server.sockets.size() << endl;
   if (server.sockets.size()==ncpus)
     serverStartComputation(server);
 }
@@ -789,8 +791,8 @@ int emain()
     load_accs(argv[1],arr);
 //    load_seqs(argv[1],arr);
 //    avgcluster.init(arr.size(),ofile+".avg.dat");
-    clcluster.init(arr.size(),ofile+".cl.dat");
-    slcluster.init(arr.size(),ofile+".sl.dat");
+    clcluster.init(arr.size(),ofile+".cl.dat",argv[1]);
+    slcluster.init(arr.size(),ofile+".sl.dat",argv[1]);
 
     registerServer();
     epregister(server);

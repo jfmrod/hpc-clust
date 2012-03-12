@@ -203,7 +203,7 @@ int emain()
   if (sl)
     slcluster.init(arr.size(),ofile+".sl.dat",argv[1]);
   if (al)
-    avgcluster.init(arr.size(),ofile+".avg.dat",argv[1]);
+    avgcluster.init(arr.size(),ofile+".al.dat",argv[1]);
 
   cout << "# starting clustering"<<endl;
   t1.reset();
@@ -228,8 +228,8 @@ int emain()
   cout << "# total time: " << dtime+clustime+stime << endl;
   cout << "# distances within threshold: " << totaldists << endl;
 
-  clcluster.save(ofile+".cl.otu",arr);
-  cout << "# done writing complete linkage clustering to: "<<ofile+".cl" << endl;
+//  clcluster.save(ofile+".cl.otu",arr);
+//  cout << "# done writing complete linkage clustering to: "<<ofile+".cl" << endl;
 //  slcluster.save(ofile+".sl.otu",arr);
 //  cout << "# done writing single linkage clustering to: "<<ofile+".sl" << endl;
 //  avgcluster.save(ofile+".avg.otu",arr);
