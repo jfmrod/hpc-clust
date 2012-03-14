@@ -5,7 +5,7 @@ CXXFLAGS:=${CXXFLAGS} -pthread -march=nocona -mtune=nocona -O3 # -g # -pg
 
 .PHONY: all clean
 
-targets=cluster-partition2 cluster cluster-profile cluster-fast cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-check cluster-partition cluster-dist2 cluster-evolve
+targets=cluster-short cluster-partition2 cluster cluster-profile cluster-fast cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-check cluster-partition cluster-dist2 cluster-evolve
 
 all: $(targets)
 
@@ -14,6 +14,7 @@ clean:
 
 cluster-evolve: cluster-evolve.o
 cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o
+cluster-short : cluster-short.o cluster-common.o
 
 cluster-dist : cluster-dist.o cluster-common.o eseqcluster.o eseqclustercount.o
 cluster-dist2 : cluster-dist2.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o
