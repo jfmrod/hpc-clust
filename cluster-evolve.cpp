@@ -5,83 +5,11 @@
 #include <eutils/eregexp.h>
 
 #include "cluster-common.h"
+#include "seq-profile.h"
 
 earray<ebasicarray<float> > profile;
 
-eregexp re_wspace("[ \t]+");
-
-void profileLoad(const estr& filename)
-{
-  efile f(filename);
-
-  ldieif(!f.exists(),"file not found: "+filename);
-
-  int i;
-  estr line;
-  while (f.readln(line)){
-    if (line.len()==0 || line[0]=='#') continue;
-    estrarray arr(re_explode(line,re_wspace));
-    ldieif(arr.size()<10,"not enough elements in line: "+line);
-    profile.add(ebasicarray<float>());
-    ldieif(arr[0].i()!=(int)(profile.size()-1),"wrong id on line: "+line);
-    profile[profile.size()-1].init(6);
-    for (i=0; i<6; ++i)
-      profile[profile.size()-1][i]=arr[i+3].f();
-  }
-}
-
-char getMutation(ebasicarray<float>& bpp)
-{
-  float r=rnd.uniform()*(bpp[0]+bpp[1]+bpp[2]+bpp[3]);
-  r-=bpp[0];
-  if (r<0.0) return('A');
-  r-=bpp[1];
-  if (r<0.0) return('T');
-  r-=bpp[2];
-  if (r<0.0) return('G');
-  return('C');
-}
-
-void profileInitSeq(estr& seq,earray<ebasicarray<float> >& profile)
-{
-  int i;
-  seq.clear();
-  for (i=0; i<profile.size(); ++i)
-    seq+=getMutation(profile[i]);
-}
-
-void profileMutateTimes(estr& seq,earray<ebasicarray<float> >& profile,float mutrate,long int& mutpos,int ntimes)
-{
-  for (;ntimes>0; --ntimes){
-    while (mutpos<seq.len()){
-      seq[mutpos]=getMutation(profile[mutpos]);
-      mutpos+=rnd.exponential(1.0/mutrate);
-    }
-    mutpos-=seq.len();
-  }
-}
-
-void profileMutate(estr& seq,earray<ebasicarray<float> >& profile,float mutrate,long int& mutpos)
-{
-  while (mutpos<seq.len()){
-    seq[mutpos]=getMutation(profile[mutpos]);
-    mutpos+=rnd.exponential(1.0/mutrate);
-  }
-  mutpos-=seq.len();
-}
-
-void mutateseq(estr& seqstr,int p)
-{
-  double f=rnd.uniform();
-  if (f<0.25)
-    seqstr[p]='A';
-  else if (f<0.50)
-    seqstr[p]='T';
-  else if (f<0.75)
-    seqstr[p]='G';
-  else
-    seqstr[p]='C';
-}
+estr ofile;
 
 
 void generateChimeras(estrarray& chimeras,estrarray& seqs,float percentage)
@@ -207,34 +135,6 @@ void generateRandomSequences(const estr& initseq,double mutrate,int popsize,earr
 }
 */
 
-void mutateSeqs(earray<estr>& seqstr,double mutrate)
-{
-  long int nextmut,i;
-
-  nextmut=rnd.uniform()*rnd.exponential(1.0/mutrate);
-  for (i=0; i<seqstr.size(); ++i){
-    while (nextmut<seqstr[i].len()) {
-      mutateseq(seqstr[i],nextmut);
-      nextmut+=rnd.exponential(1.0/mutrate);
-    }
-    nextmut-=seqstr[i].len();
-  }
-}
-
-void mutateSeqLength(estr& seqstr,double mutrate,int length)
-{
-  long int nextmut,i;
-
-  nextmut=rnd.uniform()*rnd.exponential((double)length/mutrate); // this ensures that the first mutation is randomly distributed
-//  for (i=0; i<length; ++i){
-    while (nextmut<seqstr.len()) {
-      mutateseq(seqstr,nextmut);
-      nextmut+=rnd.exponential((double)length/mutrate);
-    }
-    nextmut-=seqstr.len();
-//  }
-}
-
 
 
 
@@ -259,6 +159,7 @@ class ebranch
   list<ebranch*>::iterator it;
   ebranch *parent;
   int id;
+  int patch;
   long int dtime;
   long int btime;
   long int ntime;
@@ -268,6 +169,7 @@ class ebranch
   multiset<ebranch*,cmp_btime>::iterator bit;
   multiset<ebranch*,cmp_dtime>::iterator dit;
   ebranch(ebranch *_parent,long int _ntime,long int _btime,long int _dtime): parent(_parent),ntime(_ntime),btime(_btime),dtime(_dtime),extant(true),xtime(-1) {}
+  ebranch(ebranch *_parent,long int _ntime,long int _btime,long int _dtime,int _patch): parent(_parent),ntime(_ntime),btime(_btime),dtime(_dtime),extant(true),xtime(-1),patch(_patch) {}
   void add(multiset<ebranch*,cmp_btime>& bset,multiset<ebranch*,cmp_dtime>& dset) { bit=bset.insert(this); dit=dset.insert(this); }
   void remove(multiset<ebranch*,cmp_btime>& bset,multiset<ebranch*,cmp_dtime>& dset) { bset.erase(bit); dset.erase(dit); }
 };
@@ -281,31 +183,32 @@ ostream& operator<<(ostream& stream,const ebranch& b)
   return(stream);
 }
 
-void makeRandomPhylogeneticTree2(const estr& initseq,estrarray& seqs,double mutrate,int popsize)
+void makeRandomPhylogeneticTree(const estr& initseq,estrarray& seqs,double mutrate,int popsize)
 {
-  const double brate=1.0e-2*1.0/popsize;  // speciation every 1 500 000 000  generations which gives around 3% divergence between species ancestors at time of divergence which gives around 6% divergence between extant individuals of the two species populations
+  const double brate=1.0e-3;  // speciation every 1 500 000 000  generations which gives around 3% divergence between species ancestors at time of divergence which gives around 6% divergence between extant individuals of the two species populations
+//  const double brate=1.0e-2*1.0/popsize;  // speciation every 1 500 000 000  generations which gives around 3% divergence between species ancestors at time of divergence which gives around 6% divergence between extant individuals of the two species populations
 //  const double brate=1.5e-9;  // speciation every 1 500 000 000  generations which gives around 3% divergence between species ancestors at time of divergence which gives around 6% divergence between extant individuals of the two species populations
   const double drate=brate/popsize;
 
 //  mutrate=mutrate*brate/1.5e-9; // correct the mutation rate given we are not using real generation times for the branches
-  mutrate=mutrate*brate/1.5e-7; // correct the mutation rate given we are not using real generation times for the branches
+  mutrate=mutrate*brate*1.5e7; // correct the mutation rate given we are not using real generation times for the branches
 
   multiset<ebranch*,cmp_btime> birth;
   multiset<ebranch*,cmp_dtime> death;
-  list<ebranch*> branches;
+//  list<ebranch*> branches;
 
   long int btime=0;
   long int dtime=0;
   long int cspecies=1;
   ebranch *rbranch = new ebranch(0x00,btime,btime+rnd.exponential(1.0l/brate),dtime+rnd.exponential(1.0l/drate));
   rbranch->add(birth,death);
-  branches.push_back(rbranch);
-  rbranch->it=(--branches.end());
+//  branches.push_back(rbranch);
+//  rbranch->it=(--branches.end());
   int j;
 
   
   ebranch *b,*d,*p;
-  while (btime<(double)popsize*1.0e2l*1.0e4l && cspecies>0){ // get at least 100 fixations of the most common ancestor
+  while (btime<(double)popsize*2.0/brate && cspecies>0){ // get at least 10 fixations of the most common ancestor
     b=(*birth.begin());
     d=(*death.begin());
     lassert(!b->extant || !d->extant);
@@ -316,22 +219,17 @@ void makeRandomPhylogeneticTree2(const estr& initseq,estrarray& seqs,double mutr
       btime=b->btime;
       b->extant=false;
       b->xtime=btime;
-//      b->btime=btime+rnd.exponential(1.0/brate);
-//      b->add(birth,death);
 
-//      b->branches.add(sidcount);
       ebranch *nb1=new ebranch(b,btime,btime+rnd.exponential(1.0l/brate),b->dtime);
       nb1->add(birth,death);
-      branches.push_back(nb1);
-      nb1->it=(--branches.end());
+//      branches.push_back(nb1);
+//      nb1->it=(--branches.end());
       b->branches.add(nb1);
 
-//      b->branches.add(sidcount);
       ebranch *nb2=new ebranch(b,btime,btime+rnd.exponential(1.0l/brate),dtime+rnd.exponential(1.0l/drate));
       nb2->add(birth,death);
-      branches.push_back(nb2);
-      nb2->it=(--branches.end());
-      lassert(*(--branches.end())!=nb2);
+//      branches.push_back(nb2);
+//      nb2->it=(--branches.end());
       b->branches.add(nb2);
 
       ++cspecies;
@@ -347,25 +245,24 @@ void makeRandomPhylogeneticTree2(const estr& initseq,estrarray& seqs,double mutr
       if (d->parent==0x00) { cout << "# first species went extinct before speciation" << endl; break; }
 
       j=d->parent->branches.find(d);
-      lassert(j==-1);
       d->parent->branches.erase( j );
 
       p=d->parent;
       if (p!=rbranch && p->branches.size()==1) {
         j=p->parent->branches.find(p);
-        lassert(j==-1);
         p->parent->branches[j]=p->branches[0];
-//        p->parent->xtime=p->xtime;
 
         p->branches[0]->parent=p->parent;
         p->branches[0]->ntime=p->ntime;
-        branches.erase(p->it);
+//        branches.erase(p->it);
         delete p;
       }
-      branches.erase(d->it);
+//      branches.erase(d->it);
       delete d;
     }
   }
+
+  ldieif (cspecies==0,"mass extinction!!");
 
   long int i,pid,pid2;
 /*
@@ -391,20 +288,27 @@ void makeRandomPhylogeneticTree2(const estr& initseq,estrarray& seqs,double mutr
   }
 */
 
-
+/*
   cout << "# number of taxonomic nodes: " << branches.size() << endl;
   list<ebranch*>::iterator it;
   int count=0;
   for (it=branches.begin(); it!=branches.end(); ++it){
     (*it)->id=count++;
   }
+*/
 
+  int nodecount=0;
+  int leafcount=0;
   ebasicarray<ebranch*> stack;
   ebranch *b2;
   eintarray stacki;
   earray<estr> stacknewick;
   earray<estr> stacktax;
   earray<estr> stackseq;
+
+  rbranch->id=0;
+  ++nodecount;
+
   stack.add(rbranch);
   stacki.add(0);
   stacknewick.add(estr());
@@ -412,17 +316,18 @@ void makeRandomPhylogeneticTree2(const estr& initseq,estrarray& seqs,double mutr
   stacktax.add("0");
   estr tmpseq;
 
-  long int nextmut=rnd.uniform()*rnd.exponential(1.0/mutrate);
+//  long int nextmut=rnd.uniform()*rnd.exponential(1.0/mutrate);
   while (stack.size()){
     i=stack.size()-1;
     b=stack[i];
 //    cout << b->id <<":" <<stacki[i] << " " << b->extant << " " <<  b->branches.size() << endl;
     if (stacki[i]<b->branches.size()){
       b2=b->branches[stacki[i]];
+      b2->id=nodecount;
       tmpseq=stackseq[i];
       if (b2->branches.size()) {
 //        mutateSeqLength(tmpseq,mutrate,b2->xtime-b2->ntime);
-        profileMutateTimes(tmpseq,profile,mutrate,nextmut,b2->xtime-b2->ntime);
+        profileMutateTimes(tmpseq,profile,rnd.gamma(1.0,mutrate),b2->xtime-b2->ntime);
         stackseq.add(tmpseq);
         stack.add(b2);
         stacki.add(0);
@@ -430,14 +335,17 @@ void makeRandomPhylogeneticTree2(const estr& initseq,estrarray& seqs,double mutr
         stacktax.add(stacktax[i]+";"+b2->id);
         cout << "# " << stacktax[i]+";"+b2->id << " " << tmpseq << endl;
       } else {
-        ldieif(!b2->extant,"branch: "+estr(b2->id)+" is not extant: "+b2->branches.size());
+        ldieif(!b2->extant,"branch: "+estr(nodecount)+" is not extant: "+b2->branches.size());
         if (stacknewick[i].size())
           stacknewick[i]+=",";
         stacknewick[i]+=estr(b2->id)+": "+(btime-b2->ntime);
 //        mutateSeqLength(tmpseq,mutrate,btime-b2->ntime);
-        profileMutateTimes(tmpseq,profile,mutrate,nextmut,btime-b2->ntime);
-        seqs.add(estr(b2->id)+"|"+stacktax[i]+";"+b2->id,tmpseq);
+        profileMutateTimes(tmpseq,profile,rnd.gamma(1.0,mutrate),btime-b2->ntime);
+        seqs.add(estr(b2->id),tmpseq);
+//        seqs.add(estr(b2->id)+"|"+stacktax[i]+";"+b2->id,tmpseq);
+        ++leafcount;
       }
+      ++nodecount;
       ++stacki[i];
     }else{
       // pop stack
@@ -456,7 +364,255 @@ void makeRandomPhylogeneticTree2(const estr& initseq,estrarray& seqs,double mutr
     }
   }
 
-  cout << "# (" << stacknewick[0] << ")" << endl;
+  if (ofile.len()){
+    efile f(ofile+".tree","w");
+    f.write("("+stacknewick[0]+");");
+    f.close();
+  }
+//  cout << "# (" << stacknewick[0] << ")" << endl;
+}
+
+int linneigh(int i,int k,int side)
+{
+  int x=i%side;
+  int y=i/side;
+  switch (k){
+    case 0:{
+      ++x;
+      if (x==side) return(i);
+      return(x+y*side);
+    }
+    case 1:{
+      --x;
+      if (x<0) return(i);
+      return(x+y*side);
+    }
+    case 2:{
+      ++y;
+      if (y==side) return(i);
+      return(x+y*side);
+    }
+    case 3:{
+      --y;
+      if (y<0) return(i);
+      return(x+y*side);
+    }
+  }
+  ldie("unknown neighbor");
+}
+
+int randomPatch(int p,int side)
+{
+  int i=rnd.uniform()*5;
+  if (i==0) return(p);
+  return(linneigh(p,i-1,side));
+}
+
+int patchSum(int *arr,int i,int side)
+{
+  int k,tmp;
+  int sum=arr[i];
+  for (k=0; k<4; ++k){
+    tmp=linneigh(i,k,side);
+    if (tmp!=i)
+      sum+=arr[ tmp ];
+  }
+  return(sum);
+}
+
+void makeRandomPhylogeneticTreeSpatial(const estr& initseq,estrarray& seqs,double mutrate,int popsize)
+{
+  int side=40;
+  int spCapacity[side*side];
+  int spCount[side*side];
+
+  long int i;
+
+  for (i=0; i<side*side; ++i){
+    spCount[i]=0;
+    spCapacity[i]=5;
+  }
+
+  const double brate=1.0e-3;  // speciation every 1 500 000 000  generations which gives around 3% divergence between species ancestors at time of divergence which gives around 6% divergence between extant individuals of the two species populations
+//  const double brate=1.0e-2*1.0/popsize;  // speciation every 1 500 000 000  generations which gives around 3% divergence between species ancestors at time of divergence which gives around 6% divergence between extant individuals of the two species populations
+  double drate=brate/popsize;
+
+//  mutrate=mutrate*brate/1.5e-9; // correct the mutation rate given we are not using real generation times for the branches
+  mutrate=mutrate*brate*1.5e7; // correct the mutation rate given we are not using real generation times for the branches
+
+  multiset<ebranch*,cmp_btime> birth;
+  multiset<ebranch*,cmp_dtime> death;
+  list<ebranch*> branches;
+
+  long int btime=0;
+  long int dtime=0;
+  long int cspecies=1;
+
+  int newpatch;
+  newpatch=side/2+side*side/2;
+  drate=brate/patchSum(spCapacity,newpatch,side); // spCapacity[newpatch]);
+
+  ebranch *rbranch = new ebranch(0x00,btime,btime+rnd.exponential(1.0l/brate),dtime+rnd.exponential(1.0l/drate),newpatch);
+  rbranch->add(birth,death);
+//  branches.push_back(rbranch);
+//  rbranch->it=(--branches.end());
+  ++spCount[rbranch->patch];
+
+  int j;
+
+  
+  ebranch *b,*d,*p;
+  while (btime<(double)popsize*10.0l/brate && cspecies>0){ // get at least 100 fixations of the most common ancestor
+    b=(*birth.begin());
+    d=(*death.begin());
+    lassert(!b->extant || !d->extant);
+    if ( b->btime-btime < (d->dtime-dtime)/patchSum(spCount,d->patch,side) ) { //spCount[d->patch] ){
+      b->remove(birth,death);
+
+      dtime += (b->btime-btime)*patchSum(spCount,b->patch,side); // spCount[b->patch];
+      btime=b->btime;
+      b->extant=false;
+      b->xtime=btime;
+//      b->btime=btime+rnd.exponential(1.0/brate);
+//      b->add(birth,death);
+
+//      b->branches.add(sidcount);
+      ebranch *nb1=new ebranch(b,btime,btime+rnd.exponential(1.0l/brate),b->dtime,b->patch);
+      nb1->add(birth,death);
+//      branches.push_back(nb1);
+//      nb1->it=(--branches.end());
+      b->branches.add(nb1);
+
+      newpatch=randomPatch(b->patch,side);
+      drate=brate/patchSum(spCapacity,newpatch,side); //spCapacity[newpatch];
+     
+//      b->branches.add(sidcount);
+      ebranch *nb2=new ebranch(b,btime,btime+rnd.exponential(1.0l/brate),dtime+rnd.exponential(1.0l/drate),newpatch);
+      nb2->add(birth,death);
+//      branches.push_back(nb2);
+//      nb2->it=(--branches.end());
+      lassert(*(--branches.end())!=nb2);
+      b->branches.add(nb2);
+
+      ++spCount[ nb2->patch ];
+      ++cspecies;
+//      cout << btime << " birth: " << b->id << " [" << b->patch <<"]" << " " <<nb1->id << " ["<<nb1->patch<<"]"<< " " << nb2->id << " ["<<nb2->patch<<"]"<<" cspecies: " << cspecies << endl;
+    }else{
+      btime += (d->dtime-dtime)/patchSum(spCount,d->patch,side);  // spCount[ d->patch ];
+      dtime = d->dtime;
+      --spCount[ d->patch ];
+      --cspecies;
+      d->remove(birth,death);
+      d->extant=false;
+      d->xtime=btime;
+      if (d->parent==0x00) { cout << "# first species went extinct before speciation" << endl; break; }
+//      cout << btime << " death: " << d->id << " pid: " << d->parent->id << " cspecies: " << cspecies << endl;
+
+      j=d->parent->branches.find(d);
+      lassert(j==-1);
+      d->parent->branches.erase( j );
+
+      p=d->parent;
+      if (p!=rbranch && p->branches.size()==1) {
+        j=p->parent->branches.find(p);
+        lassert(j==-1);
+        p->parent->branches[j]=p->branches[0];
+//        p->parent->xtime=p->xtime;
+
+        p->branches[0]->parent=p->parent;
+        p->branches[0]->ntime=p->ntime;
+//        branches.erase(p->it);
+        delete p;
+      }
+//      branches.erase(d->it);
+      delete d;
+    }
+  }
+
+  ldieif (cspecies==0,"mass extinction!!");
+
+  long int pid,pid2;
+
+/*
+  cout << "# number of taxonomic nodes: " << branches.size() << endl;
+  list<ebranch*>::iterator it;
+  int count=0;
+  for (it=branches.begin(); it!=branches.end(); ++it){
+    (*it)->id=count++;
+  }
+*/
+
+  ebasicarray<ebranch*> stack;
+  ebranch *b2;
+  eintarray stacki;
+  earray<estr> stacknewick;
+  earray<estr> stacktax;
+  earray<estr> stackseq;
+  int nodecount=0;
+  int leafcount=0;
+
+  rbranch->id=0;
+  ++nodecount;
+
+  stack.add(rbranch);
+  stacki.add(0);
+  stacknewick.add(estr());
+  stackseq.add(initseq);
+  stacktax.add("0");
+  estr tmpseq;
+
+  long int nextmut=rnd.uniform()*rnd.exponential(1.0/mutrate);
+  while (stack.size()){
+    i=stack.size()-1;
+    b=stack[i];
+//    cout << b->id <<":" <<stacki[i] << " " << b->extant << " " <<  b->branches.size() << endl;
+    if (stacki[i]<b->branches.size()){
+      b2=b->branches[stacki[i]];
+      b2->id=nodecount;
+      tmpseq=stackseq[i];
+      if (b2->branches.size()) {
+//        mutateSeqLength(tmpseq,mutrate,b2->xtime-b2->ntime);
+        profileMutateTimes(tmpseq,profile,mutrate,nextmut,b2->xtime-b2->ntime);
+        stackseq.add(tmpseq);
+        stack.add(b2);
+        stacki.add(0);
+        stacknewick.add(estr());
+        stacktax.add(stacktax[i]+";"+b2->id);
+        cout << "# " << stacktax[i]+";"+b2->id << " " << tmpseq << endl;
+      } else {
+        ldieif(!b2->extant,"branch: "+estr(b2->id)+" is not extant: "+b2->branches.size());
+        if (stacknewick[i].size())
+          stacknewick[i]+=",";
+        stacknewick[i]+=estr(b2->id)+": "+(btime-b2->ntime);
+//        mutateSeqLength(tmpseq,mutrate,btime-b2->ntime);
+        profileMutateTimes(tmpseq,profile,mutrate,nextmut,btime-b2->ntime);
+        seqs.add(estr(b2->id)+"|"+stacktax[i]+";"+b2->id,tmpseq);
+        ++leafcount;
+      }
+      ++stacki[i];
+      ++nodecount;
+    }else{
+      // pop stack
+      if (stack.size()==1) break;
+
+//      cout << (b->parent!=0x00?b->parent->id:0) << " <- " << b->id << ": " << (b->xtime-b->ntime) << " " << b->ntime << " " << b->xtime << " " << b->branches.size() << endl;
+      if (stacknewick[i-1].len())
+        stacknewick[i-1]+=",";
+      stacknewick[i-1]+="("+stacknewick[i]+")"+estr(b->id)+": "+(b->xtime-b->ntime);
+
+      stackseq.erase(i);
+      stack.erase(i);
+      stacki.erase(i);
+      stacknewick.erase(i);
+      stacktax.erase(i);
+    }
+  }
+
+  if (ofile.len()){
+    efile f(ofile+".tree","w");
+    f.write("("+stacknewick[0]+");");
+    f.close();
+  }
 }
 
 /*
@@ -599,12 +755,36 @@ void makeRandomPhylogeneticTree(const estr& initseq,earray<estr>& seqs,double mu
 }
 */
 
+void print_pop_dists(earray<estr>& popseqs)
+{
+  int i,j;
+  float mindist,maxdist,avgdist,tmpdist;
+  
+  mindist=1.0; maxdist=0.0; avgdist=0.0;
+  for (i=0; i<popseqs.size(); ++i){
+    for (j=i+1; j<popseqs.size(); ++j){
+      tmpdist=dist(popseqs[i],popseqs[j]);
+      if (tmpdist>maxdist) maxdist=tmpdist;
+      if (tmpdist<mindist) mindist=tmpdist;
+      avgdist+=tmpdist;
+    }
+  }
+  avgdist=avgdist/(popseqs.size()*(popseqs.size()-1)/2.0);
+  printf("# mindist: %f  maxdist: %f  avgdist: %f\n",mindist,maxdist,avgdist);
+}
+
 
 int emain()
 {
   double mutrate=1.0e-9;
+  double popdiv=0.02;
   int popsize=100;
+  int spsize=1000;
+
+  epregister(ofile);
   epregister(mutrate);
+  epregister(popdiv);
+  epregister(spsize);
   epregister(popsize);
   eparseArgs(argvc,argv);
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <file>");
@@ -615,25 +795,27 @@ int emain()
 //  for (i=0; i<400; ++i)
 //    initseq+='A';
 
-  profileLoad(argv[1]);
+  profileLoad(profile,argv[1]);
   profileInitSeq(initseq,profile);
 
   estrarray mcaseqs,seqs;
   earray<estr> popseqs;
-  makeRandomPhylogeneticTree2(initseq,mcaseqs,mutrate,popsize);
+//  makeRandomPhylogeneticTreeSpatial(initseq,mcaseqs,mutrate,spsize);
+  makeRandomPhylogeneticTree(initseq,mcaseqs,mutrate,spsize);
 
-//  for (i=0; i<seqs.size(); ++i)
-//    printf("%-5s %s\n",seqs.keys(i)._str,seqs[i]._str);
-//  exit(0);
+  
+  for (i=0; i<mcaseqs.size(); ++i)
+    printf("%-30s %s\n",mcaseqs.keys(i)._str,mcaseqs.values(i)._str);
 
-
+/*
   estr info;
   earray<eintarray> ctree;
   for (i=0; i<mcaseqs.size(); ++i){
     ctree.clear(); popseqs.clear();
-    generateCoalescenceTree(ctree,100);
-    generateSequencesWithCTree(ctree,mcaseqs[i],mutrate*0.03/4.0*1.0e10/1.0e2/2.0,popseqs); // although we are simulating only 100 sequences in the coalescence tree, we want it to represent the mutations of an evolving population with around 10^9 individuals, thus we need a higher mutation rate. Since species level divergence is around 3%, we are adjusting the number of mutations to be 3% on average for the population
+    generateCoalescenceTree(ctree,popsize);
+    generateSequencesWithCTree(ctree,mcaseqs[i],popdiv/popsize/2.0,popseqs); // although we are simulating only 100 sequences in the coalescence tree, we want it to represent the mutations of an evolving population with around 10^9 individuals, thus we need a higher mutation rate. Since species level divergence is around 3%, we are adjusting the number of mutations to be 3% on average for the population
     printf("# %-30s %s\n",mcaseqs.keys(i)._str,mcaseqs[i]._str);
+    print_pop_dists(popseqs);
     for (j=0; j<popseqs.size(); ++j){
       info=mcaseqs.keys(i)+"|"+estr(j);
       printf("%-30s %s\n",info._str,popseqs[j]._str);
@@ -646,6 +828,7 @@ int emain()
 
   for (i=0; i<chimeras.size(); ++i)
       printf("%-30s %s\n",chimeras.keys(i)._str,chimeras.values(i)._str);
+*/
 
   exit(0);
 

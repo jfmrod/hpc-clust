@@ -62,6 +62,29 @@ void load_seqs_profile(const estr& filename)
   cout << "# seqs: " << seqcount << endl;
 }
 
+float getProfileConsensus(int i)
+{
+  int j;
+  float cons=(float)profile[i][0];
+  for (j=1; j<4; ++j)
+    if (cons<(float)profile[i][j]) cons=(float)profile[i][j];
+  cons=(cons)/(profile[i][0]+profile[i][1]+profile[i][2]+profile[i][3]);
+  cons=(cons-0.25)/0.75;
+  return(cons);
+}
+
+float getProfileAverageConsensus(int i)
+{
+  int j;
+  float avgcons=0.0;
+  int count=0;
+  for (j=max(i-25,0); j<MIN(i+25,profile.size()); ++j){
+    avgcons+=getProfileConsensus(j);
+    ++count;
+  }
+  return(avgcons/count);
+}
+
 int emain()
 {
   eparseArgs(argvc,argv);
@@ -71,15 +94,11 @@ int emain()
 
   int i,j;
   float cons;
-  float runcons=1.0;
+  float avgcons;
   for (i=0; i<profile.size(); ++i){
-    cons=(float)profile[i][0];
-    for (j=1; j<4; ++j)
-      if (cons<(float)profile[i][j]) cons=(float)profile[i][j];
-    cons=(cons)/(profile[i][0]+profile[i][1]+profile[i][2]+profile[i][3]);
-    cons=(cons-0.25)/0.75;
-    runcons=(5.0*runcons+cons)/6.0;
-    printf("%4.1i %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n",i,cons,runcons,(float)profile[i][0]/seqcount,(float)profile[i][1]/seqcount,(float)profile[i][2]/seqcount,(float)profile[i][3]/seqcount,(float)profile[i][4]/seqcount,(float)profile[i][5]/seqcount,(float)profile[i][6]/seqcount);
+    cons=getProfileConsensus(i);
+    avgcons=getProfileAverageConsensus(i);
+    printf("%4.1i %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n",i,cons,avgcons,(float)profile[i][0]/seqcount,(float)profile[i][1]/seqcount,(float)profile[i][2]/seqcount,(float)profile[i][3]/seqcount,(float)profile[i][4]/seqcount,(float)profile[i][5]/seqcount,(float)profile[i][6]/seqcount);
   }
 
   return(0);

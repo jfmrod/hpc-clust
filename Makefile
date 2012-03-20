@@ -5,14 +5,24 @@ CXXFLAGS:=${CXXFLAGS} -pthread -march=nocona -mtune=nocona -O3 # -g # -pg
 
 .PHONY: all clean
 
-targets=cluster-short cluster-partition2 cluster cluster-profile cluster-fast cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-check cluster-partition cluster-dist2 cluster-evolve
+targets=cluster-short cluster-partition2 cluster cluster-profile cluster-fast cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-check cluster-partition cluster-dist2 cluster-evolve cluster-regen
 
 all: $(targets)
 
 clean:
 	rm -f $(targets) *.o
 
-cluster-evolve: cluster-evolve.o
+cluster-evolve: cluster-evolve.o seq-profile.o
+seq-profile.o : seq-profile.h seq-profile.cpp
+
+
+cluster-regen: cluster-regen.o seq-profile.o ../sali/etree.o
+
+cluster-regen.o: cluster-regen.cpp seq-profile.h ../sali/etree.h
+
+
+
+
 cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o
 cluster-short : cluster-short.o cluster-common.o
 
