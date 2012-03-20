@@ -23,7 +23,7 @@ cluster-regen.o: cluster-regen.cpp seq-profile.h ../sali/etree.h
 
 
 
-cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o
+cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o eseqclusterstep.o
 cluster-short : cluster-short.o cluster-common.o
 
 cluster-dist : cluster-dist.o cluster-common.o eseqcluster.o eseqclustercount.o
@@ -58,4 +58,4 @@ eseqcluster.o : eseqcluster.h eseqcluster.cpp
 eseqclustercount.o : eseqclustercount.h eseqclustercount.cpp
 eseqclustersingle.o : eseqcluster.h eseqclustersingle.h eseqclustersingle.cpp
 eseqclusteravg.o : eseqcluster.h eseqclusteravg.h eseqclusteravg.cpp
-
+eseqclusterstep.o : eseqcluster.h eseqclusterstep.h eseqclusterstep.cpp

@@ -19,6 +19,10 @@ void eseqclusterstep::init(int count,const estr& ofilename,const estr& seqsfile)
     incluster.add(list<int>());
     incluster[i].push_back(i);
   }
+  step=50;
+  otucount=0;
+  otumembers.clear();
+  otudist.clear();
   cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
   mergecount=0;
 }
@@ -31,20 +35,46 @@ void eseqclusterstep::merge(int x,int y,int dx,int dy,float dist)
   smerge[x]=x;
   smerge[y]=x;
 
-  scount[x]+=scount[y];
+  list<int>::iterator it;
 
   if (scount[x]>=step && scount[y]>=step){
-    
-
+    if (otu[x]==-1){
+      otumembers.add(eintarray());
+      otudist.add(dist);
+      for (it=incluster[x].begin(); it!=incluster[x].end(); ++it){
+        otu[*it]=otucount;
+        otumembers[otucount].add(*it);
+      }
+      ++otucount;
+    }
+    if (otu[y]==-1){
+      otumembers.add(eintarray());
+      otudist.add(dist);
+      for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
+        otu[*it]=otucount;
+        otumembers[otucount].add(*it);
+      }
+      ++otucount;
+    }
   }else{
-
-    if (scount[y]<step){
-      otu[y]=otu[x];
-      scount[y]=0;
+    // here we add clusters of few sequences that should have been added to an already formed otu
+    if (scount[y]<step && otu[dx]!=-1 && (dist-otudist[otu[dx]])<0.05){
+      for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
+        otu[*it]=otu[dx];
+        otumembers[otu[dx]].add(*it);
+      }
+    }
+    if (scount[x]<step && otu[dy]!=-1 && (dist-otudist[otu[dy]])<0.05){
+      for (it=incluster[x].begin(); it!=incluster[x].end(); ++it){
+        otu[*it]=otu[dy];
+        otumembers[otu[dy]].add(*it);
+      }
     }
   }
 
-  list<int>::iterator it;
+  scount[x]+=scount[y];
+  scount[y]=0;
+
   for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
     scluster[*it]=x;
     incluster[x].push_back(*it);
@@ -52,7 +82,7 @@ void eseqclusterstep::merge(int x,int y,int dx,int dy,float dist)
   ++mergecount;
   
 //  cout << scluster.size()-mergecount << " " << dist << " " << x << " " << y << endl;
-  ofile.write(estr(scluster.size()-mergecount)+" "+dist+" "+x+" "+y+"\n");
+//  ofile.write(estr(scluster.size()-mergecount)+" "+dist+" "+x+" "+y+"\n");
 }
 
 void eseqclusterstep::add(eseqdist& sdist){
@@ -71,25 +101,17 @@ void eseqclusterstep::add(eseqdist& sdist){
 
 void eseqclusterstep::save(const estr& filename,const estrarray& arr)
 {
-  int i;
+  int i,j;
   estr otustr;
   estrhashof<eintarray> otus;
 
-  efile f(filename+".clstr");
-  for (i=0; i<scluster.size(); ++i)
-    f.write(estr(scluster[i])+"     "+arr.keys(i)+"\n");
-  f.close();
-
-  list<int>::iterator it;
-  int otucount=0;
-  efile f2(filename);
-  for (i=0; i<incluster.size(); ++i){
-    if (scount[i]==0) continue;
-    f2.write(">OTU"+estr(otucount)+"\n");
-    for (it=incluster[i].begin(); it!=incluster[i].end(); ++it)
-      f2.write(arr.keys(*it)+"\n");
-    ++otucount;
+  efile f(filename);
+  for (i=0; i<otumembers.size(); ++i){
+    f.write(">OTU"+estr(i)+" "+otudist[i]+" "+otumembers[i].size()+"\n");
+    for (j=0; j<otumembers[i].size(); ++j){
+      f.write(arr.keys(otumembers[i][j])+"\n");
+    }
   }
-  f2.close();
+  f.close();
 }
 

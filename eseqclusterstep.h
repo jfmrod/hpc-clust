@@ -16,6 +16,7 @@ class eseqclusterstep
  public:
   int mergecount;
   efile ofile;
+  int step;
 
   emutex mutexDists;
   eblockarray<eseqdist> dists;
@@ -23,12 +24,16 @@ class eseqclusterstep
   eintarray scount;
   eintarray scluster;
   eintarray smerge;
+  int otucount;
+  earray<eintarray> otumembers;
+  edoublearray      otudist;
+  eintarray         otu;
 
   ebasicarray<list<int> > incluster;
 
   eseqclusterstep();
 
-  void merge(int x,int y,float dist);
+  void merge(int x,int y,int dx,int dy,float dist);
   void init(int count,const estr& ofile,const estr& seqsfile);
   void add(int ind);
   void add(eseqdist& sdist);
