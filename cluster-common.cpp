@@ -242,6 +242,42 @@ void load_seqs_mutate_compressed(const estr& filename,estrarray& arr,int& seqlen
   cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
 }
 
+void load_short_compressed(const estr& filename,estrarray& arr,int& seqlen)
+{
+  estr line;
+  estr name;
+  estr start;
+  estr end;
+  efile f(filename);
+
+  int i;
+
+  while (f.readln(line)){
+    if (line.len()==0 || line[0]=='#') continue;
+    
+    i=line.find(" ");
+    if (i==-1) continue;
+    name=line.substr(0,i);
+    line.del(0,i);
+    line.trim();
+    i=line.find(" ");
+    if (i==-1) continue;
+    start=line.substr(0,i);
+    line.del(0,i);
+    line.trim();
+    i=line.find(" ");
+    if (i==-1) continue;
+    end=line.substr(0,i);
+    line.del(0,i);
+    line.trim();
+    seqlen=line.len();
+    arr.add(name,seq_compress(line.uppercase()));
+  }
+  cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
+}
+
+
+
 
 void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen)
 {

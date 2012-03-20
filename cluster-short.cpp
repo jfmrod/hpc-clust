@@ -27,45 +27,47 @@ inline float dist_short_compressed(const estr& s1,const estr& s2,int s,int seqle
   int len=seqlen;
   int count=0;
   long int *ep1=(long int*)(s1._str)+MIN(s1._strlen/8,seqlen/16);
-  long int *p1=(long int*)(s1._str)+(s/8);
-  long int *p2=(long int*)(s2._str)+(s/8);
+  long int *p1=(long int*)(s1._str)+(s/16);
+  long int *p2=(long int*)(s2._str)+(s/16);
 
-  switch (s%16){
-   case 1:
-    dist_inc(*p1,*p2,b4_m1,count);
-   case 2:
-    dist_inc(*p1,*p2,b4_m2,count);
-   case 3:
-    dist_inc(*p1,*p2,b4_m3,count);
-   case 4:
-    dist_inc(*p1,*p2,b4_m4,count);
-   case 5:
-    dist_inc(*p1,*p2,b4_m5,count);
-   case 6:
-    dist_inc(*p1,*p2,b4_m6,count);
-   case 7:
-    dist_inc(*p1,*p2,b4_m7,count);
-   case 8:
-    dist_inc(*p1,*p2,b4_m8,count);
-   case 9:
-    dist_inc(*p1,*p2,b4_m9,count);
-   case 10:
-    dist_inc(*p1,*p2,b4_m10,count);
-   case 11:
-    dist_inc(*p1,*p2,b4_m11,count);
-   case 12:
-    dist_inc(*p1,*p2,b4_m12,count);
-   case 13:
-    dist_inc(*p1,*p2,b4_m13,count);
-   case 14:
-    dist_inc(*p1,*p2,b4_m14,count);
-   case 15:
-    dist_inc(*p1,*p2,b4_m15,count);
-    ++p1;
-    ++p2;
+  if (p1<ep1){
+    switch (s%16){
+     case 1:
+      dist_inc(*p1,*p2,b4_m1,count);
+     case 2:
+      dist_inc(*p1,*p2,b4_m2,count);
+     case 3:
+      dist_inc(*p1,*p2,b4_m3,count);
+     case 4:
+      dist_inc(*p1,*p2,b4_m4,count);
+     case 5:
+      dist_inc(*p1,*p2,b4_m5,count);
+     case 6:
+      dist_inc(*p1,*p2,b4_m6,count);
+     case 7:
+      dist_inc(*p1,*p2,b4_m7,count);
+     case 8:
+      dist_inc(*p1,*p2,b4_m8,count);
+     case 9:
+      dist_inc(*p1,*p2,b4_m9,count);
+     case 10:
+      dist_inc(*p1,*p2,b4_m10,count);
+     case 11:
+      dist_inc(*p1,*p2,b4_m11,count);
+     case 12:
+      dist_inc(*p1,*p2,b4_m12,count);
+     case 13:
+      dist_inc(*p1,*p2,b4_m13,count);
+     case 14:
+      dist_inc(*p1,*p2,b4_m14,count);
+     case 15:
+      dist_inc(*p1,*p2,b4_m15,count);
+      ++p1;
+      ++p2;
+    }
   }
 
-  for (; p1!=ep1; ++p1,++p2){
+  for (; p1<ep1; ++p1,++p2){
     dist_inc(*p1,*p2,b4_m0,count);
     dist_inc(*p1,*p2,b4_m1,count);
     dist_inc(*p1,*p2,b4_m2,count);
@@ -123,12 +125,17 @@ inline float dist_short_compressed(const estr& s1,const estr& s2,int s,int seqle
 
 void calc_best_dist(const estr& shortseq,const estrarray& seqs,int seqlen,int& bestmatch,double& bestdist)
 {
-  int s,e;
-  for (s=0; s<shortseq.len() && shortseq[s]=='-'; ++s);
-  for (e=shortseq.len()-1; e>0 && shortseq[e]=='-'; --e);
-  ldieif(s>=e,"did not find sequence information: "+shortseq); 
-
   bestmatch=-1; bestdist=0.0;
+
+  int s,e;
+  for (s=0; s<shortseq.len() && (unsigned char)shortseq[s]==0xFFu; ++s);
+  e=shortseq.len()-1;
+  if (shortseq.len()>0 && shortseq.len()%2==1 && (unsigned char)shortseq[e]&0x0F==0x0F) --e;
+  for (; e>0 && (unsigned char)shortseq[e]==0xFFu; --e);
+  if (s>=e) return; 
+  
+//  cout << "s: " << s << " e: " << e << " len: "<<shortseq.len() << endl;
+
   double tmpdist;
   int i;
   for (i=0; i<seqs.size(); ++i){
@@ -171,13 +178,14 @@ int emain()
 
   int i;
   load_seqs_compressed(argv[1],arr,seqlen);
-  load_seqs_compressed(argv[2],arrshort,seqlen);
+  load_short_compressed(argv[2],arrshort,seqlen);
   
   cout << "# computing distances" << endl;
   int bestmatch;
   double bestdist;
   for (i=0; i<arrshort.size(); ++i){
     calc_best_dist(arrshort.values(i),arr,seqlen,bestmatch,bestdist);
+    if (bestmatch==-1) continue;
     cout << arrshort.keys(i) << " " << bestdist << " " << arr.keys(bestmatch) << endl;
   }
 

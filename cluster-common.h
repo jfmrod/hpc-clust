@@ -628,6 +628,8 @@ void load_seqs(const estr& filename,estrarray& arr);
 
 void load_seqs_mutate_compressed(const estr& filename,estrarray& arr,int& seqlen,float avgmutseq);
 
+void load_short_compressed(const estr& filename,estrarray& arr,int& seqlen);
+
 void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen);
 void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen);
 void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<int>& arrind,int& seqlen);
