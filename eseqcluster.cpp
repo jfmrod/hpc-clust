@@ -67,7 +67,7 @@ void eseqcluster::check(ebasicarray<eseqdist>& dists)
 
 void eseqcluster::init(int count,const estr& ofilename,const estr& seqsfile) {
   ofile.open(ofilename,"w");
-  ofile.write("# seqsfile: "+seqsfile);
+  ofile.write("# seqsfile: "+seqsfile+"\n");
   int i;
   scount.reserve(count);
   scluster.reserve(count);

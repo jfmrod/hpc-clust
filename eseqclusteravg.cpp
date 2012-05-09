@@ -37,7 +37,7 @@ void eseqclusteravg::check(ebasicarray<eseqdistCount>& dists)
 
 void eseqclusteravg::init(int count,const estr& filename,const estr& seqsfile) {
   ofile.open(filename,"w");
-  ofile.write("# seqsfile: "+seqsfile);
+  ofile.write("# seqsfile: "+seqsfile+"\n");
   int i;
   incmaxdist=0.0;
   lastdist=0.0;

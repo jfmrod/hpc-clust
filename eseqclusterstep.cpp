@@ -6,17 +6,16 @@
 
 void eseqclusterstep::init(int count,const estr& ofilename,const estr& seqsfile) {
   ofile.open(ofilename,"w");
-  ofile.write("# seqsfile: "+seqsfile);
+  ofile.write("# seqsfile: "+seqsfile+"\n");
   int i;
-  scount.reserve(count);
+  scount.init(count,1);
+  smerge.init(count,-1);
+  otu.init(count,-1);
+  incluster.init(count);
+
   scluster.reserve(count);
-  smerge.reserve(count);
-  incluster.reserve(count);
   for (i=0; i<count; ++i){
-    scount.add(1);
     scluster.add(i);
-    smerge.add(-1);
-    incluster.add(list<int>());
     incluster[i].push_back(i);
   }
   step=50;
@@ -58,18 +57,47 @@ void eseqclusterstep::merge(int x,int y,int dx,int dy,float dist)
     }
   }else{
     // here we add clusters of few sequences that should have been added to an already formed otu
-    if (scount[y]<step && otu[dx]!=-1 && (dist-otudist[otu[dx]])<0.05){
+    if (scount[y]<step){
+      if (otu[dx]!=-1 && (otudist[otu[dx]]-dist)<0.05){
+        for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
+          otu[*it]=otu[dx];
+          otumembers[otu[dx]].add(*it);
+        }
+      }else if (otu[x]!=-1){
+        for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
+          otu[*it]=otu[x];
+          otumembers[otu[x]].add(*it);
+        }
+      }
+    }
+    if (scount[x]<step){
+      if (otu[dy]!=-1 && (otudist[otu[dy]]-dist)<0.05){
+        for (it=incluster[x].begin(); it!=incluster[x].end(); ++it){
+          otu[*it]=otu[dy];
+          otumembers[otu[dy]].add(*it);
+        }
+      }else if (otu[y]!=-1){
+        for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
+          otu[*it]=otu[y];
+          otumembers[otu[y]].add(*it);
+        }
+      }
+    }
+/*
+    // here we add clusters of few sequences that should have been added to an already formed otu
+    if (scount[y]<step && otu[x]!=-1){
       for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
-        otu[*it]=otu[dx];
-        otumembers[otu[dx]].add(*it);
+        otu[*it]=otu[x];
+        otumembers[otu[x]].add(*it);
       }
     }
-    if (scount[x]<step && otu[dy]!=-1 && (dist-otudist[otu[dy]])<0.05){
+    if (scount[x]<step && otu[y]!=-1){
       for (it=incluster[x].begin(); it!=incluster[x].end(); ++it){
-        otu[*it]=otu[dy];
-        otumembers[otu[dy]].add(*it);
+        otu[*it]=otu[y];
+        otumembers[otu[y]].add(*it);
       }
     }
+*/
   }
 
   scount[x]+=scount[y];

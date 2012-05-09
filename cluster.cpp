@@ -4,9 +4,11 @@
 #include <eutils/etime.h>
 #include <eutils/etimer.h>
 #include <eutils/eoption.h>
+#include <eutils/eparalgor.h>
 
 #include "cluster-common.h"
 #include "eseqclusteravg.h"
+#include "eseqclusterstep.h"
 
 //eseqcluster cluster;
 
@@ -15,6 +17,7 @@ eblockarray<eseqdist> dists;
 eseqcluster clcluster; // complete linkage
 eseqclustersingle slcluster; // single linkage
 eseqclusteravg avgcluster; // avg linkage
+eseqclusterstep stepcluster; 
 
 //eblockarray<eseqdist> mindists;
 //ebasicarray<eseqdist> mindists;
@@ -24,6 +27,11 @@ estrarray arr;
 unsigned totaldists;
 
 int seqlen=0;
+
+unsigned int radixKey(eblockarray<eseqdist>& dists,int i)
+{
+  return((unsigned int)(dists[i].dist*10000));
+}
 
 /*
 void p_calc_dists_nogap(int node,int tnodes,float thres)
@@ -82,9 +90,11 @@ int emain()
   bool cl=false;
   bool sl=false;
   bool al=false;
+  bool step=false;
   epregister(cl);
   epregister(sl);
   epregister(al);
+  epregister(step);
 
   eoption<efunc> dfunc;
 
@@ -115,7 +125,7 @@ int emain()
 //  epregister(outfile);
   eparseArgs(argvc,argv);
 
-  ldieif(!cl && !sl && !al,"please choose at least one clustering method <-sl true|-cl true|-al true>");
+  ldieif(!cl && !sl && !al && !step,"please choose at least one clustering method <-sl true|-cl true|-al true>");
 
   cout << "# distance function: " << dfunc.key() << endl;
 
@@ -158,6 +168,7 @@ int emain()
     }
 //      taskman.addTask(efunc(cluster,&eseqclusterCount::calc),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
 //      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,t));
+    cout << "# number of task: " << taskman.tasks.size() << endl;
 
     taskman.createThread(ncpus);
     cout << "# finished creating threads: "<<ncpus << endl;
@@ -169,7 +180,13 @@ int emain()
     cout << "# distances within threshold: " << dists.size() << endl;
 
 //    heapsort(mindists);
-    dists.sort();
+//    dists.sort();
+    cout << "# number of tasks: " << taskman.tasks.size() << endl;
+//    cout << "# first pending: " << taskman.firstPendingTask << endl;
+//    parRadixSort<eblockarray<eseqdist>,radixKey>(dists,taskman);
+    radix256sort<eblockarray<eseqdist>,radixKey>(dists);
+    cout << "# number of tasks: " << taskman.tasks.size() << endl;
+//    cout << "# first pending: " << taskman.firstPendingTask << endl;
     stime=t1.lap()*0.001;
 
 /*
@@ -204,6 +221,8 @@ int emain()
     slcluster.init(arr.size(),ofile+".sl.dat",argv[1]);
   if (al)
     avgcluster.init(arr.size(),ofile+".al.dat",argv[1]);
+  if (step)
+    stepcluster.init(arr.size(),ofile+".step.dat",argv[1]);
 
   cout << "# starting clustering"<<endl;
   t1.reset();
@@ -216,6 +235,8 @@ int emain()
       avgcluster.add(dists[i]);
     if (sl)
       slcluster.add(dists[i]);
+    if (step)
+      stepcluster.add(dists[i]);
 //    cluster.update(i-1);
 //    if (cluster.mergecount%1000==0 && cluster.mergecount!=lastupdate) { lastupdate=cluster.mergecount; cout << "# merged " << cluster.update(i-1) << " seqs" << endl; }
 //    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }
@@ -228,6 +249,10 @@ int emain()
   cout << "# total time: " << dtime+clustime+stime << endl;
   cout << "# distances within threshold: " << totaldists << endl;
 
+  if (step){
+    stepcluster.save(ofile+".sotu",arr);
+    cout << "# done writing step single linkage clustering to: "<<ofile+".sotu" << endl;
+  }
 //  clcluster.save(ofile+".cl.otu",arr);
 //  cout << "# done writing complete linkage clustering to: "<<ofile+".cl" << endl;
 //  slcluster.save(ofile+".sl.otu",arr);
