@@ -20,6 +20,18 @@
 #include "eseqclustersingle.h"
 #include "eseqclustercount.h"
 
+class eshortseq
+{
+ public:
+  int b;
+  int e;
+  estr seq;
+  estr name;
+
+  void compress();
+};
+
+
 inline unsigned char nuc_compress(unsigned char c){
   switch(c){
    case 'A': return(0x00u);
@@ -40,7 +52,7 @@ inline unsigned char nuc_compress(unsigned char c){
    case 'N': return(0x0Eu);
    case '-': return(0x0Fu);
   }
-  ldie("unknown nucleotide:"+estr(c));
+  ldie("unknown nucleotide: "+estr(c));
   return(0x0F);
 }
 
@@ -231,6 +243,73 @@ inline float dist_tamura_compressed(const estr& s1,const estr& s2,int seqlen)
   return(1+1.0*C*log(1.0-(float)P/(C*len)-(float)Q/len) + 0.5*(1.0-C)*log(1.0-2.0*Q/len));
 }
 
+void initDistMatrix();
+
+extern int gap_matrix[16][16];
+
+inline float dist_compressed2(const estr& s1,const estr& s2,int seqlen)
+{
+  int len=seqlen;
+  int count=0;
+  unsigned long int *ep1=(unsigned long int*)(s1._str)+(s1._strlen/8);
+  unsigned long int *p1=(unsigned long int*)s1._str;
+  unsigned long int *p2=(unsigned long int*)s2._str;
+  unsigned long int tp1,tp2;
+  for (; p1!=ep1; ++p1,++p2){
+    tp1=*p1,tp2=*p2; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+    tp1>>=4,tp2>>=4; count+=gap_matrix[b4_m0&tp1][b4_m0&tp2];
+  }
+
+  switch (seqlen%16){
+   case 15:
+    dist_inc(*p1,*p2,b4_m14,count);
+   case 14:
+    dist_inc(*p1,*p2,b4_m13,count);
+   case 13:
+    dist_inc(*p1,*p2,b4_m12,count);
+   case 12:
+    dist_inc(*p1,*p2,b4_m11,count);
+   case 11:
+    dist_inc(*p1,*p2,b4_m10,count);
+   case 10:
+    dist_inc(*p1,*p2,b4_m9,count);
+   case 9:
+    dist_inc(*p1,*p2,b4_m8,count);
+   case 8:
+    dist_inc(*p1,*p2,b4_m7,count);
+   case 7:
+    dist_inc(*p1,*p2,b4_m6,count);
+   case 6:
+    dist_inc(*p1,*p2,b4_m5,count);
+   case 5:
+    dist_inc(*p1,*p2,b4_m4,count);
+   case 4:
+    dist_inc(*p1,*p2,b4_m3,count);
+   case 3:
+    dist_inc(*p1,*p2,b4_m2,count);
+   case 2:
+    dist_inc(*p1,*p2,b4_m1,count);
+   case 1:
+    dist_inc(*p1,*p2,b4_m0,count);
+  }
+  return((float)count/(float)seqlen);
+}
+
+/*
 inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
 {
   int len=seqlen;
@@ -255,6 +334,72 @@ inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
     dist_inc(*p1,*p2,b4_m13,count);
     dist_inc(*p1,*p2,b4_m14,count);
     dist_inc(*p1,*p2,b4_m15,count);
+  }
+
+  switch (seqlen%16){
+   case 15:
+    dist_inc(*p1,*p2,b4_m14,count);
+   case 14:
+    dist_inc(*p1,*p2,b4_m13,count);
+   case 13:
+    dist_inc(*p1,*p2,b4_m12,count);
+   case 12:
+    dist_inc(*p1,*p2,b4_m11,count);
+   case 11:
+    dist_inc(*p1,*p2,b4_m10,count);
+   case 10:
+    dist_inc(*p1,*p2,b4_m9,count);
+   case 9:
+    dist_inc(*p1,*p2,b4_m8,count);
+   case 8:
+    dist_inc(*p1,*p2,b4_m7,count);
+   case 7:
+    dist_inc(*p1,*p2,b4_m6,count);
+   case 6:
+    dist_inc(*p1,*p2,b4_m5,count);
+   case 5:
+    dist_inc(*p1,*p2,b4_m4,count);
+   case 4:
+    dist_inc(*p1,*p2,b4_m3,count);
+   case 3:
+    dist_inc(*p1,*p2,b4_m2,count);
+   case 2:
+    dist_inc(*p1,*p2,b4_m1,count);
+   case 1:
+    dist_inc(*p1,*p2,b4_m0,count);
+  }
+  return((float)count/(float)seqlen);
+}
+*/
+
+inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
+{
+  int len=seqlen;
+  int count=0;
+  long int *ep1=(long int*)(s1._str)+(s1._strlen/8);
+  long int *p1=(long int*)s1._str;
+  long int *p2=(long int*)s2._str;
+  long int tp1,tp2;
+  for (; p1!=ep1; ++p1,++p2){
+    tp1=*p1,tp2=*p2; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
+    tp1>>=4,tp2>>=4; dist_inc(tp1,tp2,b4_m0,count);
   }
 
   switch (seqlen%16){
@@ -505,6 +650,42 @@ int t_calc_dists_noise(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tno
 }
 
 
+template <class T,class M,class K,float (*fdist)(const eshortseq&,const eshortseq&)>
+int t_calc_dists(emutex& mutex,T& arr,K& dists,int node,int tnodes,float thres)
+{
+  long int i,i2,j;
+  long int start,end;
+
+  start=(long int)(node)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+  end=(long int)(node+1)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+
+  float tmpid,tmpid2,tmpid3;
+  K tmpdists;
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j]);
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i2],arr[j]);
+      if (tmpid>=thres) tmpdists.add(M(i2,j,tmpid));
+    }
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j]);
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+  }
+  mutex.lock();
+  dists+=tmpdists;
+  mutex.unlock();
+  return(0);
+}
+
 template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
 int t_calc_dists(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,float thres)
 {
@@ -629,6 +810,7 @@ void load_seqs(const estr& filename,estrarray& arr);
 void load_seqs_mutate_compressed(const estr& filename,estrarray& arr,int& seqlen,float avgmutseq);
 
 void load_short_compressed(const estr& filename,estrarray& arr,int& seqlen);
+void load_short_compressed(const estr& filename,ebasicarray<eshortseq>& arr);
 
 void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen);
 void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen);

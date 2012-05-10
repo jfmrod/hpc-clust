@@ -98,6 +98,8 @@ int emain()
 
   eoption<efunc> dfunc;
 
+  initDistMatrix();
+
   dfunc.choice=0;
 //  dfunc.add("gap",gap_calc_dists);
 //  dfunc.add("gap+noise",gapnoise_calc_dists);
@@ -139,7 +141,6 @@ int emain()
   epregisterClassInheritance(ebasicarray<eseqdist>,ebasearray);
   epregisterClassMethod(ebasicarray<eseqdist>,subset);
   epregisterClassSerializeMethod(ebasicarray<eseqdist>);
-
 
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <seqali>");
 

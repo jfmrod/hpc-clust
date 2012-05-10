@@ -4,6 +4,20 @@
 #include <eutils/eregexp.h>
 #include <math.h>
 
+int gap_matrix[16][16];
+
+void initDistMatrix()
+{
+  unsigned long int i,j;
+  for (i=0u; i<16u; ++i){
+    for (j=0u; j<16u; ++j){
+      gap_matrix[i][j]=0u;
+      if (i == j)
+        ++gap_matrix[i][j];
+    }
+  }
+}
+
 
 void cluster_init(earray<eintarray>& cvec,const estrhashof<int>& arrind,const eintarray& otuarr,int otucount)
 {
@@ -274,6 +288,48 @@ void load_short_compressed(const estr& filename,estrarray& arr,int& seqlen)
     arr.add(name,seq_compress(line.uppercase()));
   }
   cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
+}
+
+void eshortseq::compress()
+{
+  int i;
+  for (i=0; i<seq.len() && seq[i]=='-'; ++i);
+  b=i;
+  for (i=seq.len()-1; i>=0 && seq[i]=='-'; --i);
+  e=i;
+  ldieif(b>e,"Empty sequence: "+seq);
+  seq=seq_compress(seq);
+}
+
+void load_short_compressed(const estr& filename,ebasicarray<eshortseq>& arr)
+{
+  estr line;
+  estr name;
+  estr start;
+  estr end;
+  efile f(filename);
+
+  eshortseq seq;
+  int i;
+
+  estrarray args;
+  while (f.readln(line)){
+    if (line.len()==0 || line[0]=='#') continue;
+
+    args=line.explode(" ");
+    if (args.size()==2){
+      seq.name=args[0];
+      seq.seq=args[1].uppercase();
+      seq.compress();
+    }else if (args.size()==4){
+      seq.name=args[0];
+      seq.seq=args[3].uppercase();
+      seq.compress();
+    }else
+      ldie("error parsing line: "+line);
+    arr.add(seq);
+  }
+  cout << "# seqs: " << arr.size() << endl;
 }
 
 

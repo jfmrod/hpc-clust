@@ -42,8 +42,13 @@ int step=1;
 long int totaldists=0;
 long int itotaldists=0;
 
+bool dists=false;
+bool sl=false;
+bool cl=false;
+bool al=false;
+
 eseqcluster      clcluster;
-//eseqclusteravg      avgcluster;
+eseqclusteravg      alcluster;
 eseqclustersingle slcluster;
 
 
@@ -116,13 +121,14 @@ void serverFinished(edcserverClient& sclient,const estr& msg)
   cout << "# time receiving: " << t4time*0.001 << endl;
   cout << "# total distances: "<< itotaldists << endl;
 
+/*
   clcluster.save(ofile+".cl.otu",arr);
   cout << "# done writing complete linkage otu file: "<<ofile<<".cl.otu" << endl;
-//  avgcluster.save(ofile+".avg.otu",arr);
-//  cout << "# done writing average linkage otu file: "<<ofile<<".avg.otu" << endl;
+  alcluster.save(ofile+".avg.otu",arr);
+  cout << "# done writing average linkage otu file: "<<ofile<<".avg.otu" << endl;
   slcluster.save(ofile+".sl.otu",arr);
   cout << "# done writing single linkage otu file: "<<ofile<<".sl.otu" << endl;
-
+*/
   exit(0);
 }
 
@@ -147,10 +153,14 @@ void serverClusterDistance(edcserver& server)
 //        cout << "# client "<<j<<" cpos: "<< cpos[j] << " cend: " << cend[j] << " maxdist: " << maxdist<<" cfinished: " << cfinished[j] << " haveData: " << haveData << " finishedCount: " << finishedCount << endl;
       while(cpos[j]!=cend[j] && cmindists[j][cpos[j]].dist == maxdist) {
 //      cout << "+ " << idist << " " << maxdist << " " << cpos[idist] << " " << cend[idist] << endl;
-//        avgcluster.add(cmindists[j][cpos[j]]);
-        writeDistance(fdists,cmindists[j][cpos[j]]);
-//        clcluster.add(cmindists[j][cpos[j]]);
-//        slcluster.add(cmindists[j][cpos[j]]);
+        if (dists)
+          writeDistance(fdists,cmindists[j][cpos[j]]);
+        if (al)
+          alcluster.add(cmindists[j][cpos[j]]);
+        if (cl)
+          clcluster.add(cmindists[j][cpos[j]]);
+        if (sl)
+          slcluster.add(cmindists[j][cpos[j]]);
         cpos[j]=(cpos[j]+1)%cmindists[j].size();
       }
 //      cout << "# client "<<j<<" cpos: "<< cpos[j] << " cend: " << cend[j] << " maxdist: " << maxdist<<" cfinished: " << cfinished[j] << " haveData: " << haveData << " finishedCount: " << finishedCount << endl;
@@ -717,6 +727,12 @@ int emain()
 
   estr host;
 
+
+  epregister(dists);
+  epregister(al);
+  epregister(cl);
+  epregister(sl);
+
   epregister(t);
   epregister(host);
   epregister(ncpus);
@@ -790,9 +806,12 @@ int emain()
 
     load_accs(argv[1],arr);
 //    load_seqs(argv[1],arr);
-//    avgcluster.init(arr.size(),ofile+".avg.dat");
-    clcluster.init(arr.size(),ofile+".cl.dat",argv[1]);
-    slcluster.init(arr.size(),ofile+".sl.dat",argv[1]);
+    if (al)
+      alcluster.init(arr.size(),ofile+".avg.dat",argv[1]);
+    if (cl)
+      clcluster.init(arr.size(),ofile+".cl.dat",argv[1]);
+    if (sl)
+      slcluster.init(arr.size(),ofile+".sl.dat",argv[1]);
 
     registerServer();
     epregister(server);
