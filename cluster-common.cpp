@@ -296,7 +296,7 @@ void eshortseq::compress()
   for (i=0; i<seq.len() && seq[i]=='-'; ++i);
   b=i;
   for (i=seq.len()-1; i>=0 && seq[i]=='-'; --i);
-  e=i;
+  e=i+1;
   ldieif(b>e,"Empty sequence: "+seq);
   seq=seq_compress(seq);
 }
@@ -398,9 +398,7 @@ void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<int>& a
     line.trim();
     seqlen=line.len();
     arr.add(name,seq_compress(line.uppercase()));
-    tmps=name.explode(":");
-    ldieif(tmps.size()<1,"\":\" not found in sequence name: "+name);
-    arrind.add(tmps[0],arrind.size());
+    arrind.add(name,arrind.size());
   }
   cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
 }

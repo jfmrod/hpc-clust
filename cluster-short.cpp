@@ -41,6 +41,113 @@ estr args2str(int argvc,char **argv)
 
 emutex mutex;
 
+inline float dist_nogap_short3_compressed(const eshortseq& s1,const eshortseq& s2)
+{
+//  if (s1.b>s2.e || s2.b>s1.e) return(0.0);
+
+  int s,e;
+  s=MAX(s1.b,s2.b);
+  e=MIN(s1.e,s2.e);
+  if (s>e) return(0.0);
+
+  int len=e-s;
+  if (len<10) return(0.0);
+
+  int count=0;
+  long int *ep1=(long int*)(s1.seq._str)+(e/16);
+  long int *p1=(long int*)(s1.seq._str)+(s/16);
+  long int *p2=(long int*)(s2.seq._str)+(s/16);
+  if (p1<ep1){
+    switch (s%16){
+     case 1:
+      dist_nogap_inc(*p1,*p2,b4_m1,count,len);
+     case 2:
+      dist_nogap_inc(*p1,*p2,b4_m2,count,len);
+     case 3:
+      dist_nogap_inc(*p1,*p2,b4_m3,count,len);
+     case 4:
+      dist_nogap_inc(*p1,*p2,b4_m4,count,len);
+     case 5:
+      dist_nogap_inc(*p1,*p2,b4_m5,count,len);
+     case 6:
+      dist_nogap_inc(*p1,*p2,b4_m6,count,len);
+     case 7:
+      dist_nogap_inc(*p1,*p2,b4_m7,count,len);
+     case 8:
+      dist_nogap_inc(*p1,*p2,b4_m8,count,len);
+     case 9:
+      dist_nogap_inc(*p1,*p2,b4_m9,count,len);
+     case 10:
+      dist_nogap_inc(*p1,*p2,b4_m10,count,len);
+     case 11:
+      dist_nogap_inc(*p1,*p2,b4_m11,count,len);
+     case 12:
+      dist_nogap_inc(*p1,*p2,b4_m12,count,len);
+     case 13:
+      dist_nogap_inc(*p1,*p2,b4_m13,count,len);
+     case 14:
+      dist_nogap_inc(*p1,*p2,b4_m14,count,len);
+     case 15:
+      dist_nogap_inc(*p1,*p2,b4_m15,count,len);
+      ++p1;
+      ++p2;
+    }
+  }
+
+  for (; p1<ep1; ++p1,++p2){
+    dist_nogap_inc(*p1,*p2,b4_m0,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m1,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m2,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m3,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m4,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m5,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m6,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m7,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m8,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m9,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m10,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m11,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m12,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m13,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m14,count,len);
+    dist_nogap_inc(*p1,*p2,b4_m15,count,len);
+  }
+
+  switch (e%16){
+   case 15:
+    dist_nogap_inc(*p1,*p2,b4_m14,count,len);
+   case 14:
+    dist_nogap_inc(*p1,*p2,b4_m13,count,len);
+   case 13:
+    dist_nogap_inc(*p1,*p2,b4_m12,count,len);
+   case 12:
+    dist_nogap_inc(*p1,*p2,b4_m11,count,len);
+   case 11:
+    dist_nogap_inc(*p1,*p2,b4_m10,count,len);
+   case 10:
+    dist_nogap_inc(*p1,*p2,b4_m9,count,len);
+   case 9:
+    dist_nogap_inc(*p1,*p2,b4_m8,count,len);
+   case 8:
+    dist_nogap_inc(*p1,*p2,b4_m7,count,len);
+   case 7:
+    dist_nogap_inc(*p1,*p2,b4_m6,count,len);
+   case 6:
+    dist_nogap_inc(*p1,*p2,b4_m5,count,len);
+   case 5:
+    dist_nogap_inc(*p1,*p2,b4_m4,count,len);
+   case 4:
+    dist_nogap_inc(*p1,*p2,b4_m3,count,len);
+   case 3:
+    dist_nogap_inc(*p1,*p2,b4_m2,count,len);
+   case 2:
+    dist_nogap_inc(*p1,*p2,b4_m1,count,len);
+   case 1:
+    dist_nogap_inc(*p1,*p2,b4_m0,count,len);
+  }
+  return((float)count/(float)len);
+}
+
 inline float dist_nogap_short2_compressed(const eshortseq& s1,const eshortseq& s2)
 {
   if (s1.b>s2.e || s2.b>s1.e) return(0.0);
@@ -168,6 +275,7 @@ int emain()
 
   dfunc.choice=0;
   dfunc.add("nogap",t_calc_dists<ebasicarray<eshortseq>,eseqdist,eblockarray<eseqdist>,dist_nogap_short2_compressed>);
+  dfunc.add("nogap2",t_calc_dists<ebasicarray<eshortseq>,eseqdist,eblockarray<eseqdist>,dist_nogap_short3_compressed>);
 
   epregisterClass(eoption<efunc>);
   epregisterClassMethod2(eoption<efunc>,operator=,int,(const estr& val));
