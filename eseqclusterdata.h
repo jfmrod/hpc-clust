@@ -1,8 +1,6 @@
 #ifndef ESEQCLUSTERDATA_H
 #define ESEQCLUSTERDATA_H
 
-#include "eseqcluster.h"
-
 class eseqclusterData
 {
  public:

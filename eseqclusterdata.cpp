@@ -1,3 +1,4 @@
+#include "cluster-common.h"
 #include "eseqclusterdata.h"
 
 void eseqclusterData::save(const efile& f)
@@ -15,8 +16,12 @@ void eseqclusterData::load(const efile& f)
   while (f.readln(line)){
     if (line.len()==0 || line[0]=='#') continue;
     parts=line.explode(" ");
-    ldieif(parts.size()!=3,"fields in line different than 3: "+line);
-    mergearr.add(eseqdist(parts[1].i(),parts[2].i(),parts[0].f()));
+    if (parts.size()==3){
+      mergearr.add(eseqdist(parts[1].i(),parts[2].i(),parts[0].f()));
+    }else if (parts.size()==4){
+      mergearr.add(eseqdist(parts[2].i(),parts[3].i(),parts[1].f()));
+    }else
+      ldie("fields in line different than 3: "+line);
   }
 }
 

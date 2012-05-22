@@ -9,7 +9,6 @@
 #include "cluster-common.h"
 #include "eseqclusteravg.h"
 #include "eseqclusterstep.h"
-#include "eseqclusterdist.h"
 
 //eseqcluster cluster;
 
@@ -17,9 +16,8 @@ eblockarray<eseqdist> dists;
 
 eseqcluster clcluster; // complete linkage
 eseqclustersingle slcluster; // single linkage
-eseqclusteravg avgcluster; // avg linkage
+eseqclusteravg alcluster; // avg linkage
 eseqclusterstep stepcluster; 
-eseqclusterdist sldistc;
 
 //eblockarray<eseqdist> mindists;
 //ebasicarray<eseqdist> mindists;
@@ -93,12 +91,12 @@ int emain()
   bool sl=false;
   bool al=false;
   bool step=false;
-  bool sldist=false;
+  bool cdist=false;
   epregister(cl);
   epregister(sl);
   epregister(al);
   epregister(step);
-  epregister(sldist);
+  epregister(cdist);
 
   eoption<efunc> dfunc;
 
@@ -136,7 +134,7 @@ int emain()
 //  epregister(outfile);
   eparseArgs(argvc,argv);
 
-  ldieif(!cl && !sl && !al && !step && !sldist,"please choose at least one clustering method <-sl true|-cl true|-al true>");
+  ldieif(!cl && !sl && !al && !step,"please choose at least one clustering method <-sl true|-cl true|-al true>");
 
   cout << "# distance function: " << dfunc.key() << endl;
 
@@ -222,11 +220,9 @@ int emain()
   if (sl)
     slcluster.init(arr.size(),ofile+".sl",argv[1]);
   if (al)
-    avgcluster.init(arr.size(),ofile+".al",argv[1]);
+    alcluster.init(arr.size(),ofile+".al",argv[1]);
   if (step)
     stepcluster.init(arr.size(),ofile+".step",argv[1]);
-  if (sldist)
-    sldistc.init(arr.size(),ofile+".sldist",argv[1]);
 
   cout << "# starting clustering"<<endl;
   t1.reset();
@@ -236,13 +232,11 @@ int emain()
     if (cl)
       clcluster.add(dists[i]);
     if (al)
-      avgcluster.add(dists[i]);
+      alcluster.add(dists[i]);
     if (sl)
       slcluster.add(dists[i]);
     if (step)
       stepcluster.add(dists[i]);
-    if (sldist)
-      sldistc.add(dists[i]);
 
 //    cluster.update(i-1);
 //    if (cluster.mergecount%1000==0 && cluster.mergecount!=lastupdate) { lastupdate=cluster.mergecount; cout << "# merged " << cluster.update(i-1) << " seqs" << endl; }
@@ -259,6 +253,23 @@ int emain()
   if (step){
     stepcluster.save(ofile+".sotu",arr);
     cout << "# done writing step single linkage clustering to: "<<ofile+".sotu" << endl;
+  }
+  if (cdist){
+    if (sl){
+      efile f(ofile+".sl.dist");
+      for (i=dists.size()-1; i>=0; --i)
+        f.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+slcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
+    }
+    if (cl){
+      efile f(ofile+".cl.dist");
+      for (i=dists.size()-1; i>=0; --i)
+        f.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+clcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
+    }
+    if (al){
+      efile f(ofile+".al.dist");
+      for (i=dists.size()-1; i>=0; --i)
+        f.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+alcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
+    }
   }
 //  clcluster.save(ofile+".cl.otu",arr);
 //  cout << "# done writing complete linkage clustering to: "<<ofile+".cl" << endl;
