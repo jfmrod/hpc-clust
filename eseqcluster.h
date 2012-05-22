@@ -8,7 +8,6 @@
 #include <eutils/eblockarray.h>
 #include <eutils/ebasicarray.h>
 
-#undef check
 
 class eseqdist
 {
@@ -26,6 +25,8 @@ class eseqdist
   int unserial(const estr& data,int i);
 };
 
+#include "eseqclusterdata.h"
+
 class eseqcluster
 {
  public:
@@ -33,8 +34,9 @@ class eseqcluster
 
   int mergecount;
 
-  emutex mutexDists;
-  eblockarray<eseqdist> dists;
+//  emutex mutexDists;
+//  eblockarray<eseqdist> dists;
+  eseqclusterData clusterData;
 
   eintarray scount;
   eintarray scluster;
@@ -53,9 +55,9 @@ class eseqcluster
 
   eseqcluster();
 
-  void merge(int x,int y);
+  void merge(int x,int y,float dist);
   void init(int count,const estr& ofile,const estr& seqsfile);
-  void add(int ind);
+//  void add(int ind);
   void add(const eseqdist& sdist);
 
 //  int update(ebasicarray<eseqdist>& dists,int s);

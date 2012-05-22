@@ -9,6 +9,7 @@
 #include "cluster-common.h"
 #include "eseqclusteravg.h"
 #include "eseqclusterstep.h"
+#include "eseqclusterdist.h"
 
 //eseqcluster cluster;
 
@@ -18,6 +19,7 @@ eseqcluster clcluster; // complete linkage
 eseqclustersingle slcluster; // single linkage
 eseqclusteravg avgcluster; // avg linkage
 eseqclusterstep stepcluster; 
+eseqclusterdist sldistc;
 
 //eblockarray<eseqdist> mindists;
 //ebasicarray<eseqdist> mindists;
@@ -91,10 +93,12 @@ int emain()
   bool sl=false;
   bool al=false;
   bool step=false;
+  bool sldist=false;
   epregister(cl);
   epregister(sl);
   epregister(al);
   epregister(step);
+  epregister(sldist);
 
   eoption<efunc> dfunc;
 
@@ -106,6 +110,7 @@ int emain()
   dfunc.add("gap",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
   dfunc.add("nogap",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
   dfunc.add("nogapsingle",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
+  dfunc.add("nogapwindow",t_calc_dists_window<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed_window>);
   dfunc.add("tamura",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
   dfunc.add("gap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
   dfunc.add("nogap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
@@ -115,6 +120,9 @@ int emain()
   epregisterClassMethod2(eoption<efunc>,operator=,int,(const estr& val));
 
   epregister(dfunc);
+
+  int winlen=70;
+  epregister(winlen);
 
   estr ofile="cluster-results";
   estr dfile;
@@ -128,7 +136,7 @@ int emain()
 //  epregister(outfile);
   eparseArgs(argvc,argv);
 
-  ldieif(!cl && !sl && !al && !step,"please choose at least one clustering method <-sl true|-cl true|-al true>");
+  ldieif(!cl && !sl && !al && !step && !sldist,"please choose at least one clustering method <-sl true|-cl true|-al true>");
 
   cout << "# distance function: " << dfunc.key() << endl;
 
@@ -163,19 +171,11 @@ int emain()
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
     if (partsTotal>(arr.size()-1)*arr.size()/20) partsTotal=(arr.size()-1)*arr.size()/20;
-    for (i=0; i<partsTotal; ++i){
-      
-//      taskman.addTask(dfunc.value(),evararray(arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
-      taskman.addTask(dfunc.value(),evararray(mutex,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
-    }
-//      taskman.addTask(efunc(cluster,&eseqclusterCount::calc),evararray(arr,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t));
-//      taskman.addTask(p_calc_dists_nogap,evararray((const int&)i,partsTotal,t));
-    cout << "# number of task: " << taskman.tasks.size() << endl;
+    for (i=0; i<partsTotal; ++i)
+      taskman.addTask(dfunc.value(),evararray(mutex,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t,(const int&)winlen));
 
     taskman.createThread(ncpus);
-    cout << "# finished creating threads: "<<ncpus << endl;
     taskman.wait();
-    cout << "# all tasks finished" << endl;
 
     dtime=t1.lap()*0.001;
     cout << "# time calculating distances: " << dtime << endl;
@@ -218,13 +218,15 @@ int emain()
 
   cout << "# initializing cluster"<<endl;
   if (cl)
-    clcluster.init(arr.size(),ofile+".cl.dat",argv[1]);
+    clcluster.init(arr.size(),ofile+".cl",argv[1]);
   if (sl)
-    slcluster.init(arr.size(),ofile+".sl.dat",argv[1]);
+    slcluster.init(arr.size(),ofile+".sl",argv[1]);
   if (al)
-    avgcluster.init(arr.size(),ofile+".al.dat",argv[1]);
+    avgcluster.init(arr.size(),ofile+".al",argv[1]);
   if (step)
-    stepcluster.init(arr.size(),ofile+".step.dat",argv[1]);
+    stepcluster.init(arr.size(),ofile+".step",argv[1]);
+  if (sldist)
+    sldistc.init(arr.size(),ofile+".sldist",argv[1]);
 
   cout << "# starting clustering"<<endl;
   t1.reset();
@@ -239,6 +241,9 @@ int emain()
       slcluster.add(dists[i]);
     if (step)
       stepcluster.add(dists[i]);
+    if (sldist)
+      sldistc.add(dists[i]);
+
 //    cluster.update(i-1);
 //    if (cluster.mergecount%1000==0 && cluster.mergecount!=lastupdate) { lastupdate=cluster.mergecount; cout << "# merged " << cluster.update(i-1) << " seqs" << endl; }
 //    if (i%10000==0) { cout << i/10000 << " "<< mindists[i].dist << " " << arr.size()-cluster.mergecount << " " << cluster.smatrix.size() << endl; }

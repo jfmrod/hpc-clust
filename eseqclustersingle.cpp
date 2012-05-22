@@ -31,6 +31,8 @@ void eseqclustersingle::merge(int x,int y,float dist)
   if (x==y) return;
   ldieif(scount[x]==0 || scount[y]==0,"also should not happen");
 
+  clusterData.mergearr.add(eseqdist(x,y,dist));
+
   smerge[x]=x;
   smerge[y]=x;
 
@@ -62,6 +64,7 @@ void eseqclustersingle::add(eseqdist& sdist){
   merge(x,y,sdist.dist);
 }
 
+/*
 void eseqclustersingle::add(int ind){
 //  if (dists[ind].count==0) return;
   ldieif(dists[ind].x<0 || dists[ind].y<0 || dists[ind].x>=scluster.size() || dists[ind].y>=scluster.size(),"out of bounds: dists[ind].x: "+estr(dists[ind].x)+" dists[ind].y: "+estr(dists[ind].y)+" scluster.size(): "+estr(scluster.size()));
@@ -75,6 +78,7 @@ void eseqclustersingle::add(int ind){
 
   merge(x,y,dists[ind].dist);
 }
+*/
 
 void eseqclustersingle::save(const estr& filename,const estrarray& arr)
 {

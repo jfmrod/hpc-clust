@@ -123,10 +123,12 @@ int eseqcluster::update(ebasicarray<eseqdist>& dists,int s)
 }
 */
 
-void eseqcluster::merge(int x,int y)
+void eseqcluster::merge(int x,int y,float dist)
 {
   ldieif(x==y,"should not happen!");
   ldieif(scount[x]==0 || scount[y]==0,"also should not happen");
+
+  clusterData.mergearr.add(eseqdist(x,y,dist));
 
   smerge[x]=x;
   smerge[y]=x;
@@ -190,7 +192,7 @@ void eseqcluster::add(const eseqdist& sdist){
   if (it==smatrix.end()){
 //    if (scount[x]*scount[y]==sdist.count){
     if (scount[x]*scount[y]==1){
-      merge(x,y);
+      merge(x,y,sdist.dist);
 //      cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
       ofile.write(estr(scluster.size()-mergecount)+" "+sdist.dist+" "+x+" "+y+"\n");
     }else{
@@ -206,7 +208,7 @@ void eseqcluster::add(const eseqdist& sdist){
 
   // complete linkage
   if (*it==scount[x]*scount[y]){
-    merge(x,y);
+    merge(x,y,sdist.dist);
 //    cout << scluster.size()-mergecount << " " << sdist.dist << " " << x << " " << y << endl;
     ofile.write(estr(scluster.size()-mergecount)+" "+sdist.dist+" "+x+" "+y+"\n");
     smatrix.erase(it);

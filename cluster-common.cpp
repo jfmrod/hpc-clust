@@ -19,6 +19,9 @@ void initDistMatrix()
 }
 
 
+
+
+
 void cluster_init(earray<eintarray>& cvec,const estrhashof<int>& arrind,const eintarray& otuarr,int otucount)
 {
   int i,j;

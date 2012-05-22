@@ -47,6 +47,8 @@ class eseqclusterCount
   emutex mutexDists;
   eblockarray<eseqdistCount> dists;
 
+  eseqclusterData clusterData;
+
   eintarray scount;
   eintarray scluster;
   eintarray smerge;
@@ -59,11 +61,11 @@ class eseqclusterCount
 
   eseqclusterCount();
 
-  void merge(int x,int y);
+  void merge(int x,int y,float dist);
   void init(int count);
 
   void add(eseqdistCount& sdist);
-  void add(int ind);
+//  void add(int ind);
 
   long int update(long int ind);
   long int update(long int ind,int x,int y);

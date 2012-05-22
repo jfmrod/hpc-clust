@@ -245,10 +245,6 @@ inline float dist_nogapsingle_compressed(const estr& s1,const estr& s2,int seqle
   return((float)count/(float)len);
 }
 
-
-
-
-
 inline void dist_tamura_inc(long int a1,long int a2,long int mask,int& P,int& Q,int& GC1,int& GC2,int& len){
   if ((a1&mask)==mask || (a2&mask)==mask)
     --len;
@@ -523,6 +519,48 @@ inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
     dist_inc(*p1,*p2,b4_m0,count);
   }
   return((float)count/(float)seqlen);
+}
+
+inline void dist_nogap_inc(const estr& s1,const estr& s2,int i,int& count,int& len){
+  int bp=i >> 4; // i/16
+  int bm=(i%16)*4;
+  unsigned long int mask=(b4_m0 << bm);
+  
+  if ((*(((unsigned long int*)s1._str)+bp)&mask)==mask && (*(((unsigned long int*)s2._str)+bp)&mask)==mask)
+    --len;
+  else if ((*(((unsigned long int*)s1._str)+bp)&mask)==(*(((unsigned long int*)s2._str)+bp)&mask))
+    ++count;
+}
+
+inline void dist_nogap_dec(const estr& s1,const estr& s2,int i,int& count,int& len){
+  int bp=i >> 4; // i/16
+  int bm=(i%16)*4;
+  unsigned long int mask=(b4_m0 << bm);
+  
+  if ((*(((unsigned long int*)s1._str)+bp)&mask)==mask && (*(((unsigned long int*)s2._str)+bp)&mask)==mask)
+    ++len;
+  else if ((*(((unsigned long int*)s1._str)+bp)&mask)==(*(((unsigned long int*)s2._str)+bp)&mask))
+    --count;
+}
+
+inline float dist_nogap_compressed_window(const estr& s1,const estr& s2,int seqlen,int winlen)
+{
+  int len=winlen;
+  int count=0;
+  int i,j;
+  for (i=0; i<seqlen && i<winlen; ++i)
+    dist_nogap_inc(s1,s2,i,count,len);
+
+  float tmpdiff=float(count)/len;
+  float maxdiff=tmpdiff;
+  for (j=0; i<seqlen; ++i,++j){
+    dist_nogap_inc(s1,s2,i,count,len);
+    dist_nogap_dec(s1,s2,j,count,len);
+    tmpdiff=float(count)/len;
+    if (tmpdiff<maxdiff) maxdiff=tmpdiff;
+  }
+
+  return(maxdiff);
 }
 
 inline float dist_nogap_compressed(const estr& s1,const estr& s2,int seqlen)
@@ -801,6 +839,42 @@ int t_calc_dists(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,fl
     i=arr.size()/2-1;
     for (j=i+1; j<arr.size(); ++j){
       tmpid=fdist(arr[i],arr[j],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+  }
+  mutex.lock();
+  dists+=tmpdists;
+  mutex.unlock();
+  return(0);
+}
+
+template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int,int)>
+int t_calc_dists_window(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,float thres,int winlen)
+{
+  long int i,i2,j;
+  long int start,end;
+
+  start=(long int)(node)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+  end=(long int)(node+1)*(long int)(arr.size()-1)/(long int)(2*tnodes);
+
+  float tmpid,tmpid2,tmpid3;
+  K tmpdists;
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen,winlen);
+      if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+    i2=arr.size()-i-2;
+    for (j=i2+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i2],arr[j],seqlen,winlen);
+      if (tmpid>=thres) tmpdists.add(M(i2,j,tmpid));
+    }
+  }
+  if (node==tnodes-1 && arr.size()%2==0){
+    i=arr.size()/2-1;
+    for (j=i+1; j<arr.size(); ++j){
+      tmpid=fdist(arr[i],arr[j],seqlen,winlen);
       if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
     }
   }

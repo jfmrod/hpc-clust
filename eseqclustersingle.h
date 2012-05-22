@@ -17,8 +17,9 @@ class eseqclustersingle
   int mergecount;
   efile ofile;
 
-  emutex mutexDists;
-  eblockarray<eseqdist> dists;
+//  emutex mutexDists;
+//  eblockarray<eseqdist> dists;
+  eseqclusterData clusterData;
 
   eintarray scount;
   eintarray scluster;

@@ -153,7 +153,7 @@ long int eseqclusteravg::update(eblockarray<eseqdistCount>& dists,long int s)
       }
     }
 
-    delete uarr;
+    delete[] uarr;
   }while (updcount==100);
 
   for (i=0; i<smerge.size(); ++i)
@@ -166,6 +166,8 @@ void eseqclusteravg::merge(const eseqdistCount& sdist)
 {
   ldieif(sdist.x==sdist.y,"should not happen!");
   ldieif(scount[sdist.x]==0 || scount[sdist.y]==0,"also should not happen");
+
+  clusterData.mergearr.add(eseqdist(sdist.x,sdist.y,sdist.dist));
 
   smerge[sdist.x]=sdist.x;
   smerge[sdist.y]=sdist.x;

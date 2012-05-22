@@ -30,6 +30,8 @@ class eseqclusteravg
   ebasicarray<list<int> > inter;
   ebasicarray<list<int> > incluster;
 
+  eseqclusterData clusterData;
+
   multiset<eseqdistCount,greater<eseqdistCount> > completemerges;
 
   void check(ebasicarray<eseqdistCount>& dists);

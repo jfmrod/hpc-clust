@@ -180,7 +180,7 @@ long int eseqclusterCount::update(long int s)
       }
     }
 
-    delete uarr;
+    delete[] uarr;
   }while (updcount==100);
 
   for (i=0; i<smerge.size(); ++i)
@@ -265,10 +265,12 @@ long int eseqclusterCount::update(eblockarray<eseqdistCount>& dists,long int s)
   return(count);
 }
 
-void eseqclusterCount::merge(int x,int y)
+void eseqclusterCount::merge(int x,int y,float dist)
 {
   ldieif(x==y,"should not happen!");
   ldieif(scount[x]==0 || scount[y]==0,"also should not happen");
+
+  clusterData.mergearr.add(eseqdist(x,y,dist));
 
   smerge[x]=x;
   smerge[y]=x;
@@ -348,7 +350,7 @@ void eseqclusterCount::add(eseqdistCount& sdist){
   if (it==smatrix.end()){
     if (scount[tmpdist.x]*scount[tmpdist.y]==tmpdist.count){
 //    if (scount[x]*scount[y]==1){
-      merge(tmpdist.x,tmpdist.y);
+      merge(tmpdist.x,tmpdist.y,tmpdist.dist);
 //      update(ind-1,x,y);
       cout << scluster.size()-mergecount << " " << tmpdist.dist << " " << tmpdist.x << " " << tmpdist.y << endl;
 //      sleep(1);
@@ -366,7 +368,7 @@ void eseqclusterCount::add(eseqdistCount& sdist){
 
   // complete linkage
   if ((*it)==scount[tmpdist.x]*scount[tmpdist.y]){
-    merge(tmpdist.x,tmpdist.y);
+    merge(tmpdist.x,tmpdist.y,tmpdist.dist);
 //    update(ind-1,x,y);
     cout << scluster.size()-mergecount << " " << tmpdist.dist << " " << tmpdist.x << " " << tmpdist.y << endl;
 //    sleep(1);
