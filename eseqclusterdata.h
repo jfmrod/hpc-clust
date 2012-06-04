@@ -7,6 +7,7 @@ class eseqclusterData
   earray<eseqdist> mergearr;
 
   float getMergeDistance(int x,int y);
+  int getOTU(float dist,eintarray& otuarr);
   void save(const efile& f);
   void load(const efile& f);
 };

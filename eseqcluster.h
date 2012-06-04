@@ -20,7 +20,7 @@ class eseqdist
   eseqdist();
   eseqdist(int x,int y,float dist);
 
-  inline bool operator<(const eseqdist& sdist) const{ return(dist<sdist.dist?true:false); }
+  inline bool operator<(const eseqdist& sdist) const{ return(dist<sdist.dist); }
   void serial(estr& data) const;
   int unserial(const estr& data,int i);
 };

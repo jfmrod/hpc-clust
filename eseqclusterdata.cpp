@@ -1,6 +1,35 @@
 #include "cluster-common.h"
 #include "eseqclusterdata.h"
 
+int eseqclusterData::getOTU(float dist,eintarray& otuarr)
+{
+  int i,j;
+  for (i=0; i<otuarr.size(); ++i)
+    otuarr[i]=i;
+
+  // point at the seq we merged with
+  for (i=0; i<mergearr.size() && mergearr[i].dist>=dist; ++i)
+    otuarr[mergearr[i].y]=mergearr[i].x;
+
+  // translate all the merged seq ids to the last seq id of the otu
+  for (i=0; i<otuarr.size(); ++i){
+    for (j=i; j!=otuarr[j]; j=otuarr[j]);
+    otuarr[i]=j;
+  }
+
+  eintarray otuind;
+  otuind.init(otuarr.size(),-1);
+
+  // translate otu indexes into an index from 0 to the total number of otus
+  int otucount=0;
+  for (i=0; i<otuarr.size(); ++i){
+    if (otuind[otuarr[i]]==-1)
+      otuind[otuarr[i]]=otucount++;
+    otuarr[i]=otuind[otuarr[i]];
+  }
+  return(otucount);
+}
+
 void eseqclusterData::save(const efile& f)
 {
   int i;

@@ -19,10 +19,9 @@ edcserver server;
 eoption<efunc> dfunc;
 estrarray arr;
 //ebasicarray<eseqdist> mindists;
-estr ofile="cluster.dat";
+estr ofile;
 
 float t=0.9; // clustering threshold
-estr distfile;
 efile fdists;
 
 etimer t1;
@@ -47,9 +46,9 @@ bool sl=false;
 bool cl=false;
 bool al=false;
 
-eseqcluster      clcluster;
-eseqclusteravg      alcluster;
-eseqclustersingle slcluster;
+eseqcluster        clcluster;
+eseqclusteravg     alcluster;
+eseqclustersingle  slcluster;
 
 
 long int transfersize=1000;
@@ -740,8 +739,10 @@ int emain()
 //  epregister(mindists);
   epregister(tbucket);
   epregister(ofile);
-  epregister(distfile);
   eparseArgs(argvc,argv);
+
+  if (ofile.len()==0)
+    ofile=argv[1];
 
   epregisterClass(eseqdist);
   epregisterClassSerializeMethod(eseqdist);
@@ -783,8 +784,6 @@ int emain()
   int i,i2,j;
 
   if (host.len()>0){
-    distfile="";
-
     load_seqs_compressed(argv[1],nodeArr,seqlen);
 
     cout << "# creating " << nthreads << " threads" << endl;
@@ -801,17 +800,17 @@ int emain()
     client.connect(host,12345);
     cerr << " waiting for command" << endl;
   }else{
-    ldieif(!distfile.len(),"no distance file specified");
-    fdists.open(distfile,"w");
-
     load_accs(argv[1],arr);
 //    load_seqs(argv[1],arr);
     if (al)
-      alcluster.init(arr.size(),ofile+".avg.dat",argv[1]);
+      alcluster.init(arr.size(),ofile+".al",argv[1]);
     if (cl)
-      clcluster.init(arr.size(),ofile+".cl.dat",argv[1]);
+      clcluster.init(arr.size(),ofile+".cl",argv[1]);
     if (sl)
-      slcluster.init(arr.size(),ofile+".sl.dat",argv[1]);
+      slcluster.init(arr.size(),ofile+".sl",argv[1]);
+    if (dists)
+      fdists.open(ofile+".dist","w");
+
 
     registerServer();
     epregister(server);
