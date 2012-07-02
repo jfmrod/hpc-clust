@@ -5,7 +5,7 @@ CXXFLAGS:=${CXXFLAGS} -pthread -march=nocona -mtune=nocona -O3 # -g # -pg
 
 .PHONY: all clean
 
-targets=cluster-matchshort cluster-short cluster-partition2 cluster cluster-profile cluster-fast cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-check cluster-partition cluster-dist2 cluster-evolve cluster-regen
+targets=cluster-profile-siteevorate cluster-chimera cluster-matchshort cluster-short cluster-partition2 cluster cluster-profile cluster-fast cluster-cooc cluster2 cluster-uniq cluster-sorted cluster-cmp cluster-check cluster-partition cluster-dist2 cluster-evolve cluster-regen
 
 all: $(targets)
 
@@ -26,6 +26,8 @@ cluster-regen.o: cluster-regen.cpp seq-profile.h ../sali/etree.h
 cluster : cluster.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o eseqclusterstep.o eseqclusterdata.o
 cluster-short : cluster-short.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o eseqclusterstep.o
 cluster-matchshort : cluster-matchshort.o cluster-common.o eseqclusterdata.o eseqcluster.o
+cluster-chimera : cluster-chimera.o cluster-common.o eseqclusterdata.o eseqcluster.o
+cluster-profile-siteevorate : cluster-profile-siteevorate.o cluster-common.o eseqclusterdata.o eseqcluster.o
 
 cluster-dist : cluster-dist.o cluster-common.o eseqcluster.o eseqclustercount.o
 cluster-dist2 : cluster-dist2.o cluster-common.o eseqcluster.o eseqclustercount.o eseqclustersingle.o eseqclusteravg.o

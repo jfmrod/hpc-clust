@@ -35,7 +35,7 @@ int emain()
       cout << i/(arr.size()/10);
     it=duphash.get(arr.values(i));
     if (it==duphash.end()) //!duphash.exists(arr.values(i)))
-      { f.write(id[0]+"   "+arr.values(i)+"\n"); duphash.add(arr.values(i),id[0]); ++count; }
+      { f.write(id[0]+" "+arr.values(i)+"\n"); duphash.add(arr.values(i),id[0]); ++count; }
     else 
       dups.add(id[0],it.value());
 //    else

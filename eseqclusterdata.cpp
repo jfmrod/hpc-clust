@@ -1,6 +1,8 @@
 #include "cluster-common.h"
 #include "eseqclusterdata.h"
 
+eseqclusterData::eseqclusterData(): count(0) {}
+
 int eseqclusterData::getOTU(float dist,eintarray& otuarr)
 {
   int i,j;
@@ -30,6 +32,78 @@ int eseqclusterData::getOTU(float dist,eintarray& otuarr)
   return(otucount);
 }
 
+
+void eseqclusterData::getCluster(const eintarray& seqs, eintarray& seqcluster,float& cdist)
+{
+  if (seqs.size()<2) { lwarn("seqs is empty or contains only one sequence: "+estr(seqs.size())); return; }
+  if (mergearr.size()==0 || count==0) { lwarn("empty merge array, load the cluster merge file"); return; }
+
+  int i,j,k;
+
+  earray<eintarray> otus;
+  otus.init(count);
+  eintarray otuarr;
+  otuarr.init(count);
+  for (i=0; i<otuarr.size(); ++i){
+    otuarr[i]=i;
+    otus[i].add(i);
+  }
+
+//  cout << "# finding cluster for: " << seqs.size() << endl;
+
+  // point at the seq we merged with
+  float lastdist=mergearr[0].dist;
+  bool allin=false;
+  for (i=0; i<mergearr.size(); ++i){
+    if (lastdist != mergearr[i].dist){
+      allin=true;
+      for (k=seqs[0]; k!=otuarr[k]; k=otuarr[k]);
+      otuarr[seqs[0]]=k;
+      for (j=1; j<seqs.size(); ++j){
+        for (k=seqs[j]; k!=otuarr[k]; k=otuarr[k]);
+        otuarr[seqs[j]]=k;
+        if (otuarr[seqs[0]] != otuarr[seqs[j]]) { allin=false; break; }
+      }
+      if (allin) break;
+      lastdist=mergearr[i].dist;
+//      cout << "# lastdist: " << lastdist << endl;
+    }
+
+   
+    otuarr[mergearr[i].y]=mergearr[i].x;
+/*
+    otus[mergearr[i].x]+=otus[mergearr[i].y];
+    for (j=0; j<otus[mergearr[i].y].size(); ++j)
+      otuarr[otus[mergearr[i].y][j]]=mergearr[i].x;
+    otus[mergearr[i].y].clear();
+*/
+  }
+
+//  cout << "# finished" << endl;
+
+  if (allin){
+    cdist=lastdist;
+    for (k=seqs[0]; k!=otuarr[k]; k=otuarr[k]);
+    otuarr[seqs[0]]=k;
+    for (i=0; i<otuarr.size(); ++i){
+      for (k=i; k!=otuarr[k]; k=otuarr[k]);
+      otuarr[i]=k;
+      if (otuarr[i]==otuarr[seqs[0]])
+        seqcluster.add(i);
+    }
+    return;
+  }
+  for (j=0; j<seqs.size(); ++j){
+    for (k=seqs[j]; k!=otuarr[k]; k=otuarr[k]);
+    otuarr[seqs[j]]=k;
+  }
+  estr str;
+  for (j=0; j<seqs.size(); ++j)
+    str+=","+estr(otuarr[seqs[j]]);
+  cout << str.substr(1) << endl; 
+  cdist=-1.0;
+}
+
 void eseqclusterData::save(const efile& f)
 {
   int i;
@@ -37,8 +111,9 @@ void eseqclusterData::save(const efile& f)
     f.write(estr(mergearr[i].dist)+" "+mergearr[i].x+" "+mergearr[i].y+"\n");
 }
 
-void eseqclusterData::load(const efile& f)
+void eseqclusterData::load(const efile& f,int _count)
 {
+  count=_count;
   mergearr.clear();
   estr line;
   estrarray parts;

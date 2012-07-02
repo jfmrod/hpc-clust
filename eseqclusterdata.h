@@ -4,12 +4,18 @@
 class eseqclusterData
 {
  public:
+  int count;
   earray<eseqdist> mergearr;
 
-  float getMergeDistance(int x,int y);
+  eseqclusterData();
+
   int getOTU(float dist,eintarray& otuarr);
+
+  float getMergeDistance(int x,int y);
+  void getCluster(const eintarray& seqs, eintarray& seqcluster, float& cdist);
+
   void save(const efile& f);
-  void load(const efile& f);
+  void load(const efile& f,int count);
 };
 
 #endif
