@@ -65,10 +65,13 @@ void eseqcluster::check(ebasicarray<eseqdist>& dists)
   cout << "# no duplicates found!" << endl;
 }
 
-void eseqcluster::init(int count,const estr& ofilename,const estr& seqsfile) {
+void eseqcluster::init(int count,const estr& ofilename,const estr& seqsfile,const earray<eintarray>& dupslist)
+{
   ofile.open(ofilename,"w");
   ofile.write("# seqsfile: "+seqsfile+"\n");
-  int i;
+  int i,j;
+
+  mergecount=0;
   scount.reserve(count);
   scluster.reserve(count);
   smerge.reserve(count);
@@ -82,11 +85,17 @@ void eseqcluster::init(int count,const estr& ofilename,const estr& seqsfile) {
     incluster[i].push_back(i);
     inter.add(list<int>());
   }
+  for (i=0; i<dupslist.size(); ++i){
+    for (j=1; j<dupslist[i].size(); ++j){
+      ++mergecount;
+      ofile.write(estr(scluster.size()-mergecount)+" 1.0 "+dupslist[i][0]+" "+dupslist[i][j]+"\n");
+      clusterData.mergearr.add(eseqdist(dupslist[i][0],dupslist[i][j],1.0));
+    }
+  }
   cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
   cout << "# initializing smatrix with: " << (long int)(count)*(long int)(count)/(long int)(20000)<< " elements" << endl; 
   smatrix.reserve((long int)(count)*(long int)(count)/(long int)(20000));
 //  cout << "# smatrix._hashitems = " << smatrix._hashitems << endl;
-  mergecount=0;
 }
 
 /*

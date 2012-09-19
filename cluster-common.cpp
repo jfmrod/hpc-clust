@@ -4,6 +4,7 @@
 #include <eutils/eregexp.h>
 #include <math.h>
 
+/*
 int gap_matrix[16][16];
 
 void initDistMatrix()
@@ -17,7 +18,7 @@ void initDistMatrix()
     }
   }
 }
-
+*/
 
 
 
@@ -198,6 +199,7 @@ estr seq_compress(const estr& seq)
   char tmp;
   for (i=0; i<seq.len()-2; i+=2){
     tmp=nuc_compress(seq[i]);
+//    tmp=tmp|(0xF0&(nuc_compress(seq[i+1])<<4));
     tmp=tmp|(nuc_compress(seq[i+1])<<4);
     res._str[i/2]=tmp;
   }
@@ -205,7 +207,8 @@ estr seq_compress(const estr& seq)
   if (i+1<seq.len())
     tmp=tmp|(nuc_compress(seq[i+1])<<4);
   res._str[i/2]=tmp;
-  res._strlen=(i+1)/2;
+  res._strlen=(seq.len()+1)/2;
+  res._str[i/2+1]=0x00;
   return(res);
 }
 

@@ -1,0 +1,4 @@
+
+Install:
+  mysql    devel headers and libs
+  gsl      devel headers and libs

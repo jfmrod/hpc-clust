@@ -32,7 +32,7 @@ class eseqclusterstep
   ebasicarray<list<int> > incluster;
 
   void merge(int x,int y,int dx,int dy,float dist);
-  void init(int count,const estr& ofile,const estr& seqsfile);
+  void init(int count,const estr& ofile,const estr& seqsfile,const earray<eintarray>& dupslist);
   void add(int ind);
   void add(eseqdist& sdist);
 

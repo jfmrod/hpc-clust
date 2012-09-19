@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: hpc-cluster
+Description: High Performace Computing Cluster library
+Version: @VERSION@
+Libs: @HPC_CLUSTER_LIBS@ @LIBS@
+Cflags: @HPC_CLUSTER_CXXFLAGS@

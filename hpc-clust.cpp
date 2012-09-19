@@ -10,8 +10,6 @@
 #include "eseqclusteravg.h"
 #include "eseqclusterstep.h"
 
-//eseqcluster cluster;
-
 eblockarray<eseqdist> dists;
 
 eseqcluster clcluster; // complete linkage
@@ -19,8 +17,6 @@ eseqclustersingle slcluster; // single linkage
 eseqclusteravg alcluster; // avg linkage
 eseqclusterstep stepcluster; 
 
-//eblockarray<eseqdist> mindists;
-//ebasicarray<eseqdist> mindists;
 int partsFinished=0;
 int partsTotal=100;
 estrarray arr;
@@ -100,14 +96,10 @@ int emain()
 
   eoption<efunc> dfunc;
 
-  initDistMatrix();
-
   dfunc.choice=0;
-//  dfunc.add("gap",gap_calc_dists);
-//  dfunc.add("gap+noise",gapnoise_calc_dists);
-  dfunc.add("gap",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
-  dfunc.add("nogap",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
-  dfunc.add("nogapsingle",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
+  dfunc.add("gap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+  dfunc.add("nogap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+  dfunc.add("nogapsingle",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
   dfunc.add("nogapwindow",t_calc_dists_window<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed_window>);
   dfunc.add("tamura",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
   dfunc.add("gap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
@@ -122,7 +114,7 @@ int emain()
   int winlen=70;
   epregister(winlen);
 
-  estr ofile="cluster-results";
+  estr ofile;
   estr dfile;
   float t=0.90;
   int ncpus=1;
@@ -130,11 +122,14 @@ int emain()
   epregister(ncpus);
   epregister(ofile);
   epregister(dfile);
-//  estr outfile="cooc_distances.dat";
-//  epregister(outfile);
   eparseArgs(argvc,argv);
 
+  ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <seqali>");
   ldieif(!cl && !sl && !al && !step,"please choose at least one clustering method <-sl true|-cl true|-al true>");
+
+  if (ofile.len()==0)
+    ofile=argv[1];
+
 
   cout << "# distance function: " << dfunc.key() << endl;
 
@@ -149,13 +144,30 @@ int emain()
   epregisterClassMethod(ebasicarray<eseqdist>,subset);
   epregisterClassSerializeMethod(ebasicarray<eseqdist>);
 
-  ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <seqali>");
-
   int i;
   if (avgmutseq>0.0)
     load_seqs_mutate_compressed(argv[1],arr,seqlen,avgmutseq);
   else
     load_seqs_compressed(argv[1],arr,seqlen);
+
+  ebasicstrhashof<int> duphash;
+  ebasicstrhashof<int>::iter it;
+  duphash.reserve(arr.size());
+  eintarray uniqind;
+  earray<eintarray> dupslist;
+  for (i=0; i<arr.size(); ++i){
+    if (i%(arr.size()/10)==0)
+      fprintf(stderr,"\r%i/%i",i,arr.size());
+    it=duphash.get(arr.values(i));
+    if (it==duphash.end())
+      { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
+    else 
+      dupslist[it.value()].add(i);
+  }
+  fprintf(stderr,"\n");
+  cout << endl;
+  cout << "# unique seqs: " << uniqind.size() << endl;
+
   
   float dtime,stime;
   etimer t1;
@@ -165,12 +177,13 @@ int emain()
 
 //  if (ncpus==1) partsTotal=1;
 
+  
   efile df(dfile);
   if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
     if (partsTotal>(arr.size()-1)*arr.size()/20) partsTotal=(arr.size()-1)*arr.size()/20;
     for (i=0; i<partsTotal; ++i)
-      taskman.addTask(dfunc.value(),evararray(mutex,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t,(const int&)winlen));
+      taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t,(const int&)winlen));
 
     taskman.createThread(ncpus);
     taskman.wait();
@@ -216,13 +229,13 @@ int emain()
 
   cout << "# initializing cluster"<<endl;
   if (cl)
-    clcluster.init(arr.size(),ofile+".cl",argv[1]);
+    clcluster.init(arr.size(),ofile+".cl",argv[1],dupslist);
   if (sl)
-    slcluster.init(arr.size(),ofile+".sl",argv[1]);
+    slcluster.init(arr.size(),ofile+".sl",argv[1],dupslist);
   if (al)
-    alcluster.init(arr.size(),ofile+".al",argv[1]);
+    alcluster.init(arr.size(),ofile+".al",argv[1],dupslist);
   if (step)
-    stepcluster.init(arr.size(),ofile+".step",argv[1]);
+    stepcluster.init(arr.size(),ofile+".step",argv[1],dupslist);
 
   cout << "# starting clustering"<<endl;
   t1.reset();

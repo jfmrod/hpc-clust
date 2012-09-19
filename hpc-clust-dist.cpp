@@ -15,6 +15,7 @@
 edcclient client;
 edcserver server;
 
+eintarray uniqind;
 
 eoption<efunc> dfunc;
 estrarray arr;
@@ -32,10 +33,10 @@ earray<estr> nodeArr;
 eblockarray<eseqdist> nodeDists;
 ////ebasicarray<eseqdist> nodeDists;
 
-void serverGetDistances(edcserver& server);
-void serverCluster(edcserver& server);
-void serverDistanceThreshold(edcserver& server);
-void serverMergeResults(edcserver& server);
+void serverGetDistances(edcBaseServer& server);
+void serverCluster(edcBaseServer& server);
+void serverDistanceThreshold(edcBaseServer& server);
+void serverMergeResults(edcBaseServer& server);
 
 int step=1;
 long int totaldists=0;
@@ -50,6 +51,7 @@ eseqcluster        clcluster;
 eseqclusteravg     alcluster;
 eseqclustersingle  slcluster;
 
+int nthreads=4;
 
 long int transfersize=1000;
 long int buffersize=10000;
@@ -85,14 +87,14 @@ void writeDistance(efile& f,eseqdist& sdist)
 
 
 
-void serverClusterDistance(edcserver& server);
+void serverClusterDistance(edcBaseServer& server);
 
-void serverFinished(edcserverClient& sclient,const estr& msg)
+void serverFinished(edcBaseServerNode& sclient,const estr& msg)
 {
   int i;
   bool allFinished=true;
   bool foundSocket=false;
-  for (i=0; i<sclient.server.sockets.size(); ++i){
+  for (i=0; i<sclient.server.nodeCount(); ++i){
     foundSocket=true;
     if (&sclient.server.getClient(i)==&sclient){
       cmindistsMutexs[i].lock();
@@ -131,7 +133,7 @@ void serverFinished(edcserverClient& sclient,const estr& msg)
   exit(0);
 }
 
-void serverClusterDistance(edcserver& server)
+void serverClusterDistance(edcBaseServer& server)
 {
   int i,j;
   float maxdist;
@@ -216,7 +218,7 @@ void serverProcessDists(int i,const estr& msg,int& count)
 }
 
 //ebasicarray<eseqdistCount> sdists;
-void serverRecvDistance(edcserverClient& sclient,const estr& msg)
+void serverRecvDistance(edcBaseServerNode& sclient,const estr& msg)
 {
   t4.reset();
 //  sdists.clear();
@@ -225,7 +227,7 @@ void serverRecvDistance(edcserverClient& sclient,const estr& msg)
 //  unstime+=t3.lap();
   bool foundServer=false;
   int i,j,count;
-  for (i=0; i<sclient.server.sockets.size(); ++i){
+  for (i=0; i<sclient.server.nodeCount(); ++i){
     if (&sclient.server.getClient(i)==&sclient){
       cmindistsMutexs[i].lock();
       if (cend[i]==cpos[i])
@@ -265,14 +267,14 @@ void serverRecvDistance(edcserverClient& sclient,const estr& msg)
   t4time+=t4.lap();
 }
 
-void serverStartComputation(edcserver& server)
+void serverStartComputation(edcBaseServer& server)
 {
   t1.reset();
   cout << "# starting distributed computation" << endl;
 
 //  sdists.reserve(10000);
   int i,j;
-  for (i=0; i<server.sockets.size(); ++i){
+  for (i=0; i<server.nodeCount(); ++i){
     cmindists.add(ebasicarray<eseqdist>());
     cmindistsMutexs.add(emutex());
     cmindists[i].init(buffersize);
@@ -282,8 +284,8 @@ void serverStartComputation(edcserver& server)
   }
 
 //  server.onAllReady=serverGetDistances;
-  for (i=0; i<server.sockets.size(); ++i)
-    server.getClient(i).call("nodeComputeDistances",evararray((const int&)i,(const int&)server.sockets.size(),(const float&)t));
+  for (i=0; i<server.nodeCount(); ++i)
+    server.getClient(i).call("nodeComputeDistances",evararray(uniqind,(const int&)i,(const int&)server.nodeCount(),(const float&)t,(const int&)nthreads));
 }
 
 /*
@@ -606,7 +608,6 @@ ebasicarray<eseqdist> nodeGetCount(int maxcount)
 }
 */
 
-int nthreads=4;
 etaskman taskman;
 emutex mutexDists;
 int partsFinished=0;
@@ -647,15 +648,20 @@ void nodeSendDistances()
   cerr << cnode << " sending ended at nodePos: " << nodePos<< endl;
 }
 
-long int nodeComputeDistances(int node,int tnodes,float thres)
+long int nodeComputeDistances(eintarray _uniqind,int node,int tnodes,float thres,int _nthreads)
 {
+  uniqind=_uniqind;
+  nthreads=_nthreads;
+  cerr << "# " << cnode << ") creating " << nthreads << " threads" << endl;
+  taskman.createThread(nthreads);
   cnode=node;
-  cerr << cnode << " computing distances" << endl;
-  if ((long int)partsTotal>=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes)) partsTotal=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes);
+  cerr << "# " << cnode << ") computing distances. unique: " << uniqind.size() << " total: "<< nodeArr.size() << endl;
+  if ((long int)partsTotal>=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes))
+    partsTotal=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes);
+
   int i;
   for (i=0; i<partsTotal; ++i){
-    taskman.addTask(dfunc.value(),evararray(mutexDists,nodeArr,nodeDists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres));
-//    taskman.addTask(dfunc.value(),evararray(nodeArr,nodeDists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres));
+    taskman.addTask(dfunc.value(),evararray(mutexDists,uniqind,nodeArr,nodeDists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres));
   }
   taskman.wait();
 
@@ -704,6 +710,85 @@ estr args2str(int argvc,char **argv)
   return(tmpstr);
 }
 
+template <class T>
+void seq(T& arr,int n)
+{
+  arr.clear();
+  arr.reserve(n);
+  int i;
+  for (i=0; i<n; ++i)
+    arr.add(i);
+}
+
+template <class T>
+void randperm(T& arr)
+{
+  int i,j;
+  for (i=arr.size()-1; i>0; --i){
+    j=rnd.uniform()*(i+1);
+    if (j!=i) arr.swap(i,j);
+  }
+}
+
+estr host;
+
+void doStartClient()
+{
+  load_seqs_compressed(argv[1],nodeArr,seqlen);
+
+  int pipefd[2];
+  pipe(pipefd);
+  dup2(pipefd[1],1);
+
+  client.outpipe=pipefd[0];
+  getSystem()->addReadCallback(client.outpipe,efunc(client,&edcclient::sendOutput),evararray());
+
+  client.connect(host,12345);
+  cerr << " waiting for command" << endl;
+}
+
+void doStartServer()
+{
+  int i;
+  load_seqs_compressed(argv[1],arr,seqlen);
+  ebasicstrhashof<int> duphash;
+  ebasicstrhashof<int>::iter it;
+  duphash.reserve(arr.size());
+  earray<eintarray> dupslist;
+  for (i=0; i<arr.size(); ++i){
+    if (i%(arr.size()/10)==0)
+      fprintf(stderr,"\r%i/%i",i,arr.size());
+    it=duphash.get(arr.values(i));
+    if (it==duphash.end())
+      { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
+    else 
+      dupslist[it.value()].add(i);
+  }
+  randperm(uniqind);
+  fprintf(stderr,"\n");
+  cout << endl;
+  cout << "# unique seqs: " << uniqind.size() << endl;
+
+  if (al)
+    alcluster.init(arr.size(),ofile+".al",argv[1],dupslist);
+  if (cl)
+    clcluster.init(arr.size(),ofile+".cl",argv[1],dupslist);
+  if (sl)
+    slcluster.init(arr.size(),ofile+".sl",argv[1],dupslist);
+  if (dists)
+    fdists.open(ofile+".dist","w");
+
+
+  registerServer();
+  epregister(server);
+  server.callbacks.add(serverRecvDistance);
+  server.callbacks.add(serverFinished);
+//    server.showResult=true;
+  server.onIncoming=doIncoming;
+//    server.onAllReady=doAllReady;
+  server.listen(12345);
+}
+
 int emain()
 {
   cout << "# " << date() << endl;
@@ -712,9 +797,9 @@ int emain()
   dfunc.choice=0;
 //  dfunc.add("gap",gap_calc_dists);
 //  dfunc.add("gap+noise",gapnoise_calc_dists);
-  dfunc.add("nogap",t_calc_dists<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
-  dfunc.add("gap",t_calc_dists<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
-  dfunc.add("tamura",t_calc_dists<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+  dfunc.add("nogap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+  dfunc.add("gap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+  dfunc.add("tamura",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
   dfunc.add("gap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
   dfunc.add("nogap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
   dfunc.add("tamura+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
@@ -723,8 +808,6 @@ int emain()
   epregisterClassMethod2(eoption<efunc>,operator=,int,(const estr& val));
 
   epregister(dfunc);
-
-  estr host;
 
 
   epregister(dists);
@@ -778,49 +861,10 @@ int emain()
 
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <file>");
 
- 
-
-
-  int i,i2,j;
-
-  if (host.len()>0){
-    load_seqs_compressed(argv[1],nodeArr,seqlen);
-
-    cout << "# creating " << nthreads << " threads" << endl;
-
-    taskman.createThread(nthreads);
-
-    int pipefd[2];
-    pipe(pipefd);
-    dup2(pipefd[1],1);
-
-    client.outpipe=pipefd[0];
-    getSystem()->addReadCallback(client.outpipe,efunc(client,&edcclient::sendOutput),evararray());
-
-    client.connect(host,12345);
-    cerr << " waiting for command" << endl;
-  }else{
-    load_accs(argv[1],arr);
-//    load_seqs(argv[1],arr);
-    if (al)
-      alcluster.init(arr.size(),ofile+".al",argv[1]);
-    if (cl)
-      clcluster.init(arr.size(),ofile+".cl",argv[1]);
-    if (sl)
-      slcluster.init(arr.size(),ofile+".sl",argv[1]);
-    if (dists)
-      fdists.open(ofile+".dist","w");
-
-
-    registerServer();
-    epregister(server);
-    server.callbacks.add(serverRecvDistance);
-    server.callbacks.add(serverFinished);
-//    server.showResult=true;
-    server.onIncoming=doIncoming;
-//    server.onAllReady=doAllReady;
-    server.listen(12345);
-  }
+  if (host.len()>0)
+    doStartClient();
+  else
+    doStartServer();
 
   getSystem()->run();
 

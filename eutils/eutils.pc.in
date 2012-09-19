@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: easycpp.eutils
+Description: The easy programming library
+Version: @VERSION@
+Libs: @EUTILS_LIBS@ @LIBS@
+Cflags: @EUTILS_CXXFLAGS@

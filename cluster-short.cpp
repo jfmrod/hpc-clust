@@ -271,8 +271,6 @@ int emain()
 
   eoption<efunc> dfunc;
 
-  initDistMatrix();
-
   dfunc.choice=0;
   dfunc.add("nogap",t_calc_dists<ebasicarray<eshortseq>,eseqdist,eblockarray<eseqdist>,dist_nogap_short2_compressed>);
   dfunc.add("nogap2",t_calc_dists<ebasicarray<eshortseq>,eseqdist,eblockarray<eseqdist>,dist_nogap_short3_compressed>);
@@ -317,6 +315,9 @@ int emain()
   etimer t1;
   t1.reset();
 
+
+  earray<eintarray> dupslist;
+
   etaskman taskman;
 
   cout << "# computing distances" << endl;
@@ -356,13 +357,13 @@ int emain()
 
   cout << "# initializing cluster"<<endl;
   if (cl)
-    clcluster.init(arr.size(),ofile+".cl.dat",argv[1]);
+    clcluster.init(arr.size(),ofile+".cl.dat",argv[1],dupslist);
   if (sl)
-    slcluster.init(arr.size(),ofile+".sl.dat",argv[1]);
+    slcluster.init(arr.size(),ofile+".sl.dat",argv[1],dupslist);
   if (al)
-    alcluster.init(arr.size(),ofile+".al.dat",argv[1]);
+    alcluster.init(arr.size(),ofile+".al.dat",argv[1],dupslist);
   if (step)
-    stepcluster.init(arr.size(),ofile+".step.dat",argv[1]);
+    stepcluster.init(arr.size(),ofile+".step.dat",argv[1],dupslist);
 
   cout << "# starting clustering"<<endl;
   t1.reset();

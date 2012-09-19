@@ -327,6 +327,7 @@ inline float dist_tamura_compressed(const estr& s1,const estr& s2,int seqlen)
   return(1+1.0*C*log(1.0-(float)P/(C*len)-(float)Q/len) + 0.5*(1.0-C)*log(1.0-2.0*Q/len));
 }
 
+/*
 void initDistMatrix();
 
 extern int gap_matrix[16][16];
@@ -392,6 +393,7 @@ inline float dist_compressed2(const estr& s1,const estr& s2,int seqlen)
   }
   return((float)count/(float)seqlen);
 }
+*/
 
 /*
 inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
@@ -804,6 +806,42 @@ int t_calc_dists(emutex& mutex,T& arr,K& dists,int node,int tnodes,float thres)
     for (j=i+1; j<arr.size(); ++j){
       tmpid=fdist(arr[i],arr[j]);
       if (tmpid>=thres) tmpdists.add(M(i,j,tmpid));
+    }
+  }
+  mutex.lock();
+  dists+=tmpdists;
+  mutex.unlock();
+  return(0);
+}
+
+template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
+int t_calc_dists_u(emutex& mutex,eintarray& uniqind,T& arr,K& dists,int seqlen,int node,int tnodes,float thres)
+{
+  long int i,i2,j;
+  long int start,end;
+
+  start=(long int)(node)*(long int)(uniqind.size()-1)/(long int)(2*tnodes);
+  end=(long int)(node+1)*(long int)(uniqind.size()-1)/(long int)(2*tnodes);
+
+  float tmpid,tmpid2,tmpid3;
+  K tmpdists;
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<uniqind.size(); ++j){
+      tmpid=fdist(arr[uniqind[i]],arr[uniqind[j]],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(uniqind[i],uniqind[j],tmpid));
+    }
+    i2=uniqind.size()-i-2;
+    for (j=i2+1; j<uniqind.size(); ++j){
+      tmpid=fdist(arr[uniqind[i2]],arr[uniqind[j]],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(uniqind[i2],uniqind[j],tmpid));
+    }
+  }
+  if (node==tnodes-1 && uniqind.size()%2==0){
+    i=uniqind.size()/2-1;
+    for (j=i+1; j<uniqind.size(); ++j){
+      tmpid=fdist(arr[uniqind[i]],arr[uniqind[j]],seqlen);
+      if (tmpid>=thres) tmpdists.add(M(uniqind[i],uniqind[j],tmpid));
     }
   }
   mutex.lock();

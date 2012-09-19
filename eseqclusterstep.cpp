@@ -4,26 +4,34 @@
 #include <eutils/efile.h>
 
 
-void eseqclusterstep::init(int count,const estr& ofilename,const estr& seqsfile) {
+void eseqclusterstep::init(int count,const estr& ofilename,const estr& seqsfile,const earray<eintarray>& dupslist) {
   ofile.open(ofilename,"w");
   ofile.write("# seqsfile: "+seqsfile+"\n");
-  int i;
+  int i,j;
   scount.init(count,1);
   smerge.init(count,-1);
   otu.init(count,-1);
   incluster.init(count);
+  mergecount=0;
 
   scluster.reserve(count);
   for (i=0; i<count; ++i){
     scluster.add(i);
     incluster[i].push_back(i);
   }
+  for (i=0; i<dupslist.size(); ++i){
+    for (j=1; j<dupslist[i].size(); ++j){
+      ++mergecount;
+      ofile.write(estr(scluster.size()-mergecount)+" 1.0 "+dupslist[i][0]+" "+dupslist[i][j]+"\n");
+//      clusterData.mergearr.add(eseqdist(dupslist[i][0],dupslist[i][j],1.0));
+    }
+  }
+
   step=50;
   otucount=0;
   otumembers.clear();
   otudist.clear();
   cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
-  mergecount=0;
 }
 
 void eseqclusterstep::merge(int x,int y,int dx,int dy,float dist)

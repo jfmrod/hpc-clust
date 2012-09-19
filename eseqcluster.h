@@ -8,6 +8,7 @@
 #include <eutils/eblockarray.h>
 #include <eutils/ebasicarray.h>
 
+#undef check
 
 class eseqdist
 {
@@ -56,7 +57,7 @@ class eseqcluster
   eseqcluster();
 
   void merge(int x,int y,float dist);
-  void init(int count,const estr& ofile,const estr& seqsfile);
+  void init(int count,const estr& ofile,const estr& seqsfile,const earray<eintarray>& dupslist);
 //  void add(int ind);
   void add(const eseqdist& sdist);
 

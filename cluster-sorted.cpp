@@ -33,12 +33,12 @@ inline int readDistance(eseqdist& sdist,const estr& data,int i)
   return(i+2*sizeof(uint32_t)+sizeof(float));
 }
 
-void doClustering(const estr& seqsfile,const estr& inputfile,const estr& output)
+void doClustering(const estr& seqsfile,const estr& inputfile,const estr& output,const earray<eintarray>& dupsfile)
 {
   load_accs(seqsfile,arr);
-  al.init(arr.size(),output+".al.dat",seqsfile);
-  cl.init(arr.size(),output+".cl.dat",seqsfile);
-  sl.init(arr.size(),output+".sl.dat",seqsfile);
+  al.init(arr.size(),output+".al.dat",seqsfile,dupsfile);
+  cl.init(arr.size(),output+".cl.dat",seqsfile,dupsfile);
+  sl.init(arr.size(),output+".sl.dat",seqsfile,dupsfile);
 
   cout << "# starting clustering " << endl;
   int i,lasti;
@@ -78,7 +78,9 @@ int emain()
 
   ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" <seqs> <dists>");
 
-  doClustering(argv[1],argv[2],output);
+  earray<eintarray> dupsfile;
+
+  doClustering(argv[1],argv[2],output,dupsfile);
 
   return(0);
 }
