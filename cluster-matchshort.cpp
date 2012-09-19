@@ -28,6 +28,7 @@ class ematchinfo
  public:
   int otu;
   float dist;
+  float dist2;
   float mindist;
   float avgdist;
   float maxdist;
@@ -47,7 +48,7 @@ bool ematchinfo::operator<(const ematchinfo& minfo)
 
 ostream& operator<<(ostream& stream,const ematchinfo& matchinfo)
 {
-  stream<<"[matchinfo dist: "<<matchinfo.dist<<" bestcount: "<<matchinfo.bestcount<<" eqcount: "<<matchinfo.eqcount<<"]";
+  stream<<"[matchinfo dist: "<<matchinfo.dist<<" dist2: "<<matchinfo.dist2 << " mindist: " << matchinfo.mindist <<" eqcount: "<<matchinfo.eqcount<<"]";
   return(stream);
 }
 
@@ -57,6 +58,7 @@ ebasicarray<eshortseq> arrshort;
 //estrhashof<int> seqotu;
 earray<eotuinfo> otuinfo;
 eintarray seqotuid;
+eintarray seqotuid2;
 //eintarray oturef;
 
 eseqclusterData clusterData;
@@ -547,6 +549,7 @@ void place_short_task(earray<ematchinfo>& matchinfo,int n,int tn)
     if (s>=e) continue;
 
 
+    matchinfo[l].eqcount=0;
     matchinfo[l].bestcount=0;
     matchinfo[l].dist=0.0;
     for (j=0; j<arr.size(); ++j)
@@ -622,6 +625,213 @@ void place_short_adaptive_task(earray<ematchinfo>& matchinfo,int n,int tn)
 
 
 
+eintarray varr;
+
+/*
+void validate_short_adaptive_task(int s,int e,earray<ematchinfo>& matchinfo,int n,int tn)
+{
+  int j,l,k;
+
+  efloatarray tmpdists;
+//  eintarray tmpseqs;
+//  eintarray tmpotu;
+  float tmpdist,bestdist;
+
+  tmpdists.init(arr.size());
+//  tmpseqs.reserve(arr.size());
+
+  int start=(n*varr.size())/tn;
+  int end=((n+1)*varr.size())/tn;
+
+  for (l=start; l<end; ++l){
+    matchinfo[l].bestcount=0;
+    matchinfo[l].dist=0.0;
+    matchinfo[l].eqcount=0;
+    bestdist=0.0;
+    for (j=0; j<arr.size(); ++j){
+      if (seqotuid2[varr[l]]==seqotuid2[j]) continue;
+
+      tmpdists[j]=dist_nogap_short_compressed(arr[varr[l]],arr[j],s,e);
+      if (tmpdists[j]>bestdist)
+        bestdist=tmpdists[j];
+    }
+
+    matchinfo[l].dist=bestdist;
+    matchinfo[l].mindist=bestdist;
+    matchinfo[l].eqcount=0;
+    eintarray si(iheapsort(tmpdists));
+    matchinfo[l].otu=seqotuid[si[tmpdists.size()-1]];
+    for (k=tmpdists.size()-1; k>=0; --k){
+      if (seqotuid[si[k]] != matchinfo[l].otu){
+//        ++matchinfo[l].eqcount;
+        matchinfo[l].dist2=tmpdists[si[k]];
+        break;
+      }
+      matchinfo[l].mindist=tmpdists[si[k]];
+
+    }
+  }
+   eintarray si(iheapsort(tmpdists));
+    for (k=tmpdists.size()-1; k>=0 && tmpdists[si[k]]>=bestdist-(1.0-bestdist)*eqthres; --k)
+      matchinfo[l].seqlist.add(si[k]);
+
+    matchinfo[l].dist=bestdist;
+    if (matchinfo[l].seqlist.size()>1) 
+      clusterData.getCluster(matchinfo[l].seqlist, matchinfo[l].seqcluster, matchinfo[l].cdist);
+  }
+}
+
+*/
+
+
+
+void validate_short_task2(int s,int e,earray<ematchinfo>& matchinfo,int n,int tn)
+{
+  int j,l,k;
+
+  efloatarray tmpdists;
+//  eintarray tmpseqs;
+//  eintarray tmpotu;
+  float tmpdist,bestdist;
+
+  tmpdists.init(arr.size());
+//  tmpseqs.reserve(arr.size());
+
+  int start=(n*varr.size())/tn;
+  int end=((n+1)*varr.size())/tn;
+
+  for (l=start; l<end; ++l){
+    matchinfo[l].bestcount=0;
+    matchinfo[l].dist=0.0;
+    matchinfo[l].eqcount=0;
+//    tmpdists.clear();
+//    tmpseqs.clear();
+    bestdist=0.0;
+    for (j=0; j<arr.size(); ++j){
+      if (seqotuid2[varr[l]]==seqotuid2[j]) { tmpdists[j]=0.0; continue; }
+
+      tmpdists[j]=dist_nogap_short_compressed(arr[varr[l]],arr[j],s,e);
+      if (tmpdists[j]>bestdist)
+        bestdist=tmpdists[j];
+
+//      if (tmpdist >= bestdist-(1.0-bestdist)*eqthres) { 
+//        tmpseqs.add(j);
+//        tmpdists.add(tmpdist);
+//      }
+    }
+
+    matchinfo[l].dist=bestdist;
+    matchinfo[l].mindist=bestdist;
+    matchinfo[l].eqcount=0;
+    eintarray si(iheapsort(tmpdists));
+    matchinfo[l].otu=seqotuid[si[tmpdists.size()-1]];
+    for (k=tmpdists.size()-1; k>=0; --k){ //&& tmpdists[si[k]]>=bestdist-(1.0-bestdist)*eqthres; --k){
+//      matchinfo[l].seqlist.add(si[k]);
+      if (seqotuid[si[k]] != matchinfo[l].otu){
+//        ++matchinfo[l].eqcount;
+        matchinfo[l].dist2=tmpdists[si[k]];
+        break;
+      }
+      matchinfo[l].mindist=tmpdists[si[k]];
+
+    }
+  }
+/*
+
+    tmpotu.init(otuinfo.size(),0);
+    eintarray si(iheapsort(tmpdists));
+    matchinfo[l].dist=tmpdists[si[si.size()-1]];
+    for (j=tmpdists.size()-1; j>=0 && tmpdists[si[j]]>=matchinfo[l].dist; --j){
+      ++tmpotu[ seqotuid[si[j]] ]; 
+      if (tmpotu[ seqotuid[si[j]]] > matchinfo[l].bestcount){
+        matchinfo[l].bestcount=tmpotu[ seqotuid[si[j]] ];
+        matchinfo[l].otu=seqotuid[si[j]];
+      }
+    }
+    for (; j>=0 && tmpdists[si[j]]>=matchinfo[l].dist-(1.0-matchinfo[l].dist)*eqthres; --j){
+      if (tmpotu[ seqotuid[si[j]] ]==0)
+        ++matchinfo[l].eqcount;
+      ++tmpotu[ seqotuid[si[j]] ]; 
+    }
+  }
+*/
+}
+
+
+void validate_short_task(int s,int e,earray<ematchinfo>& matchinfo,int n,int tn)
+{
+  int j,l,k;
+
+  efloatarray tmpdists;
+//  eintarray tmpseqs;
+//  eintarray tmpotu;
+  float tmpdist,bestdist;
+
+  tmpdists.init(arr.size());
+//  tmpseqs.reserve(arr.size());
+
+  int start=(n*varr.size())/tn;
+  int end=((n+1)*varr.size())/tn;
+
+  for (l=start; l<end; ++l){
+    matchinfo[l].bestcount=0;
+    matchinfo[l].dist=0.0;
+    matchinfo[l].eqcount=0;
+//    tmpdists.clear();
+//    tmpseqs.clear();
+    bestdist=0.0;
+    for (j=0; j<arr.size(); ++j){
+      if (varr[l]==j) { tmpdists[j]=0.0; continue; }
+
+      tmpdists[j]=dist_nogap_short_compressed(arr[varr[l]],arr[j],s,e);
+      if (tmpdists[j]>bestdist)
+        bestdist=tmpdists[j];
+
+//      if (tmpdist >= bestdist-(1.0-bestdist)*eqthres) { 
+//        tmpseqs.add(j);
+//        tmpdists.add(tmpdist);
+//      }
+    }
+
+    matchinfo[l].dist=bestdist;
+    matchinfo[l].mindist=bestdist;
+    matchinfo[l].eqcount=0;
+    eintarray si(iheapsort(tmpdists));
+    matchinfo[l].otu=seqotuid[si[tmpdists.size()-1]];
+    for (k=tmpdists.size()-1; k>=0; --k){ //&& tmpdists[si[k]]>=bestdist-(1.0-bestdist)*eqthres; --k){
+//      matchinfo[l].seqlist.add(si[k]);
+      if (seqotuid[si[k]] != matchinfo[l].otu){
+//        ++matchinfo[l].eqcount;
+        matchinfo[l].dist2=tmpdists[si[k]];
+        break;
+      }
+      matchinfo[l].mindist=tmpdists[si[k]];
+
+    }
+  }
+/*
+
+    tmpotu.init(otuinfo.size(),0);
+    eintarray si(iheapsort(tmpdists));
+    matchinfo[l].dist=tmpdists[si[si.size()-1]];
+    for (j=tmpdists.size()-1; j>=0 && tmpdists[si[j]]>=matchinfo[l].dist; --j){
+      ++tmpotu[ seqotuid[si[j]] ]; 
+      if (tmpotu[ seqotuid[si[j]]] > matchinfo[l].bestcount){
+        matchinfo[l].bestcount=tmpotu[ seqotuid[si[j]] ];
+        matchinfo[l].otu=seqotuid[si[j]];
+      }
+    }
+    for (; j>=0 && tmpdists[si[j]]>=matchinfo[l].dist-(1.0-matchinfo[l].dist)*eqthres; --j){
+      if (tmpotu[ seqotuid[si[j]] ]==0)
+        ++matchinfo[l].eqcount;
+      ++tmpotu[ seqotuid[si[j]] ]; 
+    }
+  }
+*/
+}
+
+
+
 
 
 
@@ -688,7 +898,7 @@ void calc_best_dist_ref_profile41_task(int s,int e,earray<ematchinfo>& matchinfo
     matchinfo[l].bestcount=0;
     matchinfo[l].dist=0.0;
     for (j=0; j<arr.size(); ++j){
-      if (otuinfo[l].seqs[0]==j) continue;
+      if (otuinfo[l].seqs[0]==j) { tmpdists[j]=0.0; continue; }
       tmpdists[j]=dist_nogap_short_compressed(arr[otuinfo[l].seqs[0]],arr[j],s,e);
     }
     tmpotu.init(otuinfo.size(),0);
@@ -724,7 +934,7 @@ void calc_best_dist_ref_profile42_task(int s,int e,earray<ematchinfo>& matchinfo
     matchinfo[l].bestcount=0;
     matchinfo[l].dist=0.0;
     for (j=0; j<arr.size(); ++j){
-      if (otuinfo[l].seqs[0]==j) continue;
+      if (otuinfo[l].seqs[0]==j) { tmpdists[j]=0.0; continue; }
       tmpdists[j]=dist_nogap_short_compressed(arr[otuinfo[l].seqs[0]],arr[j],s,e);
     }
     tmpotu.init(otuinfo.size(),0);
@@ -761,7 +971,7 @@ void calc_best_dist_ref_profile43_task(int s,int e,earray<ematchinfo>& matchinfo
     matchinfo[l].bestcount=0;
     matchinfo[l].dist=0.0;
     for (j=0; j<arr.size(); ++j){
-      if (otuinfo[l].seqs[0]==j) continue;
+      if (otuinfo[l].seqs[0]==j) { tmpdists[j]=0.0; continue; }
       tmpdists[j]=dist_nogap_short_compressed(arr[otuinfo[l].seqs[0]],arr[j],s,e);
     }
     tmpotu.init(otuinfo.size(),0);
@@ -1159,6 +1369,9 @@ int emain()
 
   float ct=0.98;
   epregister(ct);
+  float vct=0.99;
+  epregister(vct);
+
 
   eoption<efunc> dfunc;
   dfunc.choice=0;
@@ -1202,6 +1415,10 @@ int emain()
 
   clusterData.load(estr(argv[1]),arr.size());
   seqotuid.init(arr.size(),-1);
+  seqotuid2.init(arr.size(),-1);
+
+  clusterData.getOTU(vct,seqotuid2);
+
   int otucount=clusterData.getOTU(ct,seqotuid);
   otuinfo.init(otucount);
   for (i=0; i<seqotuid.size(); ++i)
@@ -1255,6 +1472,30 @@ int emain()
     }
   }else{
     cout << "# validating short sequence placement" << endl;
+    for (i=0; i<otuinfo.size(); ++i){
+      if (otuinfo[i].seqs.size()>1)
+        varr.add(otuinfo[i].seqs[0]);
+    }
+    matchinfo.init(varr.size());
+
+//    for (k=0; k+winlen<seqlen; k+=20){
+    k=300;
+    {
+      cout << "## k " << k << endl;
+      for (i=0; i<ncpus; ++i)
+        taskman.addTask(validate_short_task2,evararray(k,k+winlen,matchinfo,(const int&)i,(const int&)ncpus));
+      taskman.wait();
+
+      for (j=0; j<varr.size(); ++j){
+        if (matchinfo[j].eqcount>0 || otuinfo[matchinfo[j].otu].seqs.size()<=minotusize) {
+          cout << "# " << k << " " << arr.keys(varr[j]) << " " << matchinfo[j].dist << " " << otuinfo[matchinfo[j].otu].seqs.size() << " " << arr.keys(otuinfo[matchinfo[j].otu].seqs[0]) << " " << matchinfo[j] << endl;
+          continue;
+        }
+        cout << k << " " << arr.keys(varr[j]) << " " << matchinfo[j].dist << " " << otuinfo[matchinfo[j].otu].seqs.size() << " " << arr.keys(otuinfo[matchinfo[j].otu].seqs[0]) << " " << matchinfo[j] << endl;
+      }
+    }
+/*
+    cout << "# validating short sequence placement" << endl;
     for (k=0; k<seqlen-winlen; k+=10){
       earray<ematchinfo> matchinfo;
 
@@ -1305,6 +1546,7 @@ int emain()
         cout << k << " " << float(alltn)/(alltn+alltp) << " " << alltn << " " << alltp << " " << otuinfo.size()-singletons << " " << tdist << " " << float(tp)/alltp << " " << float(fp)/alltn << " " << float(fps)/(fps+tp+fp) << " " << float(fsing)/singletons << endl;
       }
     }
+*/
   }
 
   return(0);
