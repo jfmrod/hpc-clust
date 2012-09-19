@@ -33,7 +33,7 @@ if HAVE_MPFRLIB
 endif
 
 nodist_libeutils_a_SOURCES=eutils.cpp ernd.cpp logger.cpp eparser.cpp vector2.cpp ematrix2.h ematrix2.cpp \
-  vector3.cpp matrix3.cpp ematrix4.h ematrix4.cpp quaternion.cpp bindata.cpp files.cpp estr.cpp estr.h \
+  vector3.cpp matrix3.cpp ematrix4.h ematrix4.cpp quaternion.cpp files.cpp estr.cpp estr.h \
   evar.cpp evar.h evar_dec.h evarclass.h evarclass_dec.h evartype.h evartype.cpp evarbase.h evarclassmethod.cpp evarclassmethod.h evarclassproperty.h \
   efunc.cpp efunc.h efunc_dec.h efuncbase.h efunctype.h efunctype.cpp efuncalls.h \
   evarmethodcalls.h evarclassconverter.h ebasearray.h ebasearray.cpp ebasearrayof.h ebasearrayof.cpp earrayof.cpp emysql.cpp etable.cpp estrarray.cpp \

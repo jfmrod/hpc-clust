@@ -66,26 +66,26 @@ am__objects_5 = empint.$(OBJEXT)
 nodist_libeutils_a_OBJECTS = eutils.$(OBJEXT) ernd.$(OBJEXT) \
 	logger.$(OBJEXT) eparser.$(OBJEXT) vector2.$(OBJEXT) \
 	ematrix2.$(OBJEXT) vector3.$(OBJEXT) matrix3.$(OBJEXT) \
-	ematrix4.$(OBJEXT) quaternion.$(OBJEXT) bindata.$(OBJEXT) \
-	files.$(OBJEXT) estr.$(OBJEXT) evar.$(OBJEXT) \
-	evartype.$(OBJEXT) evarclassmethod.$(OBJEXT) efunc.$(OBJEXT) \
-	efunctype.$(OBJEXT) ebasearray.$(OBJEXT) \
-	ebasearrayof.$(OBJEXT) earrayof.$(OBJEXT) emysql.$(OBJEXT) \
-	etable.$(OBJEXT) estrarray.$(OBJEXT) eregexp.$(OBJEXT) \
-	ekstract.$(OBJEXT) ecmpstr.$(OBJEXT) efile.$(OBJEXT) \
-	ecsv.$(OBJEXT) etimer.$(OBJEXT) eudl.$(OBJEXT) eterm.$(OBJEXT) \
-	ebasichashmap.$(OBJEXT) ehashmap.$(OBJEXT) evarclass.$(OBJEXT) \
-	evarclassconverter.$(OBJEXT) efuncalls.$(OBJEXT) \
-	evarcommon.$(OBJEXT) eparserinterpreter.$(OBJEXT) \
-	estrhashof.$(OBJEXT) efuncbase.$(OBJEXT) ematrix.$(OBJEXT) \
-	efuncinfo.$(OBJEXT) edir.$(OBJEXT) esocket.$(OBJEXT) \
-	ecgi.$(OBJEXT) estrhash.$(OBJEXT) eiostream.$(OBJEXT) \
-	ethread.$(OBJEXT) etime.$(OBJEXT) earray.$(OBJEXT) \
-	ehttp.$(OBJEXT) ehtml.$(OBJEXT) ebasicarray.$(OBJEXT) \
-	edcserver.$(OBJEXT) emodule.$(OBJEXT) emodule.$(OBJEXT) \
-	etest.$(OBJEXT) ehttpServer.$(OBJEXT) ehttpHub.$(OBJEXT) \
-	ezlib.$(OBJEXT) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6)
+	ematrix4.$(OBJEXT) quaternion.$(OBJEXT) files.$(OBJEXT) \
+	estr.$(OBJEXT) evar.$(OBJEXT) evartype.$(OBJEXT) \
+	evarclassmethod.$(OBJEXT) efunc.$(OBJEXT) efunctype.$(OBJEXT) \
+	ebasearray.$(OBJEXT) ebasearrayof.$(OBJEXT) earrayof.$(OBJEXT) \
+	emysql.$(OBJEXT) etable.$(OBJEXT) estrarray.$(OBJEXT) \
+	eregexp.$(OBJEXT) ekstract.$(OBJEXT) ecmpstr.$(OBJEXT) \
+	efile.$(OBJEXT) ecsv.$(OBJEXT) etimer.$(OBJEXT) eudl.$(OBJEXT) \
+	eterm.$(OBJEXT) ebasichashmap.$(OBJEXT) ehashmap.$(OBJEXT) \
+	evarclass.$(OBJEXT) evarclassconverter.$(OBJEXT) \
+	efuncalls.$(OBJEXT) evarcommon.$(OBJEXT) \
+	eparserinterpreter.$(OBJEXT) estrhashof.$(OBJEXT) \
+	efuncbase.$(OBJEXT) ematrix.$(OBJEXT) efuncinfo.$(OBJEXT) \
+	edir.$(OBJEXT) esocket.$(OBJEXT) ecgi.$(OBJEXT) \
+	estrhash.$(OBJEXT) eiostream.$(OBJEXT) ethread.$(OBJEXT) \
+	etime.$(OBJEXT) earray.$(OBJEXT) ehttp.$(OBJEXT) \
+	ehtml.$(OBJEXT) ebasicarray.$(OBJEXT) edcserver.$(OBJEXT) \
+	emodule.$(OBJEXT) emodule.$(OBJEXT) etest.$(OBJEXT) \
+	ehttpServer.$(OBJEXT) ehttpHub.$(OBJEXT) ezlib.$(OBJEXT) \
+	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5) $(am__objects_6)
 libeutils_a_OBJECTS = $(nodist_libeutils_a_OBJECTS)
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -279,7 +279,7 @@ GMPLIBSRC = empint.cpp
 #MPFRLIBHDR = empfloatr.h
 #MPFRLIBSRC = empfloatr.cpp
 nodist_libeutils_a_SOURCES = eutils.cpp ernd.cpp logger.cpp eparser.cpp vector2.cpp ematrix2.h ematrix2.cpp \
-  vector3.cpp matrix3.cpp ematrix4.h ematrix4.cpp quaternion.cpp bindata.cpp files.cpp estr.cpp estr.h \
+  vector3.cpp matrix3.cpp ematrix4.h ematrix4.cpp quaternion.cpp files.cpp estr.cpp estr.h \
   evar.cpp evar.h evar_dec.h evarclass.h evarclass_dec.h evartype.h evartype.cpp evarbase.h evarclassmethod.cpp evarclassmethod.h evarclassproperty.h \
   efunc.cpp efunc.h efunc_dec.h efuncbase.h efunctype.h efunctype.cpp efuncalls.h \
   evarmethodcalls.h evarclassconverter.h ebasearray.h ebasearray.cpp ebasearrayof.h ebasearrayof.cpp earrayof.cpp emysql.cpp etable.cpp estrarray.cpp \
@@ -398,7 +398,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-include ./$(DEPDIR)/bindata.Po
 include ./$(DEPDIR)/earray.Po
 include ./$(DEPDIR)/earrayof.Po
 include ./$(DEPDIR)/ebasearray.Po
