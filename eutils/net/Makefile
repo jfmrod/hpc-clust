@@ -50,8 +50,8 @@ LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
 libeutils_net_a_AR = $(AR) $(ARFLAGS)
 libeutils_net_a_LIBADD =
-nodist_libeutils_net_a_OBJECTS = enet.$(OBJEXT)
-libeutils_net_a_OBJECTS = $(nodist_libeutils_net_a_OBJECTS)
+am_libeutils_net_a_OBJECTS = enet.$(OBJEXT)
+libeutils_net_a_OBJECTS = $(am_libeutils_net_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -65,8 +65,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(nodist_libeutils_net_a_SOURCES)
-DIST_SOURCES =
+SOURCES = $(libeutils_net_a_SOURCES)
+DIST_SOURCES = $(libeutils_net_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -184,7 +184,7 @@ top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
 noinst_LIBRARIES = libeutils_net.a
-nodist_libeutils_net_a_SOURCES = enet.h enet.cpp
+libeutils_net_a_SOURCES = enet.h enet.cpp
 all: all-am
 
 .SUFFIXES:

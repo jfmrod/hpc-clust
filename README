@@ -92,6 +92,14 @@ SEQUENCE_ID2      ---ATCCAC---GCACGCATGC-AT-... ...AT--ATAA
 ...
 ...
 
+
+An example of how to call the INFERNAL aligner such that it produces a file in the
+right format is:
+cmalign -1 --sub --matchonly -o alignedseqs.sto bacterial-ssu-model.cm unalignedseqs.fasta
+
+This would produce a file with the aligned sequences "alignedseqs.sto", using the
+"bacterial-ssu-model.cm" from the unaligned sequences file "unalignedseqs.fasta"
+
 If the input sequences can be found in the file "alignedseqs.sto". Then to cluster the
 sequences one simply has to run the following command:
 

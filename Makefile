@@ -20,10 +20,10 @@
 #libenet_a_SOURCES=enet.cpp enet.h
 
 
-pkgdatadir = $(datadir)/hpc-cluster
-pkgincludedir = $(includedir)/hpc-cluster
-pkglibdir = $(libdir)/hpc-cluster
-pkglibexecdir = $(libexecdir)/hpc-cluster
+pkgdatadir = $(datadir)/hpc-clust
+pkgincludedir = $(includedir)/hpc-clust
+pkglibdir = $(libdir)/hpc-clust
+pkglibexecdir = $(libexecdir)/hpc-clust
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 install_sh_DATA = $(install_sh) -c -m 644
 install_sh_PROGRAM = $(install_sh) -c
@@ -143,6 +143,10 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(cluster_chimera_SOURCES) $(cluster_fast_SOURCES) \
 	$(cluster_match_SOURCES) $(cluster_matchshort_SOURCES) \
 	$(cluster_partition_SOURCES) \
@@ -173,7 +177,6 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 	distdir dist dist-all distcheck
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -247,7 +250,7 @@ LTLIBOBJS =
 MAKEINFO = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
-PACKAGE = hpc-cluster
+PACKAGE = hpc-clust
 PACKAGE_BUGREPORT = 
 PACKAGE_NAME = 
 PACKAGE_STRING = 
@@ -259,7 +262,7 @@ RANLIB = ranlib
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = 
-VERSION = 0.1
+VERSION = 1.0.0
 abs_builddir = /home/jfmrod/erisdb/work/hpc-clust
 abs_srcdir = /home/jfmrod/erisdb/work/hpc-clust
 abs_top_builddir = /home/jfmrod/erisdb/work/hpc-clust
@@ -317,10 +320,11 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 SUBDIRS = $(subdirs)
+DIST_SUBDIRS = $(subdirs)
 MPIBIN = hpc-clust-mpi
 #EXTRA_PROGRAMS=
-#EXTRA_DIST=
-hpc_clust_SOURCES = hpc-clust.cpp cluster-common.cpp eseqcluster.cpp eseqclusterdata.cpp eseqclustercount.cpp eseqclustersingle.cpp eseqclusteravg.cpp eseqclusterstep.cpp
+EXTRA_DIST = make-otus.sh
+hpc_clust_SOURCES = hpc-clust.cpp cluster-common.h cluster-common.cpp eseqcluster.h eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseqclustercount.h eseqclustercount.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp eseqclusterstep.h eseqclusterstep.cpp
 #cluster_LDADD= libhpc-clust.a
 cluster_short_SOURCES = cluster-short.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp eseqclustersingle.cpp eseqclusteravg.cpp eseqclusterstep.cpp eseqclusterdata.cpp
 cluster_matchshort_SOURCES = cluster-matchshort.cpp cluster-common.cpp eseqcluster.cpp eseqclusterdata.cpp

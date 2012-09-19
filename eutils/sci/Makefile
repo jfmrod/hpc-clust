@@ -50,9 +50,9 @@ LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
 libeutils_sci_a_AR = $(AR) $(ARFLAGS)
 libeutils_sci_a_LIBADD =
-nodist_libeutils_sci_a_OBJECTS = ecorr.$(OBJEXT) etest.$(OBJEXT) \
+am_libeutils_sci_a_OBJECTS = ecorr.$(OBJEXT) etest.$(OBJEXT) \
 	estats.$(OBJEXT)
-libeutils_sci_a_OBJECTS = $(nodist_libeutils_sci_a_OBJECTS)
+libeutils_sci_a_OBJECTS = $(am_libeutils_sci_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -66,8 +66,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(nodist_libeutils_sci_a_SOURCES)
-DIST_SOURCES =
+SOURCES = $(libeutils_sci_a_SOURCES)
+DIST_SOURCES = $(libeutils_sci_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -185,7 +185,7 @@ top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
 noinst_LIBRARIES = libeutils_sci.a
-nodist_libeutils_sci_a_SOURCES = ecorr.h ecorr.cpp etest.h etest.cpp estats.h estats.cpp
+libeutils_sci_a_SOURCES = ecorr.h ecorr.cpp etest.h etest.cpp estats.h estats.cpp
 all: all-am
 
 .SUFFIXES:
