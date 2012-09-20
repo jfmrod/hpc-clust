@@ -29,11 +29,15 @@ AC_ARG_ENABLE(ncursestest, [  --disable-ncursestest       Do not try to compile 
   min_ncurses_version=ifelse([$1], ,0.2.5,$1)
   AC_MSG_CHECKING(for ncurses - version >= $min_ncurses_version)
   no_ncurses=""
-  if test "$NCURSES_CONFIG" = "no" ; then
-    no_ncurses=yes
-  else
+
+  NCURSES_CFLAGS=""
+  NCURSES_LIBS="-lncurses -ldl"
+  if test "$NCURSES_CONFIG" != "no" ; then
+#    no_ncurses=yes
+#  else
     NCURSES_CFLAGS=`$NCURSES_CONFIG --cflags`
     NCURSES_LIBS=`$NCURSES_CONFIG --libs`
+  fi
 
     ncurses_major_version=`$NCURSES_CONFIG --version | \
            sed 's/^\([[0-9]]*\).*/\1/'`
@@ -133,7 +137,9 @@ int main (void)
        CFLAGS="$ac_save_CFLAGS"
        LIBS="$ac_save_LIBS"
      fi
-  fi
+
+#  fi
+
   if test "x$no_ncurses" = x ; then
      AC_MSG_RESULT(yes)
      ifelse([$2], , :, [$2])     

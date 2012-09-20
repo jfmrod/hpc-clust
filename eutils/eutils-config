@@ -1,6 +1,6 @@
 #! /bin/sh
 
-prefix=/home/jfmrod/usr
+prefix=/usr/local
 exec_prefix=${prefix}
 includedir=${prefix}/include
 
@@ -54,7 +54,7 @@ while test $# -gt 0; do
 	;;
 
     --cxxflags)
-       	echo -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses 
+       	echo -I${prefix}/include -g -O2 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses 
        	;;
 
     --libs)

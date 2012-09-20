@@ -95,11 +95,14 @@ if test "$no_ncurses" != yes; then
   LIBS="$LIBS $NCURSES_LIBS"
   AC_DEFINE_UNQUOTED(HAVE_LIBNCURSES,1,[define when ncurses exists])
 else
- AC_MSG_WARN([
-   Continuing without NCURSES support.
-   If you want NCURSES support please install ncurses headers and libraries.
-   If NCURSES is installed you might need to indicate where using the argument: --with-ncurses-prefix=DIR
- ])
+  AC_CHECK_LIB(ncurses,main,[ncurses_exists=1])
+  if test "x$ncurses_exists" = "x"; then
+    AC_MSG_WARN([
+      Continuing without NCURSES support.
+      If you want NCURSES support please install ncurses headers and libraries.
+      If NCURSES is installed you might need to indicate where using the argument: --with-ncurses-prefix=DIR
+    ])
+  fi
 fi
 
 AC_CHECK_LIB(rt,main)

@@ -1366,7 +1366,7 @@ void epruninterpret(int argvc,char **argv)
   cout << endl;
 }
 
-#include <eutils/eregexp.h>
+#include "eregexp.h"
 
 void epinterpretfile(const estr& file)
 {

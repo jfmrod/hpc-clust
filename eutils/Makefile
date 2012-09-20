@@ -203,7 +203,7 @@ CPP = gcc -E
 CPPFLAGS =  -I/home/jfmrod/usr/include
 CXX = g++
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
+CXXFLAGS = -g -O2 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -211,7 +211,7 @@ ECHO_C =
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-EUTILS_CXXFLAGS = -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
+EUTILS_CXXFLAGS = -I${prefix}/include -g -O2 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
 EUTILS_LDFLAGS =  -pthread
 EUTILS_LIBS = eutils/libeutils.a -lreadline -lrt  -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lmpi_cxx -lmpi++ -lapophenia -lz
 EXEEXT = 
@@ -291,7 +291,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/jfmrod/usr
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin

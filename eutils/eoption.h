@@ -1,7 +1,7 @@
 #ifndef EOPTION_H
 #define EOPTION_H
 
-#include <eutils/estrarrayof.h>
+#include "estrarrayof.h"
 template <class T>
 class eoption : public estrarrayof<T>
 {

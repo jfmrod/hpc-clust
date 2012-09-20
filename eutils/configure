@@ -5022,11 +5022,15 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ncurses - version >= $min_ncurses_version" >&5
 $as_echo_n "checking for ncurses - version >= $min_ncurses_version... " >&6; }
   no_ncurses=""
-  if test "$NCURSES_CONFIG" = "no" ; then
-    no_ncurses=yes
-  else
+
+  NCURSES_CFLAGS=""
+  NCURSES_LIBS="-lncurses -ldl"
+  if test "$NCURSES_CONFIG" != "no" ; then
+#    no_ncurses=yes
+#  else
     NCURSES_CFLAGS=`$NCURSES_CONFIG --cflags`
     NCURSES_LIBS=`$NCURSES_CONFIG --libs`
+  fi
 
     ncurses_major_version=`$NCURSES_CONFIG --version | \
            sed 's/^\([0-9]*\).*/\1/'`
@@ -5141,7 +5145,9 @@ fi
        CFLAGS="$ac_save_CFLAGS"
        LIBS="$ac_save_LIBS"
      fi
-  fi
+
+#  fi
+
   if test "x$no_ncurses" = x ; then
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -5215,16 +5221,52 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 else
- { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
-   Continuing without NCURSES support.
-   If you want NCURSES support please install ncurses headers and libraries.
-   If NCURSES is installed you might need to indicate where using the argument: --with-ncurses-prefix=DIR
- " >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lncurses" >&5
+$as_echo_n "checking for main in -lncurses... " >&6; }
+if test "${ac_cv_lib_ncurses_main+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lncurses  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_ncurses_main=yes
+else
+  ac_cv_lib_ncurses_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ncurses_main" >&5
+$as_echo "$ac_cv_lib_ncurses_main" >&6; }
+if test "x$ac_cv_lib_ncurses_main" = x""yes; then :
+  ncurses_exists=1
+fi
+
+  if test "x$ncurses_exists" = "x"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
+      Continuing without NCURSES support.
+      If you want NCURSES support please install ncurses headers and libraries.
+      If NCURSES is installed you might need to indicate where using the argument: --with-ncurses-prefix=DIR
+    " >&5
 $as_echo "$as_me: WARNING:
-   Continuing without NCURSES support.
-   If you want NCURSES support please install ncurses headers and libraries.
-   If NCURSES is installed you might need to indicate where using the argument: --with-ncurses-prefix=DIR
- " >&2;}
+      Continuing without NCURSES support.
+      If you want NCURSES support please install ncurses headers and libraries.
+      If NCURSES is installed you might need to indicate where using the argument: --with-ncurses-prefix=DIR
+    " >&2;}
+  fi
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lrt" >&5
