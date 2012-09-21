@@ -24,7 +24,7 @@ int partsTotal=100;
 ebasicarray<eshortseq> arr;
 unsigned totaldists;
 
-unsigned int radixKey(eblockarray<eseqdist>& dists,int i)
+unsigned int radixKey(eblockarray<eseqdist>& dists,long int i)
 {
   return((unsigned int)(dists[i].dist*10000));
 }

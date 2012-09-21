@@ -42,8 +42,9 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	config.guess config.sub depcomp install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_prefix_config_h.m4 \
-	$(top_srcdir)/m4/gsl.m4 $(top_srcdir)/m4/mysql.m4 \
-	$(top_srcdir)/m4/ncurses.m4 $(top_srcdir)/configure.in
+	$(top_srcdir)/m4/gmp.m4 $(top_srcdir)/m4/gsl.m4 \
+	$(top_srcdir)/m4/mysql.m4 $(top_srcdir)/m4/ncurses.m4 \
+	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -98,7 +99,7 @@ am__objects_2 = $(am__objects_1) $(am__objects_1) $(am__objects_1) \
 #am__objects_3 = $(am__objects_1) esystem_win32.$(OBJEXT)
 am__objects_4 = $(am__objects_1) esystem_linux.$(OBJEXT)
 #am__objects_5 = $(am__objects_1) esystem_osx.$(OBJEXT)
-#am__objects_6 = empint.$(OBJEXT)
+am__objects_6 = empint.$(OBJEXT)
 #am__objects_7 = empfloatr.$(OBJEXT)
 am_libeutils_a_OBJECTS = $(am__objects_2) eutils.$(OBJEXT) \
 	ernd.$(OBJEXT) logger.$(OBJEXT) eparser.$(OBJEXT) \
@@ -198,12 +199,12 @@ AUTOMAKE = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run auto
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2
+CFLAGS = -g -O2 -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
 CPP = gcc -E
-CPPFLAGS = 
+CPPFLAGS =  -I/home/jfmrod/usr/include
 CXX = g++
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2 -pthread -I/usr/include/mpi
+CXXFLAGS = -g -O2 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -211,14 +212,15 @@ ECHO_C =
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-EUTILS_CXXFLAGS = -I${prefix}/include -g -O2 -pthread -I/usr/include/mpi
+EUTILS_CXXFLAGS = -I${prefix}/include -g -O2 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
 EUTILS_LDFLAGS =  -pthread
-EUTILS_LIBS = eutils/libeutils.a -lmpi -lrt  -lmpi -lmpi_cxx -lmpi++ -lz
+EUTILS_LIBS = eutils/libeutils.a -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt  -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
 EXEEXT = 
+GMP_LIBS = -lgmp -lgmpxx
 GREP = /bin/grep
-GSL_CFLAGS = 
-GSL_CONFIG = no
-GSL_LIBS = 
+GSL_CFLAGS = -I/home/jfmrod/usr/include
+GSL_CONFIG = /home/jfmrod/usr/bin/gsl-config
+GSL_LIBS = -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
@@ -226,17 +228,17 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS =  -pthread
 LIBOBJS = 
-LIBS = -lmpi -lrt  -lmpi -lmpi_cxx -lmpi++ -lz
+LIBS = -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt  -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 MYSQL_CFLAGS = 
 MYSQL_CONFIG = no
 MYSQL_LIBS = 
-NCURSES5_CONFIG = /usr/bin/ncurses5-config
-NCURSES_CFLAGS = 
-NCURSES_CONFIG = /usr/bin/ncurses5-config
-NCURSES_LIBS = -L/usr/lib -lncurses
+NCURSES5_CONFIG = /home/jfmrod/usr/bin/ncurses5-config
+NCURSES_CFLAGS = -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
+NCURSES_CONFIG = /home/jfmrod/usr/bin/ncurses5-config
+NCURSES_LIBS = -L/home/jfmrod/usr/lib -lncurses -ldl
 OBJEXT = o
 PACKAGE = eutils
 PACKAGE_BUGREPORT = 
@@ -291,7 +293,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/jfmrod
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -311,8 +313,8 @@ LINUXHDR = esystem_linux.h
 LINUXSRC = $(LINUXHDR) esystem_linux.cpp
 #OSXHDR = esystem_osx.h
 #OSXSRC = $(OSXHDR) esystem_osx.cpp
-#GMPLIBHDR = empint.h
-#GMPLIBSRC = empint.cpp
+GMPLIBHDR = empint.h
+GMPLIBSRC = empint.cpp
 #MPFRLIBHDR = empfloatr.h
 #MPFRLIBSRC = empfloatr.cpp
 headers = eutils.h earray.h earray_dec.h earrayof.h earrayof_dec.h ecmpstr.h ecsv.h efile.h     \

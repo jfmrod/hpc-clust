@@ -102,13 +102,13 @@ fi
 
 AC_CHECK_LIB(rt,main)
 
-AC_CHECK_LIB([gmp -lgmpxx],main,[gmplib_exists=1])
-if test "x$gmplib_exists" != "x"; then
-  echo "Compiling gnu mp library support"
+AM_PATH_GMP(5.0)
+if test "x$no_gmp" = "x"; then
+  echo "Compiling GNU MP library support"
   AC_DEFINE_UNQUOTED(HAVE_GMPLIB,1,[define when gnu mp library exists])
-  LIBS="$LIBS -lgmp -lgmpxx"
+  LIBS="$LIBS $GMP_LIBS"
 fi
-AM_CONDITIONAL(HAVE_GMPLIB, test "x$gmplib_exists" != "x")
+AM_CONDITIONAL(HAVE_GMPLIB, test "x$no_gmp" = "x")
 
 
 AC_CHECK_LIB([mpfr],main,[mpfrlib_exists=1])
@@ -132,21 +132,12 @@ if test "x$no_mpi" != "xyes"; then
 fi
 if test "x$no_mpi" != "xyes"; then
   echo "Compiling MPI library support"
+  AC_CHECK_LIB(mpi_cxx,main)
+  AC_CHECK_LIB(mpi++,main)
   AC_DEFINE_UNQUOTED(HAVE_MPILIB,1,[define when MPI library exists])
   LIBS="$LIBS -lmpi"
 fi
-
 AM_CONDITIONAL(HAVE_MPILIB, test "x$no_mpi" = "x")
-
-AC_CHECK_LIB(mpi_cxx,main,[mpilibxx_exists=1])
-if test "x$mpilibxx_exists" != "x"; then
-  LIBS="$LIBS -lmpi_cxx"
-fi
-
-AC_CHECK_LIB(mpi++,main,[mpilibpp_exists=1])
-if test "x$mpilibpp_exists" != "x"; then
-  LIBS="$LIBS -lmpi++"
-fi
 
 AC_CHECK_LIB(apophenia,main,[apolib_exists=1])
 if test "x$apolib_exists" != "x"; then

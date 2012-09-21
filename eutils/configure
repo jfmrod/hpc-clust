@@ -610,6 +610,7 @@ HAVE_MPFRLIB_FALSE
 HAVE_MPFRLIB_TRUE
 HAVE_GMPLIB_FALSE
 HAVE_GMPLIB_TRUE
+GMP_LIBS
 NCURSES_LIBS
 NCURSES_CFLAGS
 NCURSES5_CONFIG
@@ -732,6 +733,7 @@ enable_mysqltest
 with_ncurses_prefix
 with_ncurses_exec_prefix
 enable_ncursestest
+enable_gmptest
 enable_regcommon
 with_readline
 '
@@ -1369,6 +1371,7 @@ Optional Features:
   --disable-gsltest       Do not try to compile and run a test GSL program
   --disable-mysqltest       Do not try to compile and run a test MYSQL program
   --disable-ncursestest       Do not try to compile and run a test NCURSES program
+  --disable-gmptest       Do not try to compile and run a test GMP program
   --disable-regcommon    disable registration of all eutils classes and methods. Useful when developing to reduce compiling time.
 
 Optional Packages:
@@ -5275,50 +5278,142 @@ _ACEOF
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lgmp -lgmpxx" >&5
-$as_echo_n "checking for main in -lgmp -lgmpxx... " >&6; }
-if test "${ac_cv_lib_gmp__lgmpxx_main+set}" = set; then :
-  $as_echo_n "(cached) " >&6
+
+# Check whether --enable-gmptest was given.
+if test "${enable_gmptest+set}" = set; then :
+  enableval=$enable_gmptest;
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgmp -lgmpxx  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  enable_gmptest=yes
+fi
+
+
+  min_gmp_version=5.0
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gmp - version >= $min_gmp_version" >&5
+$as_echo_n "checking for gmp - version >= $min_gmp_version... " >&6; }
+  no_gmp=""
+
+  GMP_LIBS="-lgmp -lgmpxx"
+  if test "x$enable_gmptest" = "xyes"; then
+    ac_save_CFLAGS="$CFLAGS"
+    ac_save_LIBS="$LIBS"
+    LIBS="$LIBS $GMP_LIBS"
+
+    rm -f conf.gmptest
+    if test "$cross_compiling" = yes; then :
+  echo $ac_n "cross compiling; assumed OK... $ac_c"
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#include <gmp.h>
 
-int
-main ()
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef __GNU_MP_VERSION
+ #define TEST_GMP_VERSION __GNU_MP_VERSION
+ #define TEST_GMP_VERSION_MINOR   __GNU_MP_VERSION_MINOR
+#else
+ #define TEST_GMP_VERSION __GNU_MP__
+ #define TEST_GMP_VERSION_MINOR   0
+#endif
+
+
+
+char* my_strdup (const char *str);
+
+char*
+my_strdup (const char *str)
 {
-return main ();
-  ;
-  return 0;
+  char *new_str;
+
+  if (str)
+    {
+      new_str = (char *)malloc ((strlen (str) + 1) * sizeof(char));
+      strcpy (new_str, str);
+    }
+  else
+    new_str = NULL;
+
+  return new_str;
 }
+
+int main (void)
+{
+  int major = 0;
+  int minor = 0;
+  int n;
+  char *tmp_version;
+
+  system ("touch conf.gmptest");
+
+  /* HP/UX 9 (%@#!) writes to sscanf strings */
+  tmp_version = my_strdup("$min_gmp_version");
+
+  n = sscanf(tmp_version, "%d.%d", &major,&minor) ;
+
+  if (n != 2) {
+     printf("error: %s, bad version string\n", "$min_gmp_version");
+     exit(1);
+  }
+
+  if ((TEST_GMP_VERSION > major) || (TEST_GMP_VERSION==major && TEST_GMP_VERSION_MINOR >=minor))
+  {
+    exit(0);
+  }
+  else
+  {
+    printf("no\n*** GNU MP version is %d.%d, but the minimum version\n", TEST_GMP_VERSION,TEST_GMP_VERSION_MINOR);
+    printf("*** of GMP required is %d.%d. To use GMP with this software you need\n", major,minor);
+    printf("*** to upgrade to the required version.\n");
+    exit(1);
+  }
+  return(0);
+}
+
+
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_gmp__lgmpxx_main=yes
+if ac_fn_c_try_run "$LINENO"; then :
+
 else
-  ac_cv_lib_gmp__lgmpxx_main=no
+  no_gmp=yes
 fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gmp__lgmpxx_main" >&5
-$as_echo "$ac_cv_lib_gmp__lgmpxx_main" >&6; }
-if test "x$ac_cv_lib_gmp__lgmpxx_main" = x""yes; then :
-  gmplib_exists=1
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-if test "x$gmplib_exists" != "x"; then
-  echo "Compiling gnu mp library support"
+    CFLAGS="$ac_save_CFLAGS"
+    LIBS="$ac_save_LIBS"
+  fi
+
+
+  if test "x$no_gmp" = "x"; then
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+     :
+  else
+     if test -f conf.gmptest ; then
+       :
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+     fi
+     :
+  fi
+
+  rm -f conf.gmptest
+
+if test "x$no_gmp" = "x"; then
+  echo "Compiling GNU MP library support"
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_GMPLIB 1
 _ACEOF
 
-  LIBS="$LIBS -lgmp -lgmpxx"
+  LIBS="$LIBS $GMP_LIBS"
 fi
- if test "x$gmplib_exists" != "x"; then
+ if test "x$no_gmp" = "x"; then
   HAVE_GMPLIB_TRUE=
   HAVE_GMPLIB_FALSE='#'
 else
@@ -5845,24 +5940,7 @@ fi
 fi
 if test "x$no_mpi" != "xyes"; then
   echo "Compiling MPI library support"
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_MPILIB 1
-_ACEOF
-
-  LIBS="$LIBS -lmpi"
-fi
-
- if test "x$no_mpi" = "x"; then
-  HAVE_MPILIB_TRUE=
-  HAVE_MPILIB_FALSE='#'
-else
-  HAVE_MPILIB_TRUE='#'
-  HAVE_MPILIB_FALSE=
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lmpi_cxx" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lmpi_cxx" >&5
 $as_echo_n "checking for main in -lmpi_cxx... " >&6; }
 if test "${ac_cv_lib_mpi_cxx_main+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -5893,14 +5971,15 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mpi_cxx_main" >&5
 $as_echo "$ac_cv_lib_mpi_cxx_main" >&6; }
 if test "x$ac_cv_lib_mpi_cxx_main" = x""yes; then :
-  mpilibxx_exists=1
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBMPI_CXX 1
+_ACEOF
+
+  LIBS="-lmpi_cxx $LIBS"
+
 fi
 
-if test "x$mpilibxx_exists" != "x"; then
-  LIBS="$LIBS -lmpi_cxx"
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lmpi++" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lmpi++" >&5
 $as_echo_n "checking for main in -lmpi++... " >&6; }
 if test "${ac_cv_lib_mpipp_main+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -5931,12 +6010,29 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mpipp_main" >&5
 $as_echo "$ac_cv_lib_mpipp_main" >&6; }
 if test "x$ac_cv_lib_mpipp_main" = x""yes; then :
-  mpilibpp_exists=1
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBMPI__ 1
+_ACEOF
+
+  LIBS="-lmpi++ $LIBS"
+
 fi
 
-if test "x$mpilibpp_exists" != "x"; then
-  LIBS="$LIBS -lmpi++"
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_MPILIB 1
+_ACEOF
+
+  LIBS="$LIBS -lmpi"
 fi
+ if test "x$no_mpi" = "x"; then
+  HAVE_MPILIB_TRUE=
+  HAVE_MPILIB_FALSE='#'
+else
+  HAVE_MPILIB_TRUE='#'
+  HAVE_MPILIB_FALSE=
+fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lapophenia" >&5
 $as_echo_n "checking for main in -lapophenia... " >&6; }

@@ -6,10 +6,14 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
 /* define when apophenia library exists */
-/* #undef HAVE_APOLIB */
+#ifndef EUTILS_HAVE_APOLIB 
+#define EUTILS_HAVE_APOLIB  1 
+#endif
 
 /* define when gnu mp library exists */
-/* #undef HAVE_GMPLIB */
+#ifndef EUTILS_HAVE_GMPLIB 
+#define EUTILS_HAVE_GMPLIB  1 
+#endif
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #ifndef EUTILS_HAVE_INTTYPES_H 
@@ -17,21 +21,37 @@
 #endif
 
 /* define when libgsl exists */
-/* #undef HAVE_LIBGSL */
+#ifndef EUTILS_HAVE_LIBGSL 
+#define EUTILS_HAVE_LIBGSL  1 
+#endif
 
 /* Define to 1 if you have the `mpi' library (-lmpi). */
 #ifndef EUTILS_HAVE_LIBMPI 
 #define EUTILS_HAVE_LIBMPI  1 
 #endif
 
+/* Define to 1 if you have the `mpi_cxx' library (-lmpi_cxx). */
+#ifndef EUTILS_HAVE_LIBMPI_CXX 
+#define EUTILS_HAVE_LIBMPI_CXX  1 
+#endif
+
+/* Define to 1 if you have the `mpi++' library (-lmpi++). */
+#ifndef EUTILS_HAVE_LIBMPI__ 
+#define EUTILS_HAVE_LIBMPI__  1 
+#endif
+
 /* define when libmysql exists */
 /* #undef HAVE_LIBMYSQL */
 
 /* define when ncurses exists */
-/* #undef HAVE_LIBNCURSES */
+#ifndef EUTILS_HAVE_LIBNCURSES 
+#define EUTILS_HAVE_LIBNCURSES  1 
+#endif
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
-/* #undef HAVE_LIBREADLINE */
+#ifndef EUTILS_HAVE_LIBREADLINE 
+#define EUTILS_HAVE_LIBREADLINE  1 
+#endif
 
 /* Define to 1 if you have the `rt' library (-lrt). */
 #ifndef EUTILS_HAVE_LIBRT 
@@ -52,7 +72,9 @@
 #endif
 
 /* define when readline.h exists */
-/* #undef HAVE_READLINE_H */
+#ifndef EUTILS_HAVE_READLINE_H 
+#define EUTILS_HAVE_READLINE_H  1 
+#endif
 
 /* define when regex exists */
 #ifndef EUTILS_HAVE_REGEX 

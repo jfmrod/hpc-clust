@@ -1,4 +1,4 @@
-prefix=/home/jfmrod
+prefix=/usr/local
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
@@ -6,5 +6,5 @@ includedir=${prefix}/include
 Name: easycpp.eutils
 Description: The easy programming library
 Version: 1.0.0
-Libs: eutils/libeutils.a -lmpi -lrt  -lmpi -lmpi_cxx -lmpi++ -lz -lmpi -lrt  -lmpi -lmpi_cxx -lmpi++ -lz
-Cflags: -I${prefix}/include -g -O2 -pthread -I/usr/include/mpi
+Libs: eutils/libeutils.a -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt  -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt  -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
+Cflags: -I${prefix}/include -g -O2 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
