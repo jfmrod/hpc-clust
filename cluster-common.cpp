@@ -223,6 +223,7 @@ inline char rndnuc()
   return('C');
 }
 
+/*
 estr seq_mutate_compress(estr& seq,int& nextmutation,float imutrate)
 {
   while (nextmutation<seq.len()){
@@ -261,6 +262,7 @@ void load_seqs_mutate_compressed(const estr& filename,estrarray& arr,int& seqlen
   }
   cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
 }
+*/
 
 void load_short_compressed(const estr& filename,estrarray& arr,int& seqlen)
 {

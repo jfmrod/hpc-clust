@@ -144,7 +144,7 @@ separate machine it can make use of the combined memory of all the machines.
 The exact command for submitting a job to the queuing system will depend on your local cluster
 configuration. An example of the command to submit a job to run hpc-clust-mpi on 10 nodes would be:
 
-qsub -cwd -pe orte 10 mpirun -n 10 hpc-clust-mpi -sl true alignedseqs.sto
+qsub -b y -cwd -pe orte 10 mpirun -n 10 hpc-clust-mpi -sl true alignedseqs.sto
 
 
 The speed of the computation and memory usage can be further optimized by having more than one

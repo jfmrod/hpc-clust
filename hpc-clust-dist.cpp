@@ -800,9 +800,9 @@ int emain()
   dfunc.add("nogap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
   dfunc.add("gap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
   dfunc.add("tamura",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
-  dfunc.add("gap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
-  dfunc.add("nogap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
-  dfunc.add("tamura+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+//  dfunc.add("gap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+//  dfunc.add("nogap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+//  dfunc.add("tamura+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
 
   epregisterClass(eoption<efunc>);
   epregisterClassMethod2(eoption<efunc>,operator=,int,(const estr& val));

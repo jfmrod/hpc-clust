@@ -24,7 +24,7 @@ unsigned totaldists;
 
 int seqlen=0;
 
-unsigned int radixKey(eblockarray<eseqdist>& dists,int i)
+unsigned int radixKey(eblockarray<eseqdist>& dists,long int i)
 {
   return((unsigned int)(dists[i].dist*10000));
 }
@@ -102,9 +102,9 @@ int emain()
   dfunc.add("nogapsingle",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
   dfunc.add("nogapwindow",t_calc_dists_window<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed_window>);
   dfunc.add("tamura",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
-  dfunc.add("gap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
-  dfunc.add("nogap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
-  dfunc.add("tamura+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+//  dfunc.add("gap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+//  dfunc.add("nogap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+//  dfunc.add("tamura+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
 
   epregisterClass(eoption<efunc>);
   epregisterClassMethod2(eoption<efunc>,operator=,int,(const estr& val));
@@ -145,9 +145,9 @@ int emain()
   epregisterClassSerializeMethod(ebasicarray<eseqdist>);
 
   int i;
-  if (avgmutseq>0.0)
-    load_seqs_mutate_compressed(argv[1],arr,seqlen,avgmutseq);
-  else
+//  if (avgmutseq>0.0)
+//    load_seqs_mutate_compressed(argv[1],arr,seqlen,avgmutseq);
+//  else
     load_seqs_compressed(argv[1],arr,seqlen);
 
   ebasicstrhashof<int> duphash;

@@ -736,6 +736,7 @@ inline void xy2estr(int x,int y,estr& str)
   }
 }
 
+/*
 template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
 int t_calc_dists_noise(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tnodes,float thres)
 {
@@ -776,7 +777,7 @@ int t_calc_dists_noise(emutex& mutex,T& arr,K& dists,int seqlen,int node,int tno
   mutex.unlock();
   return(tmpdists.size());
 }
-
+*/
 
 template <class T,class M,class K,float (*fdist)(const eshortseq&,const eshortseq&)>
 int t_calc_dists(emutex& mutex,T& arr,K& dists,int node,int tnodes,float thres)
@@ -1007,7 +1008,7 @@ void load_accs(const estr& filename,estrarray& arr);
 void load_seqs(const estr& filename,estrarray& arr);
 
 
-void load_seqs_mutate_compressed(const estr& filename,estrarray& arr,int& seqlen,float avgmutseq);
+//void load_seqs_mutate_compressed(const estr& filename,estrarray& arr,int& seqlen,float avgmutseq);
 
 void load_short_compressed(const estr& filename,estrarray& arr,int& seqlen);
 void load_short_compressed(const estr& filename,ebasicarray<eshortseq>& arr);

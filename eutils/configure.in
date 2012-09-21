@@ -48,7 +48,7 @@ AC_CHECK_TOOL(AR, ar)
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 
-AM_INIT_AUTOMAKE("eutils","0.6.3")
+AM_INIT_AUTOMAKE("eutils","1.0.0")
 
 #export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH}"
 #export C_INCLUDE_PATH="${C_INCLUDE_PATH}"
@@ -63,46 +63,41 @@ if test "$no_gsl" != yes; then
   LIBS="$LIBS $GSL_LIBS"
   AC_DEFINE_UNQUOTED(HAVE_LIBGSL,1,[define when libgsl exists])
 else
- AC_MSG_WARN([
-   Continuing without GSL support.
-   If you want GSL support please install the gsl headers and libraries.
-   If GSL is installed you might need to indicate where using the argument: --with-gsl-prefix=DIR
- ])
+  AC_MSG_WARN([
+    Continuing without GSL support.
+    If you want GSL support please install the gsl headers and libraries.
+    If GSL is installed you might need to indicate where using the argument: --with-gsl-prefix=DIR
+  ])
 fi
 
 # Check for MYSQL installation
 AM_PATH_MYSQL(4.0.0)
 if test "$no_mysql" != yes; then
-#  CPPFLAGS="$CPPFLAGS $MYSQL_CFLAGS"
   CXXFLAGS="$CXXFLAGS $MYSQL_CFLAGS"
   CFLAGS="$CFLAGS $MYSQL_CFLAGS"
   LIBS="$LIBS $MYSQL_LIBS"
   AC_DEFINE_UNQUOTED(HAVE_LIBMYSQL,1,[define when libmysql exists])
 else
- AC_MSG_WARN([
-   Continuing without MYSQL support.
-   If you want MYSQL support please install the mysql headers and libraries.
-   If MYSQL is installed you might need to indicate where using the argument: --with-mysql-prefix=DIR
- ])
+  AC_MSG_WARN([
+    Continuing without MYSQL support.
+    If you want MYSQL support please install the mysql headers and libraries.
+    If MYSQL is installed you might need to indicate where using the argument: --with-mysql-prefix=DIR
+  ])
 fi
 
 # Check for NCURSES installation
-AM_PATH_NCURSES(4.0.0)
+AM_PATH_NCURSES(5.0)
 if test "$no_ncurses" != yes; then
-#  CPPFLAGS="$CPPFLAGS $NCURSES_CFLAGS"
   CXXFLAGS="$CXXFLAGS $NCURSES_CFLAGS"
   CFLAGS="$CFLAGS $NCURSES_CFLAGS"
   LIBS="$LIBS $NCURSES_LIBS"
   AC_DEFINE_UNQUOTED(HAVE_LIBNCURSES,1,[define when ncurses exists])
 else
-  AC_CHECK_LIB(ncurses,main,[ncurses_exists=1])
-  if test "x$ncurses_exists" = "x"; then
-    AC_MSG_WARN([
-      Continuing without NCURSES support.
-      If you want NCURSES support please install ncurses headers and libraries.
-      If NCURSES is installed you might need to indicate where using the argument: --with-ncurses-prefix=DIR
-    ])
-  fi
+  AC_MSG_WARN([
+    Continuing without NCURSES support.
+    If you want NCURSES support please install ncurses headers and libraries.
+    If NCURSES is installed you might need to indicate where using the argument: --with-ncurses-prefix=DIR
+  ])
 fi
 
 AC_CHECK_LIB(rt,main)
@@ -116,21 +111,32 @@ fi
 AM_CONDITIONAL(HAVE_GMPLIB, test "x$gmplib_exists" != "x")
 
 
-AC_CHECK_LIB([mpfr -lgmp -lgmpxx],main,[mpfrlib_exists=1])
+AC_CHECK_LIB([mpfr],main,[mpfrlib_exists=1])
 if test "x$mpfrlib_exists" != "x"; then
   echo "Compiling mpfr library support"
   AC_DEFINE_UNQUOTED(HAVE_MPFRLIB,1,[define when mpfr library exists])
-  LIBS="$LIBS -lmpfr -lgmp -lgmpxx"
+  LIBS="$LIBS -lmpfr"
 fi
 AM_CONDITIONAL(HAVE_MPFRLIB, test "x$mpfrlib_exists" != "x")
 
-AC_CHECK_LIB(mpi,main,[mpilib_exists=1])
-if test "x$mpilib_exists" != "x"; then
+AC_CHECK_LIB(mpi,main,,no_mpi=yes)
+if test "x$no_mpi" != "xyes"; then
+  AC_CHECK_HEADER([mpi.h],,no_mpi=yes)
+  if test "x$no_mpi" = "xyes"; then
+    no_mpi=""
+    AC_CHECK_HEADER([mpi/mpi.h],,no_mpi=yes)
+    if test "$x$no_mpi" != "xyes"; then
+      CXXFLAGS="${CXXFLAGS} -I/usr/include/mpi"
+    fi
+  fi
+fi
+if test "x$no_mpi" != "xyes"; then
   echo "Compiling MPI library support"
   AC_DEFINE_UNQUOTED(HAVE_MPILIB,1,[define when MPI library exists])
   LIBS="$LIBS -lmpi"
 fi
-AM_CONDITIONAL(HAVE_MPILIB, test "x$mpilib_exists" != "x")
+
+AM_CONDITIONAL(HAVE_MPILIB, test "x$no_mpi" = "x")
 
 AC_CHECK_LIB(mpi_cxx,main,[mpilibxx_exists=1])
 if test "x$mpilibxx_exists" != "x"; then
@@ -168,8 +174,11 @@ if test "x$enable_regcommon" = "xyes"; then
 fi
 
 if test "x$with_readline" = "xyes"; then
-  AC_CHECK_LIB(readline,main)
-  AC_CHECK_HEADER([readline/readline.h],[AC_DEFINE([HAVE_READLINE_H],[1],[define when readline.h exists])])
+  AC_CHECK_LIB(readline,main,,no_readline=1)
+  if test "x$no_readline" = "x"; then
+    AC_CHECK_HEADER([readline/readline.h],[AC_DEFINE([HAVE_READLINE_H],[1],[define when readline.h exists])])
+    LIBS="$LIBS -lreadline"
+  fi
 fi
 
 #AC_CHECK_LIB(pthread,main)

@@ -30,14 +30,17 @@ AC_ARG_ENABLE(ncursestest, [  --disable-ncursestest       Do not try to compile 
   AC_MSG_CHECKING(for ncurses - version >= $min_ncurses_version)
   no_ncurses=""
 
-  NCURSES_CFLAGS=""
+  NCURSES_CFLAGS="-I/usr/include/ncurses"
   NCURSES_LIBS="-lncurses -ldl"
+  ncurses_major_version=0
+  ncurses_minor_version=0
+  ncurses_micro_version=0
+
   if test "$NCURSES_CONFIG" != "no" ; then
 #    no_ncurses=yes
 #  else
     NCURSES_CFLAGS=`$NCURSES_CONFIG --cflags`
     NCURSES_LIBS=`$NCURSES_CONFIG --libs`
-  fi
 
     ncurses_major_version=`$NCURSES_CONFIG --version | \
            sed 's/^\([[0-9]]*\).*/\1/'`
@@ -56,6 +59,8 @@ AC_ARG_ENABLE(ncursestest, [  --disable-ncursestest       Do not try to compile 
     if test "x${ncurses_micro_version}" = "x" ; then
        ncurses_micro_version=0
     fi
+
+  fi
 
     if test "x$enable_ncursestest" = "xyes" ; then
       ac_save_CFLAGS="$CFLAGS"
@@ -114,16 +119,15 @@ int main (void)
      exit(1);
   }
 
-  if (($ncurses_major_version > major) ||
-     (($ncurses_major_version == major) && ($ncurses_minor_version > minor)) ||
-     (($ncurses_major_version == major) && ($ncurses_minor_version == minor) && ($ncurses_micro_version >= micro)))
+  if ((NCURSES_VERSION_MAJOR > major) ||
+     ((NCURSES_VERSION_MAJOR == major) && (NCURSES_VERSION_MINOR > minor)))
   {
     exit(0);
   }
   else
   {
-    printf("\n*** 'ncurses-config --version' returned %d.%d.%d, but the minimum version\n", $ncurses_major_version, $ncurses_minor_version, $ncurses_micro_version);
-    printf("*** of NCURSES required is %d.%d.%d. If ncurses-config is correct, then it is\n", major, minor, micro);
+    printf("\n*** NCURSES_VERSION is %s, but the minimum version\n", NCURSES_VERSION);
+    printf("*** of NCURSES required is %d.%d. If ncurses-config is correct, then it is\n", major, minor);
     printf("*** best to upgrade to the required version.\n");
     printf("*** If ncurses-config was wrong, set the environment variable NCURSES_CONFIG\n");
     printf("*** to point to the correct copy of ncurses-config, and remove the file\n");

@@ -55,15 +55,34 @@ AX_PREFIX_CONFIG_H
 LIBS="${LIBS} ${EUTILS_LIBS}"
 LDFLAGS="${LDFLAGS} ${EUTILS_LDFLAGS}"
 
-AC_ARG_WITH(mpi, [  --without-mpi    disable MPI library. ], ,with_mpi="yes" )
-if test "x$with_mpi" != "x"; then
-  AC_CHECK_LIB(mpi,main,[mpilib_exists=1])
-  if test "x$mpilib_exists" != "x"; then
-    echo "Compiling MPI library support"
-    AC_DEFINE_UNQUOTED(HAVE_MPILIB,1,[define when MPI library exists])
+AC_ARG_WITH(mpi,[  --without-mpi      disable MPI support. ],,with_mpi=yes)
+
+AC_CHECK_LIB(mpi,main,,no_mpi=yes)
+if test "x$no_mpi" != "xyes"; then
+  AC_CHECK_HEADER([mpi.h],,no_mpi=yes)
+  if test "x$no_mpi" = "xyes"; then
+    no_mpi=""
+    AC_CHECK_HEADER([mpi/mpi.h],,no_mpi=yes)
+    if test "$x$no_mpi" != "xyes"; then
+      CXXFLAGS="${CXXFLAGS} -I/usr/include/mpi"
+    fi
   fi
 fi
-AM_CONDITIONAL(HAVE_MPILIB, test "x$mpilib_exists" != "x")
+if test "x$no_mpi" = "xyes" -a "x$with_mpi" = "xyes"; then
+  AC_MSG_ERROR([
+*** MPI library not found.
+*** If you do NOT need MPI support uou can explicitly disable it with ./configure --without-mpi.
+*** If you want MPI support, you can try installing it using the package manager in your system.
+*** For example: apt-get install libopenmpi (on Debian, Ubuntu, ...), or yum install openmpi (on Redhat, Rocks, ...).
+*** If you know the MPI library is installed, please make sure that the libmpi.a library can be found in /usr/lib, and that the mpi.h header can be found in /usr/include.
+*** If the files exist elsewhere please use ./configure CXXFLAGS="-I/include/path/to/mpi.h_directory/" and LDFLAGS="-L/library/path/to/libmpi.a_directory/", or create symbolic links to the correct files in the /usr/include and /usr/lib directories.])
+fi
+if test "x$no_mpi" != "xyes" -a "x$with_mpi" = "xyes"; then
+  echo "Compiling MPI library support"
+  AC_DEFINE_UNQUOTED(HAVE_MPILIB,1,[define when MPI library exists])
+  LIBS="$LIBS -lmpi"
+fi
+AM_CONDITIONAL(HAVE_MPILIB, test "x$no_mpi" = "x" -a "x$with_mpi" = "xyes")
 
 AC_SUBST(EUTILS_CXXFLAGS)
 AC_SUBST(EUTILS_LDFLAGS)

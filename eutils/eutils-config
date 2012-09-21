@@ -1,6 +1,6 @@
 #! /bin/sh
 
-prefix=/usr/local
+prefix=/home/jfmrod
 exec_prefix=${prefix}
 includedir=${prefix}/include
 
@@ -45,7 +45,7 @@ while test $# -gt 0; do
 	;;
 
     --version)
-	echo 0.6.3
+	echo 1.0.0
 	exit 0
 	;;
 
@@ -54,11 +54,11 @@ while test $# -gt 0; do
 	;;
 
     --cxxflags)
-       	echo -I${prefix}/include -g -O2 -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses 
+       	echo -I${prefix}/include -g -O2 -pthread -I/usr/include/mpi 
        	;;
 
     --libs)
-       	echo  -pthread eutils/libeutils.a -lreadline -lrt  -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lmpi_cxx -lmpi++ -lapophenia -lz
+       	echo  -pthread eutils/libeutils.a -lmpi -lrt  -lmpi -lmpi_cxx -lmpi++ -lz
        	;;
 
     *)

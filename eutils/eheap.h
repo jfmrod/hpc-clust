@@ -209,7 +209,7 @@ ebasicarray<T> mergesorted(const ebasicarray<T>& arr1,const ebasicarray<T>& arr2
 }
 
 
-template <class T,unsigned int (*F)(T&,int)>
+template <class T,unsigned int (*F)(T&,long int)>
 void radix256sort(T& array)
 {
   int ksize=4;
