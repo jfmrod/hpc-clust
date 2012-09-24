@@ -30,28 +30,14 @@
 #define EUTILS_HAVE_LIBMPI  1 
 #endif
 
-/* Define to 1 if you have the `mpi_cxx' library (-lmpi_cxx). */
-#ifndef EUTILS_HAVE_LIBMPI_CXX 
-#define EUTILS_HAVE_LIBMPI_CXX  1 
-#endif
-
-/* Define to 1 if you have the `mpi++' library (-lmpi++). */
-#ifndef EUTILS_HAVE_LIBMPI__ 
-#define EUTILS_HAVE_LIBMPI__  1 
-#endif
-
 /* define when libmysql exists */
 /* #undef HAVE_LIBMYSQL */
 
 /* define when ncurses exists */
-#ifndef EUTILS_HAVE_LIBNCURSES 
-#define EUTILS_HAVE_LIBNCURSES  1 
-#endif
+/* #undef HAVE_LIBNCURSES */
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
-#ifndef EUTILS_HAVE_LIBREADLINE 
-#define EUTILS_HAVE_LIBREADLINE  1 
-#endif
+/* #undef HAVE_LIBREADLINE */
 
 /* Define to 1 if you have the `rt' library (-lrt). */
 #ifndef EUTILS_HAVE_LIBRT 
@@ -72,9 +58,7 @@
 #endif
 
 /* define when readline.h exists */
-#ifndef EUTILS_HAVE_READLINE_H 
-#define EUTILS_HAVE_READLINE_H  1 
-#endif
+/* #undef HAVE_READLINE_H */
 
 /* define when regex exists */
 #ifndef EUTILS_HAVE_REGEX 
