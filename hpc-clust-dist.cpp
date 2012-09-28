@@ -208,10 +208,18 @@ void serverProcessDists(int i,const estr& msg,int& count)
   ++pstr;
   int j;
 //  cout << "# " << i << " count: " << count << endl;
-  for (j=0; j<count; ++j){
+  for (j=0; j<count && cend[i]+j<cmindists[i].size(); ++j){
     cmindists[i][cend[i]+j].x=*pstr; ++pstr;
     cmindists[i][cend[i]+j].y=*pstr; ++pstr;
     cmindists[i][cend[i]+j].dist=*(float*)pstr; ++pstr;
+//    cmindists[i][cend[i]+j].count=1;
+  }
+
+  // wrapped around circular buffer
+  for (; j<count; ++j){
+    cmindists[i][cend[i]+j-buffersize].size()].x=*pstr; ++pstr;
+    cmindists[i][cend[i]+j-buffersize].y=*pstr; ++pstr;
+    cmindists[i][cend[i]+j-buffersize].dist=*(float*)pstr; ++pstr;
 //    cmindists[i][cend[i]+j].count=1;
   }
   cend[i]=(cend[i]+count)%cmindists[i].size();

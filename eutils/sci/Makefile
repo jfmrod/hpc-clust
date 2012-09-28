@@ -40,6 +40,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_prefix_config_h.m4 \
 	$(top_srcdir)/m4/gmp.m4 $(top_srcdir)/m4/gsl.m4 \
 	$(top_srcdir)/m4/mysql.m4 $(top_srcdir)/m4/ncurses.m4 \
+	$(top_srcdir)/m4/pkg.m4 $(top_srcdir)/m4/pthread.m4 \
 	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -79,11 +80,14 @@ AUTOCONF = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run auto
 AUTOHEADER = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run autoheader
 AUTOMAKE = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run automake-1.11
 AWK = gawk
+CC = gcc
+CCDEPMODE = depmode=gcc3
+CFLAGS = -g -O2 -I/home/jfmrod/usr/include
 CPPFLAGS =  -I/home/jfmrod/usr/include
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include
+CXXFLAGS = -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include -I/include
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -91,11 +95,10 @@ ECHO_C =
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-EUTILS_CXXFLAGS = -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include
-EUTILS_LDFLAGS =  -pthread
-EUTILS_LIBS = eutils/libeutils.a -lmpi++ -lmpi_cxx -lmpi -lrt  -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -lgmp -lgmpxx -lmpi -lapophenia -lz
+EUTILS_CXXFLAGS = -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include -I/include
+EUTILS_LDFLAGS =  -L/lib
+EUTILS_LIBS = eutils/libeutils.a -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -lgmp -lgmpxx -lmpi -lapophenia -lz
 EXEEXT = 
-GMP_LIBS = -lgmp -lgmpxx
 GREP = /bin/grep
 GSL_CFLAGS = -I/home/jfmrod/usr/include
 GSL_CONFIG = /home/jfmrod/usr/bin/gsl-config
@@ -105,19 +108,18 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LDFLAGS =  -pthread
+LDFLAGS =  -L/lib
 LIBOBJS = 
-LIBS = -lmpi++ -lmpi_cxx -lmpi -lrt  -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -lgmp -lgmpxx -lmpi -lapophenia -lz
+LIBS = -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -lgmp -lgmpxx -lmpi -lapophenia -lz
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
+MPI_CFLAGS = 
+MPI_LIBS = 
 MYSQL_CFLAGS = 
 MYSQL_CONFIG = no
 MYSQL_LIBS = 
-NCURSES5_CONFIG = /home/jfmrod/usr/bin/ncurses5-config
-NCURSES_CFLAGS = -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
-NCURSES_CONFIG = /home/jfmrod/usr/bin/ncurses5-config
-NCURSES_LIBS = -L/home/jfmrod/usr/lib -lncurses -ldl
+NCURSES_CONFIG = no
 OBJEXT = o
 PACKAGE = eutils
 PACKAGE_BUGREPORT = 
@@ -127,6 +129,10 @@ PACKAGE_TARNAME =
 PACKAGE_URL = 
 PACKAGE_VERSION = 
 PATH_SEPARATOR = :
+PKG_CONFIG = /usr/bin/pkg-config
+PTHREAD_CC = gcc
+PTHREAD_CFLAGS = -pthread
+PTHREAD_LIBS = 
 RANLIB = ranlib
 SET_MAKE = 
 SHELL = /bin/bash
@@ -136,12 +142,14 @@ abs_builddir = /home/jfmrod/erisdb/work/hpc-clust/eutils/sci
 abs_srcdir = /home/jfmrod/erisdb/work/hpc-clust/eutils/sci
 abs_top_builddir = /home/jfmrod/erisdb/work/hpc-clust/eutils
 abs_top_srcdir = /home/jfmrod/erisdb/work/hpc-clust/eutils
+ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
 am__leading_dot = .
 am__quote = 
 am__tar = ${AMTAR} chof - "$$tardir"
 am__untar = ${AMTAR} xf -
+ax_pthread_config = 
 bindir = ${exec_prefix}/bin
 build = x86_64-unknown-linux-gnu
 build_alias = 

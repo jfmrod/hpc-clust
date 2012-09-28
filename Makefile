@@ -52,7 +52,7 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	config.guess config.sub depcomp install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_prefix_config_h.m4 \
-	$(top_srcdir)/configure.in
+	$(top_srcdir)/m4/pthread.m4 $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -226,7 +226,7 @@ CPPFLAGS =
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -march=nocona -mtune=nocona -msse3 -O3 -DOS_LINUX
+CXXFLAGS = -O3 -pthread -DOS_LINUX
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -249,6 +249,8 @@ LIBS = `eutils/eutils-config --libs`
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
+MPI_CFLAGS = 
+MPI_LIBS = 
 OBJEXT = o
 PACKAGE = hpc-clust
 PACKAGE_BUGREPORT = 
@@ -258,6 +260,10 @@ PACKAGE_TARNAME =
 PACKAGE_URL = 
 PACKAGE_VERSION = 
 PATH_SEPARATOR = :
+PKG_CONFIG = 
+PTHREAD_CC = gcc
+PTHREAD_CFLAGS = -pthread
+PTHREAD_LIBS = 
 RANLIB = ranlib
 SET_MAKE = 
 SHELL = /bin/bash
@@ -274,6 +280,7 @@ am__leading_dot = .
 am__quote = 
 am__tar = ${AMTAR} chof - "$$tardir"
 am__untar = ${AMTAR} xf -
+ax_pthread_config = 
 bindir = ${exec_prefix}/bin
 build = x86_64-unknown-linux-gnu
 build_alias = 
@@ -303,7 +310,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/jfmrod/usr
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin

@@ -22,8 +22,8 @@ AC_ARG_ENABLE(ncursestest, [  --disable-ncursestest       Do not try to compile 
 
   AC_PATH_PROG(NCURSES_CONFIG, ncurses-config, no)
   if test "$NCURSES_CONFIG" = "no" ; then
-    AC_PATH_PROG(NCURSES5_CONFIG, ncurses5-config, no)
-    NCURSES_CONFIG="$NCURSES5_CONFIG"
+    NCURSES_CONFIG=""
+    AC_PATH_PROG(NCURSES_CONFIG, ncurses5-config, no)
   fi
 
   min_ncurses_version=ifelse([$1], ,0.2.5,$1)
@@ -37,8 +37,6 @@ AC_ARG_ENABLE(ncursestest, [  --disable-ncursestest       Do not try to compile 
   ncurses_micro_version=0
 
   if test "$NCURSES_CONFIG" != "no" ; then
-#    no_ncurses=yes
-#  else
     NCURSES_CFLAGS=`$NCURSES_CONFIG --cflags`
     NCURSES_LIBS=`$NCURSES_CONFIG --libs`
 
@@ -59,17 +57,16 @@ AC_ARG_ENABLE(ncursestest, [  --disable-ncursestest       Do not try to compile 
     if test "x${ncurses_micro_version}" = "x" ; then
        ncurses_micro_version=0
     fi
-
   fi
 
-    if test "x$enable_ncursestest" = "xyes" ; then
-      ac_save_CFLAGS="$CFLAGS"
-      ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $NCURSES_CFLAGS"
-      LIBS="$LIBS $NCURSES_LIBS"
+  if test "x$enable_ncursestest" = "xyes" ; then
+    ac_save_CFLAGS="$CFLAGS"
+    ac_save_LIBS="$LIBS"
+    CFLAGS="$CFLAGS $NCURSES_CFLAGS"
+    LIBS="$LIBS $NCURSES_LIBS"
 
-      rm -f conf.ncursestest
-      AC_TRY_RUN([
+    rm -f conf.ncursestest
+    AC_TRY_RUN([
 #include <ncurses.h>
 
 #include <stdio.h>
@@ -115,7 +112,7 @@ int main (void)
   n = sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) ;
 
   if (n != 2 && n != 3) {
-     printf("%s, bad version string\n", "$min_ncurses_version");
+     printf("\n%s, bad version string\n", "$min_ncurses_version");
      exit(1);
   }
 
@@ -126,7 +123,7 @@ int main (void)
   }
   else
   {
-    printf("\n*** NCURSES_VERSION is %s, but the minimum version\n", NCURSES_VERSION);
+    printf("no\n*** NCURSES_VERSION is %s, but the minimum version\n", NCURSES_VERSION);
     printf("*** of NCURSES required is %d.%d. If ncurses-config is correct, then it is\n", major, minor);
     printf("*** best to upgrade to the required version.\n");
     printf("*** If ncurses-config was wrong, set the environment variable NCURSES_CONFIG\n");
@@ -138,30 +135,29 @@ int main (void)
 }
 
 ],, no_ncurses=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
-       CFLAGS="$ac_save_CFLAGS"
-       LIBS="$ac_save_LIBS"
-     fi
-
-#  fi
+    CFLAGS="$ac_save_CFLAGS"
+    LIBS="$ac_save_LIBS"
+  fi
 
   if test "x$no_ncurses" = x ; then
-     AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])     
+    AC_MSG_RESULT(yes)
+    ifelse([$2], , :, [$2])     
   else
-     AC_MSG_RESULT(no)
-     if test "$NCURSES_CONFIG" = "no" ; then
-       echo "*** The ncurses-config script installed by NCURSES could not be found"
-       echo "*** If NCURSES was installed in PREFIX, make sure PREFIX/bin is in"
-       echo "*** your path, or set the NCURSES_CONFIG environment variable to the"
-       echo "*** full path to ncurses-config."
-     else
-       if test -f conf.ncursestest ; then
+    if test "$NCURSES_CONFIG" = "no" ; then
+      AC_MSG_RESULT(no)
+      echo "*** The ncurses-config script installed by NCURSES could not be found"
+      echo "*** If NCURSES was installed in PREFIX, make sure PREFIX/bin is in"
+      echo "*** your path, or set the NCURSES_CONFIG environment variable to the"
+      echo "*** full path to ncurses-config."
+    else
+      if test -f conf.ncursestest ; then
         :
-       else
-          echo "*** Could not run NCURSES test program, checking why..."
-          CFLAGS="$CFLAGS $NCURSES_CFLAGS"
-          LIBS="$LIBS $NCURSES_LIBS"
-          AC_TRY_LINK([
+      else
+        AC_MSG_RESULT(no)
+        echo "*** Could not run NCURSES test program, checking why..."
+        CFLAGS="$CFLAGS $NCURSES_CFLAGS"
+        LIBS="$LIBS $NCURSES_LIBS"
+        AC_TRY_LINK([
 #include <stdio.h>
 ],      [ return 0; ],
         [ echo "*** The test program compiled, but did not run. This usually means"
@@ -177,16 +173,12 @@ int main (void)
           echo "*** exact error that occured. This usually means NCURSES was incorrectly installed"
           echo "*** or that you have moved NCURSES since it was installed. In the latter case, you"
           echo "*** may want to edit the ncurses-config script: $NCURSES_CONFIG" ])
-          CFLAGS="$ac_save_CFLAGS"
-          LIBS="$ac_save_LIBS"
-       fi
-     fi
-#     NCURSES_CFLAGS=""
-#     NCURSES_LIBS=""
-     ifelse([$3], , :, [$3])
+        CFLAGS="$ac_save_CFLAGS"
+        LIBS="$ac_save_LIBS"
+      fi
+    fi
+    ifelse([$3], , :, [$3])
   fi
-  AC_SUBST(NCURSES_CFLAGS)
-  AC_SUBST(NCURSES_LIBS)
   rm -f conf.ncursestest
 ])
 

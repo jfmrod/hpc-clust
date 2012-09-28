@@ -30,6 +30,16 @@
 #define EUTILS_HAVE_LIBMPI  1 
 #endif
 
+/* Define to 1 if you have the `mpi_cxx' library (-lmpi_cxx). */
+#ifndef EUTILS_HAVE_LIBMPI_CXX 
+#define EUTILS_HAVE_LIBMPI_CXX  1 
+#endif
+
+/* Define to 1 if you have the `mpi++' library (-lmpi++). */
+#ifndef EUTILS_HAVE_LIBMPI__ 
+#define EUTILS_HAVE_LIBMPI__  1 
+#endif
+
 /* define when libmysql exists */
 /* #undef HAVE_LIBMYSQL */
 

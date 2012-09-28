@@ -7,9 +7,11 @@ AC_LANG([C++])
 AC_PROG_CXX
 AC_CANONICAL_HOST
 
-CXXFLAGS="${CXXFLAGS} -pthread"
-LDFLAGS="${LDFLAGS} -pthread"
+AX_PTHREAD()
 
+LIBS="$PTHREAD_LIBS $LIBS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+#CC="$PTHREAD_CC"
 
 case "${host_os}" in
   darwin*)
@@ -113,7 +115,6 @@ if test "x$no_gmp" = "x"; then
 fi
 AM_CONDITIONAL(HAVE_GMPLIB, test "x$no_gmp" = "x")
 
-
 AC_CHECK_LIB([mpfr],main,[mpfrlib_exists=1])
 if test "x$mpfrlib_exists" != "x"; then
   echo "Compiling mpfr library support"
@@ -122,7 +123,7 @@ if test "x$mpfrlib_exists" != "x"; then
 fi
 AM_CONDITIONAL(HAVE_MPFRLIB, test "x$mpfrlib_exists" != "x")
 
-AC_ARG_WITH(mpi,[  --without-mpi      disable MPI support. ],,with_mpi=yes)
+AC_ARG_WITH(mpi,[AS_HELP_STRING([--with-mpi@<:@=path@:>@],[Specify path to MPI library installation.])])
 if test "x$with_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
   CXXFLAGS="${CXXFLAGS} -I${with_mpi}/include"
   LDFLAGS="${LDFLAGS} -L${with_mpi}/lib"
@@ -138,12 +139,28 @@ if test "x$no_mpi" != "xyes"; then
     fi
   fi
 fi
+if test "x$no_mpi" = "xyes"; then
+  PKG_CHECK_MODULES(MPI,"openmpi-1.4-gcc",no_mpi="")
+  LIBS="${LIBS} $MPI_LIBS"
+  CXXFLAGS="${CXXFLAGS} $MPI_CFLAGS"
+fi
 if test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
   echo "Compiling MPI library support"
   LIBS="$LIBS -lmpi"
   AC_CHECK_LIB(mpi_cxx,main)
   AC_CHECK_LIB(mpi++,main)
   AC_DEFINE_UNQUOTED(HAVE_MPILIB,1,[define when MPI library exists])
+else
+  if test "x$no_mpi" = "xyes" -a "x$with_mpi" != "xno" -a "x$with_mpi" != "x"; then
+    AC_MSG_ERROR([
+*** MPI library support requested but not found.
+*** If you do *not* need the MPI version of hpc-clust, you can explicitly disable it with ./configure --without-mpi.
+*** If you want the MPI support to be compiled, you need to install an MPI library using the package manager in your system or by downloading and installing manually (http://www.open-mpi.org/).
+*** Some examples of commands for packet managers are: apt-get install libopenmpi (on Debian, Ubuntu, ...), yum install openmpi (on Redhat, Rocks, ...).
+*** If you know that the MPI library is installed, please make sure that the libmpi.a (or libmpi.so) library can be found in /usr/lib, and that the mpi.h header can be found in /usr/include.
+*** If the files were installed elsewhere you can specify where with: ./configure --with-mpi=/path/to/mpi/location/, or use ./configure CXXFLAGS="-I/include/path/to/mpi.h_directory/" LDFLAGS="-L/library/path/to/libmpi.a_directory/". You can also create symbolic links to the correct files in the /usr/include and /usr/lib directories.
+    ])
+  fi
 fi
 AM_CONDITIONAL(HAVE_MPILIB, test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno")
 

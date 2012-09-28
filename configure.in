@@ -8,6 +8,11 @@ AC_PROG_CC
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 
+AX_PTHREAD()
+
+LIBS="$PTHREAD_LIBS $LIBS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+#CC="$PTHREAD_CC"
 
 AC_CANONICAL_SYSTEM
 
@@ -50,13 +55,11 @@ AX_PREFIX_CONFIG_H
   AC_CONFIG_SUBDIRS([eutils])
 #fi
 
-AC_ARG_WITH(mpi,[  --without-mpi      disable MPI support. ],,with_mpi=yes)
-
+AC_ARG_WITH(mpi,[AS_HELP_STRING([--with-mpi@<:@=path@:>@],[Specify path to MPI library installation.])],,with_mpi=yes)
 if test "x$with_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
   CXXFLAGS="${CXXFLAGS} -I${with_mpi}/include"
   LDFLAGS="${LDFLAGS} -L${with_mpi}/lib"
 fi
-
 AC_CHECK_LIB(mpi,main,,no_mpi=yes)
 if test "x$no_mpi" != "xyes"; then
   AC_CHECK_HEADER([mpi.h],,no_mpi=yes)
@@ -67,6 +70,11 @@ if test "x$no_mpi" != "xyes"; then
       CXXFLAGS="${CXXFLAGS} -I/usr/include/mpi"
     fi
   fi
+fi
+if test "x$no_mpi" = "xyes"; then
+  PKG_CHECK_MODULES(MPI,"openmpi-1.4-gcc",no_mpi="")
+  LIBS="${LIBS} $MPI_LIBS"
+  CXXFLAGS="${CXXFLAGS} $MPI_CFLAGS"
 fi
 if test "x$no_mpi" = "xyes" -a "x$with_mpi" != "xno"; then
   AC_MSG_ERROR([
