@@ -200,12 +200,12 @@ AUTOMAKE = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run auto
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2 -I/home/jfmrod/usr/include
+CFLAGS = -g -O2 -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses
 CPPFLAGS =  -I/home/jfmrod/usr/include
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include -I/include
+CXXFLAGS = -march=nocona -mtune=nocona -msse3 -O3 -fPIC -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -213,9 +213,9 @@ ECHO_C =
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-EUTILS_CXXFLAGS = -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include -I/include
+EUTILS_CXXFLAGS = -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -fPIC -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
 EUTILS_LDFLAGS =  -L/lib
-EUTILS_LIBS = eutils/libeutils.a -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -lgmp -lgmpxx -lmpi -lapophenia -lz
+EUTILS_LIBS = eutils/libeutils.a -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
 EXEEXT = 
 GREP = /bin/grep
 GSL_CFLAGS = -I/home/jfmrod/usr/include
@@ -228,7 +228,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS =  -L/lib
 LIBOBJS = 
-LIBS = -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -lgmp -lgmpxx -lmpi -lapophenia -lz
+LIBS = -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
@@ -237,7 +237,8 @@ MPI_LIBS =
 MYSQL_CFLAGS = 
 MYSQL_CONFIG = no
 MYSQL_LIBS = 
-NCURSES_CONFIG = no
+NCURSES_CONFIG = /home/jfmrod/usr/bin/ncurses5-config
+NCURSES_CONFIG5 = /home/jfmrod/usr/bin/ncurses5-config
 OBJEXT = o
 PACKAGE = eutils
 PACKAGE_BUGREPORT = 

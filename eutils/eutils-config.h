@@ -44,10 +44,14 @@
 /* #undef HAVE_LIBMYSQL */
 
 /* define when ncurses exists */
-/* #undef HAVE_LIBNCURSES */
+#ifndef EUTILS_HAVE_LIBNCURSES 
+#define EUTILS_HAVE_LIBNCURSES  1 
+#endif
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
-/* #undef HAVE_LIBREADLINE */
+#ifndef EUTILS_HAVE_LIBREADLINE 
+#define EUTILS_HAVE_LIBREADLINE  1 
+#endif
 
 /* Define to 1 if you have the `rt' library (-lrt). */
 #ifndef EUTILS_HAVE_LIBRT 
@@ -67,8 +71,18 @@
 #define EUTILS_HAVE_MPILIB  1 
 #endif
 
+/* Define if you have POSIX threads libraries and header files. */
+#ifndef EUTILS_HAVE_PTHREAD 
+#define EUTILS_HAVE_PTHREAD  1 
+#endif
+
+/* Have PTHREAD_PRIO_INHERIT. */
+/* #undef HAVE_PTHREAD_PRIO_INHERIT */
+
 /* define when readline.h exists */
-/* #undef HAVE_READLINE_H */
+#ifndef EUTILS_HAVE_READLINE_H 
+#define EUTILS_HAVE_READLINE_H  1 
+#endif
 
 /* define when regex exists */
 #ifndef EUTILS_HAVE_REGEX 
@@ -149,6 +163,10 @@
 #ifndef EUTILS_PACKAGE_VERSION 
 #define EUTILS_PACKAGE_VERSION  "" 
 #endif
+
+/* Define to necessary symbol if this constant uses a non-standard name on
+   your system. */
+/* #undef PTHREAD_CREATE_JOINABLE */
 
 /* register all eutils classes and methods */
 #ifndef EUTILS_REGISTER_COMMON 

@@ -22,15 +22,15 @@ AC_ARG_ENABLE(ncursestest, [  --disable-ncursestest       Do not try to compile 
 
   AC_PATH_PROG(NCURSES_CONFIG, ncurses-config, no)
   if test "$NCURSES_CONFIG" = "no" ; then
-    NCURSES_CONFIG=""
-    AC_PATH_PROG(NCURSES_CONFIG, ncurses5-config, no)
+    AC_PATH_PROG(NCURSES_CONFIG5, ncurses5-config, no)
+    NCURSES_CONFIG="$NCURSES_CONFIG5"
   fi
 
   min_ncurses_version=ifelse([$1], ,0.2.5,$1)
   AC_MSG_CHECKING(for ncurses - version >= $min_ncurses_version)
   no_ncurses=""
 
-  NCURSES_CFLAGS="-I/usr/include/ncurses"
+  NCURSES_CFLAGS=""
   NCURSES_LIBS="-lncurses -ldl"
   ncurses_major_version=0
   ncurses_minor_version=0
@@ -60,9 +60,9 @@ AC_ARG_ENABLE(ncursestest, [  --disable-ncursestest       Do not try to compile 
   fi
 
   if test "x$enable_ncursestest" = "xyes" ; then
-    ac_save_CFLAGS="$CFLAGS"
+    ac_save_CPPFLAGS="$CPPFLAGS"
     ac_save_LIBS="$LIBS"
-    CFLAGS="$CFLAGS $NCURSES_CFLAGS"
+    CPPFLAGS="$CFLAGS $NCURSES_CFLAGS"
     LIBS="$LIBS $NCURSES_LIBS"
 
     rm -f conf.ncursestest
@@ -135,7 +135,7 @@ int main (void)
 }
 
 ],, no_ncurses=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
-    CFLAGS="$ac_save_CFLAGS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
     LIBS="$ac_save_LIBS"
   fi
 
@@ -155,7 +155,7 @@ int main (void)
       else
         AC_MSG_RESULT(no)
         echo "*** Could not run NCURSES test program, checking why..."
-        CFLAGS="$CFLAGS $NCURSES_CFLAGS"
+        CPPFLAGS="$CPPFLAGS $NCURSES_CFLAGS"
         LIBS="$LIBS $NCURSES_LIBS"
         AC_TRY_LINK([
 #include <stdio.h>
@@ -173,7 +173,7 @@ int main (void)
           echo "*** exact error that occured. This usually means NCURSES was incorrectly installed"
           echo "*** or that you have moved NCURSES since it was installed. In the latter case, you"
           echo "*** may want to edit the ncurses-config script: $NCURSES_CONFIG" ])
-        CFLAGS="$ac_save_CFLAGS"
+        CPPFLAGS="$ac_save_CPPFLAGS"
         LIBS="$ac_save_LIBS"
       fi
     fi

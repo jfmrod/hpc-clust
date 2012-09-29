@@ -58,9 +58,9 @@ AC_ARG_ENABLE(gsltest,[  --disable-gsltest       Do not try to compile and run a
   fi
 
   if test "x$enable_gsltest" = "xyes" ; then
-    ac_save_CFLAGS="$CFLAGS"
+    ac_save_CPPFLAGS="$CPPFLAGS"
     ac_save_LIBS="$LIBS"
-    CFLAGS="$CFLAGS $GSL_CFLAGS"
+    CPPFLAGS="$CPPFLAGS $GSL_CFLAGS"
     LIBS="$LIBS $GSL_LIBS"
 
     rm -f conf.gsltest
@@ -124,7 +124,7 @@ int main (void)
 }
 
 ],, no_gsl=yes,[ echo $ac_n "cross compiling; assumed OK... $ac_c" ])
-    CFLAGS="$ac_save_CFLAGS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
     LIBS="$ac_save_LIBS"
   fi
 
@@ -138,7 +138,7 @@ int main (void)
         :
       else
         echo "*** Could not run GSL test program, checking why..."
-        CFLAGS="$CFLAGS $GSL_CFLAGS"
+        CPPFLAGS="$CPPFLAGS $GSL_CFLAGS"
         LIBS="$LIBS $GSL_LIBS"
         AC_TRY_LINK([
 #include <stdio.h>
@@ -156,7 +156,7 @@ int main (void)
           echo "*** exact error that occured. This usually means GSL was incorrectly installed"
           echo "*** or that you have moved GSL since it was installed. In the latter case, you"
           echo "*** may want to edit the gsl-config script: $GSL_CONFIG or the gsl.pc pkgconfig file" ])
-          CFLAGS="$ac_save_CFLAGS"
+          CPPFLAGS="$ac_save_CPPFLAGS"
           LIBS="$ac_save_LIBS"
       fi
     fi

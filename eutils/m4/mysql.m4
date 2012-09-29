@@ -52,9 +52,9 @@ AC_ARG_ENABLE(mysqltest, [  --disable-mysqltest       Do not try to compile and 
     fi
 
     if test "x$enable_mysqltest" = "xyes" ; then
-      ac_save_CFLAGS="$CFLAGS"
+      ac_save_CPPFLAGS="$CPPFLAGS"
       ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $MYSQL_CFLAGS"
+      CPPFLAGS="$CPPFLAGS $MYSQL_CFLAGS"
       LIBS="$LIBS $MYSQL_LIBS"
 
       rm -f conf.mysqltest
@@ -131,7 +131,7 @@ int main (void)
 }
 
 ],, no_mysql=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
-      CFLAGS="$ac_save_CFLAGS"
+      CPPFLAGS="$ac_save_CPPFLAGS"
       LIBS="$ac_save_LIBS"
     fi
   fi
@@ -150,7 +150,7 @@ int main (void)
         :
        else
           echo "*** Could not run MYSQL test program, checking why..."
-          CFLAGS="$CFLAGS $MYSQL_CFLAGS"
+          CPPFLAGS="$CPPFLAGS $MYSQL_CFLAGS"
           LIBS="$LIBS $MYSQL_LIBS"
           AC_TRY_LINK([
 #include <stdio.h>
@@ -168,7 +168,7 @@ int main (void)
           echo "*** exact error that occured. This usually means MYSQL include files are not installed"
           echo "*** or that they are not in the compilers search path. In this case you should point"
           echo "*** the CPLUS_INCLUDE_PATH to your MYSQL include directory." ])
-          CFLAGS="$ac_save_CFLAGS"
+          CPPFLAGS="$ac_save_CPPFLAGS"
           LIBS="$ac_save_LIBS"
        fi
      fi

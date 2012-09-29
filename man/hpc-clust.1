@@ -1,0 +1,66 @@
+.\" Process this file with
+.\" groff -man -Tascii hpc-clust.1
+.\"
+.TH HPC-CLUST 1 "SEP 2012" Linux "User Manuals"
+.SH NAME
+hpc-clust \- high performance sequence clustering
+.SH SYNOPSIS
+.B hpc-clust [-t <threshold>] [-ncpus <count>] [-dfunc <dist_function>] [-ofile <output>] <-sl true|-cl true|-al true>
+.I aligned_seqs
+.P
+.B hpc-clust-mpi [-t <threshold>] [-dfunc <dist_function>] [-nthreads <count>] [-ofile <output>] <-sl true|-cl true|-al true>
+.I aligned_seqs
+.P
+.B hpc-clust-dist [-t <threshold>] [-dfunc <dist_function>] [-ncpus <count>] [-nthreads <count>] [-ofile <output>] <-sl true|-cl true|-al true>
+.I aligned_seqs
+.SH DESCRIPTION
+.B hpc-clust
+Performs a hierarchical clustering of the sequences specified in 
+.I aligned_seqs
+up to the threshold specified with the 
+.B -t
+option. The program proceeds in two phases. First, it computes all the distances between sequences and stores the ones below
+the specified threshold. Second, it clusters the sequences with one or more of the single, complete or average-linkage methods.
+.SH OPTIONS
+.IP -t
+Distance threshold until which to cluster the sequences.
+.IP -ncpus
+Number of nodes to run distributed clustering
+.IP -nthreads
+Number of threads to run per node (
+.B hpc-clust-dist
+or
+.B hpc-clust-mpi
+) or for the single process (
+.B hpc-clust
+).
+.IP -ofile
+Output filename. ".sl", ".cl", or ".al" will be appended to the file depending on the clustering linkage method.
+By default, it is the name of the input file.
+.IP -sl
+Perform single-linkage clustering, will create a file with the name specified by
+.B -ofile
+and ".sl", or with the same name
+as the input file if
+.B -ofile
+was not given.
+.IP -cl
+Perform complete-linkage clustering, will create a file with the name specified by
+.B -ofile
+and ".cl", or with the same name
+as the input file if
+.B -ofile
+was not given.
+.IP -al
+Perform average-linkage clustering, will create a file with the name specified by
+.B -ofile
+and ".al", or with the same name
+as the input file if
+.B -ofile
+was not given.
+.SH AUTHOR
+Joao F. Matias Rodrigues <jfmrod at konceptfx dot com>
+.SH "ACKNOWLEDGMENTS"
+Christian von Mering
+.P
+Sebastian Schmidt

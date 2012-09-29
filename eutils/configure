@@ -612,6 +612,7 @@ HAVE_MPFRLIB_FALSE
 HAVE_MPFRLIB_TRUE
 HAVE_GMPLIB_FALSE
 HAVE_GMPLIB_TRUE
+NCURSES_CONFIG5
 NCURSES_CONFIG
 MYSQL_LIBS
 MYSQL_CFLAGS
@@ -5100,9 +5101,9 @@ fi
   fi
 
   if test "x$enable_gsltest" = "xyes" ; then
-    ac_save_CFLAGS="$CFLAGS"
+    ac_save_CPPFLAGS="$CPPFLAGS"
     ac_save_LIBS="$LIBS"
-    CFLAGS="$CFLAGS $GSL_CFLAGS"
+    CPPFLAGS="$CPPFLAGS $GSL_CFLAGS"
     LIBS="$LIBS $GSL_LIBS"
 
     rm -f conf.gsltest
@@ -5181,7 +5182,7 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-    CFLAGS="$ac_save_CFLAGS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
     LIBS="$ac_save_LIBS"
   fi
 
@@ -5197,7 +5198,7 @@ $as_echo "no" >&6; }
         :
       else
         echo "*** Could not run GSL test program, checking why..."
-        CFLAGS="$CFLAGS $GSL_CFLAGS"
+        CPPFLAGS="$CPPFLAGS $GSL_CFLAGS"
         LIBS="$LIBS $GSL_LIBS"
         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -5230,7 +5231,7 @@ else
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-          CFLAGS="$ac_save_CFLAGS"
+          CPPFLAGS="$ac_save_CPPFLAGS"
           LIBS="$ac_save_LIBS"
       fi
     fi
@@ -5369,9 +5370,9 @@ $as_echo_n "checking for mysql - version >= $min_mysql_version... " >&6; }
     fi
 
     if test "x$enable_mysqltest" = "xyes" ; then
-      ac_save_CFLAGS="$CFLAGS"
+      ac_save_CPPFLAGS="$CPPFLAGS"
       ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $MYSQL_CFLAGS"
+      CPPFLAGS="$CPPFLAGS $MYSQL_CFLAGS"
       LIBS="$LIBS $MYSQL_LIBS"
 
       rm -f conf.mysqltest
@@ -5463,7 +5464,7 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-      CFLAGS="$ac_save_CFLAGS"
+      CPPFLAGS="$ac_save_CPPFLAGS"
       LIBS="$ac_save_LIBS"
     fi
   fi
@@ -5484,7 +5485,7 @@ $as_echo "no" >&6; }
         :
        else
           echo "*** Could not run MYSQL test program, checking why..."
-          CFLAGS="$CFLAGS $MYSQL_CFLAGS"
+          CPPFLAGS="$CPPFLAGS $MYSQL_CFLAGS"
           LIBS="$LIBS $MYSQL_LIBS"
           cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -5517,7 +5518,7 @@ else
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-          CFLAGS="$ac_save_CFLAGS"
+          CPPFLAGS="$ac_save_CPPFLAGS"
           LIBS="$ac_save_LIBS"
        fi
      fi
@@ -5626,17 +5627,16 @@ fi
 
 
   if test "$NCURSES_CONFIG" = "no" ; then
-    NCURSES_CONFIG=""
     # Extract the first word of "ncurses5-config", so it can be a program name with args.
 set dummy ncurses5-config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_NCURSES_CONFIG+set}" = set; then :
+if test "${ac_cv_path_NCURSES_CONFIG5+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  case $NCURSES_CONFIG in
+  case $NCURSES_CONFIG5 in
   [\\/]* | ?:[\\/]*)
-  ac_cv_path_NCURSES_CONFIG="$NCURSES_CONFIG" # Let the user override the test with a path.
+  ac_cv_path_NCURSES_CONFIG5="$NCURSES_CONFIG5" # Let the user override the test with a path.
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -5646,7 +5646,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_NCURSES_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    ac_cv_path_NCURSES_CONFIG5="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5654,20 +5654,21 @@ done
   done
 IFS=$as_save_IFS
 
-  test -z "$ac_cv_path_NCURSES_CONFIG" && ac_cv_path_NCURSES_CONFIG="no"
+  test -z "$ac_cv_path_NCURSES_CONFIG5" && ac_cv_path_NCURSES_CONFIG5="no"
   ;;
 esac
 fi
-NCURSES_CONFIG=$ac_cv_path_NCURSES_CONFIG
-if test -n "$NCURSES_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NCURSES_CONFIG" >&5
-$as_echo "$NCURSES_CONFIG" >&6; }
+NCURSES_CONFIG5=$ac_cv_path_NCURSES_CONFIG5
+if test -n "$NCURSES_CONFIG5"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NCURSES_CONFIG5" >&5
+$as_echo "$NCURSES_CONFIG5" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
 
 
+    NCURSES_CONFIG="$NCURSES_CONFIG5"
   fi
 
   min_ncurses_version=5.0
@@ -5675,7 +5676,7 @@ fi
 $as_echo_n "checking for ncurses - version >= $min_ncurses_version... " >&6; }
   no_ncurses=""
 
-  NCURSES_CFLAGS="-I/usr/include/ncurses"
+  NCURSES_CFLAGS=""
   NCURSES_LIBS="-lncurses -ldl"
   ncurses_major_version=0
   ncurses_minor_version=0
@@ -5705,9 +5706,9 @@ $as_echo_n "checking for ncurses - version >= $min_ncurses_version... " >&6; }
   fi
 
   if test "x$enable_ncursestest" = "xyes" ; then
-    ac_save_CFLAGS="$CFLAGS"
+    ac_save_CPPFLAGS="$CPPFLAGS"
     ac_save_LIBS="$LIBS"
-    CFLAGS="$CFLAGS $NCURSES_CFLAGS"
+    CPPFLAGS="$CFLAGS $NCURSES_CFLAGS"
     LIBS="$LIBS $NCURSES_LIBS"
 
     rm -f conf.ncursestest
@@ -5795,7 +5796,7 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-    CFLAGS="$ac_save_CFLAGS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
     LIBS="$ac_save_LIBS"
   fi
 
@@ -5818,7 +5819,7 @@ $as_echo "no" >&6; }
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
         echo "*** Could not run NCURSES test program, checking why..."
-        CFLAGS="$CFLAGS $NCURSES_CFLAGS"
+        CPPFLAGS="$CPPFLAGS $NCURSES_CFLAGS"
         LIBS="$LIBS $NCURSES_LIBS"
         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -5851,7 +5852,7 @@ else
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-        CFLAGS="$ac_save_CFLAGS"
+        CPPFLAGS="$ac_save_CPPFLAGS"
         LIBS="$ac_save_LIBS"
       fi
     fi
@@ -5937,7 +5938,7 @@ $as_echo_n "checking for gmp - version >= $min_gmp_version... " >&6; }
 
   GMP_LIBS="-lgmp -lgmpxx"
   if test "x$enable_gmptest" = "xyes"; then
-    ac_save_CFLAGS="$CFLAGS"
+    ac_save_CPPFLAGS="$CPPFLAGS"
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $GMP_LIBS"
 
@@ -6026,7 +6027,7 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-    CFLAGS="$ac_save_CFLAGS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
     LIBS="$ac_save_LIBS"
   fi
 

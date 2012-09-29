@@ -54,11 +54,11 @@ while test $# -gt 0; do
 	;;
 
     --cxxflags)
-       	echo -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -pthread -I/home/jfmrod/usr/include -I/include 
+       	echo -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -fPIC -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include 
        	;;
 
     --libs)
-       	echo  -L/lib eutils/libeutils.a -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -lgmp -lgmpxx -lmpi -lapophenia -lz
+       	echo  -L/lib eutils/libeutils.a -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
        	;;
 
     *)
