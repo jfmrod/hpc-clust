@@ -4,6 +4,61 @@
 #include <signal.h>
 
 
+#include <sys/sysinfo.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+long int esystem::getMemLimit()
+{
+  struct rlimit rlim;
+  getrlimit(RLIMIT_AS,&rlim);
+  return(rlim.rlim_cur/1024);
+}
+
+int esystem::getTotalRam()
+{
+  struct sysinfo info;
+  lerrorif(sysinfo(&info)!=0,"getting sysinfo");
+  return(info.totalram*info.mem_unit/1024);
+}
+
+int esystem::getFreeRam()
+{
+  struct sysinfo info;
+  lerrorif(sysinfo(&info)!=0,"getting sysinfo");
+  return(info.freeram*info.mem_unit/1024);
+}
+
+int esystem::getBufferRam()
+{
+  struct sysinfo info;
+  lerrorif(sysinfo(&info)!=0,"getting sysinfo");
+  return(info.bufferram*info.mem_unit/1024);
+}
+
+int esystem::getSharedRam()
+{
+  struct sysinfo info;
+  lerrorif(sysinfo(&info)!=0,"getting sysinfo");
+  return(info.sharedram*info.mem_unit/1024);
+}
+
+int esystem::getTotalSwap()
+{
+  struct sysinfo info;
+  lerrorif(sysinfo(&info)!=0,"getting sysinfo");
+  return(info.totalswap*info.mem_unit/1024);
+}
+
+int esystem::getFreeSwap()
+{
+  struct sysinfo info;
+  lerrorif(sysinfo(&info)!=0,"getting sysinfo");
+  return(info.freeswap*info.mem_unit/1024);
+}
+
+
+
 esystemCallback::esystemCallback(): readEnabled(false), writeEnabled(false) {}
 
 

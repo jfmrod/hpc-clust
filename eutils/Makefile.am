@@ -33,6 +33,11 @@ if HAVE_MPFRLIB
   MPFRLIBSRC=empfloatr.cpp
 endif
 
+if WITH_DL
+  DLHDR=emodule.h
+  DLSRC=$(DLHDR) emodule.cpp
+endif
+
 headers=eutils.h earray.h earray_dec.h earrayof.h earrayof_dec.h ecmpstr.h ecsv.h efile.h     \
   encurses.h emysql.h emain.h ekstract.h eintarray.h auxmath.h  \
   eregexp.h ernd.h estr.h ebasearray.h ebasearrayof.h estrarray.h etable.h etimer.h etypes.h eudl.h   \
@@ -44,9 +49,9 @@ headers=eutils.h earray.h earray_dec.h earrayof.h earrayof_dec.h ecmpstr.h ecsv.
   evarclasscout.h eheap.h efuncinfo.h evarmethodinfo.h edir.h esocket.h \
   eutils-config.h estrarrayof.h ecgi.h esystem.h eiostream.h etime.h \
   eblockarray.h eblockarray_dec.h \
-  eoption.h etest.h eparalgor.h emodule.h \
+  eoption.h etest.h eparalgor.h \
   ethread.h ehttp.h ehtml.h edcserver.h ehttpServer.h ehttpHub.h ezlib.h \
-  $(WIN32HDR) $(LINUXHDR) $(OSXHDR) $(GMPLIBHDR) $(MPFRLIBHDR)
+  $(DLHDR) $(WIN32HDR) $(LINUXHDR) $(OSXHDR) $(GMPLIBHDR) $(MPFRLIBHDR)
 
 libeutils_a_SOURCES=$(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp vector2.cpp ematrix2.h ematrix2.cpp \
   vector3.cpp matrix3.cpp ematrix4.h ematrix4.cpp quaternion.cpp files.cpp estr.cpp estr.h \
@@ -62,10 +67,10 @@ libeutils_a_SOURCES=$(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp vector
   estrarrayof.h ecgi.h ecgi.cpp estrhash.cpp esystem.h eiostream.h eiostream.cpp \
   ethread.h ethread.cpp etime.h etime.cpp earray.h earray_dec.h earray.cpp ehttp.h ehttp.cpp \
   ehtml.h ehtml.cpp ebasicarray.h ebasicarray_dec.h ebasicarray.cpp \
-  edcserver.cpp edcserver.h emodule.cpp emodule.cpp \
+  edcserver.cpp edcserver.h \
   eblockarray.h eblockarray_dec.h \
   eoption.h etest.cpp etest.h ehttpServer.h ehttpServer.cpp ehttpHub.h ehttpHub.cpp ezlib.h ezlib.cpp \
-  $(WIN32SRC) $(LINUXSRC) $(OSXSRC) $(GMPLIBSRC) $(MPFRLIBSRC)
+  $(DLSRC) $(WIN32SRC) $(LINUXSRC) $(OSXSRC) $(GMPLIBSRC) $(MPFRLIBSRC)
 
 #libeutils_a_includedir=$(includedir)/eutils
 

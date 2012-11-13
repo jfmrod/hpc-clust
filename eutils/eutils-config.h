@@ -36,9 +36,7 @@
 #endif
 
 /* Define to 1 if you have the `mpi++' library (-lmpi++). */
-#ifndef EUTILS_HAVE_LIBMPI__ 
-#define EUTILS_HAVE_LIBMPI__  1 
-#endif
+/* #undef HAVE_LIBMPI__ */
 
 /* define when libmysql exists */
 /* #undef HAVE_LIBMYSQL */
@@ -182,6 +180,9 @@
 #ifndef EUTILS_VERSION 
 #define EUTILS_VERSION  "1.0.0" 
 #endif
+
+/* include dynamic linking routines */
+/* #undef WITH_DL */
  
 /* once: _EUTILS_CONFIG_H */
 #endif

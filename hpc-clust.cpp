@@ -5,6 +5,7 @@
 #include <eutils/etimer.h>
 #include <eutils/eoption.h>
 #include <eutils/eparalgor.h>
+#include <eutils/esystem.h>
 
 #include "cluster-common.h"
 #include "eseqclusteravg.h"
@@ -19,6 +20,7 @@ eseqclusterstep stepcluster;
 
 int partsFinished=0;
 int partsTotal=100;
+
 estrarray arr;
 unsigned totaldists;
 
@@ -76,12 +78,47 @@ void gapnoise_calc_dists(estrarray& arr,eblockarray<eseqdist>& dists,int seqlen,
 }
 */
 
+void printHelp()
+{
+  printf("Usage:\n");
+  printf("    %s [...] <-sl true|-cl true|-al true> aligned_seqs\n",efile(argv[0]).basename()._str);
+  printf("\n");
+  printf("Cluster a set of multiple aligned sequences until a given threshold.\n");
+  printf("Example: hpc-clust -ncpus 4 -t 0.8 -dfunc gap -sl true myalignedseqs.sto\n"); 
+  printf("\n");
+  printf("Optional arguments:\n");
+  printf("%10s    %s.\n","-t","distance threshold until which to do the clustering [default: 0.9]");
+  printf("%10s    %s\n","-dfunc","distance function to use: nogap, gap, tamura [default: nogap]");
+  printf("%10s    %s\n","-ncpus","number of threads to use [default: 1]");
+  printf("%10s    %s\n","-ofile","output filename [defaults to input filename]. \".sl\",\".cl\", or \".al\" extensions will be appended");
+  printf("\n");
+  printf("At least one is required:\n");
+  printf("%10s    %s\n","-sl true","perform single-linkage clustering");
+  printf("%10s    %s\n","-cl true","perform complete-linkage clustering");
+  printf("%10s    %s\n","-al true","perform average-linkage clustering");
+  printf("\n");
+  printf("Report bugs to: joao.rodrigues@imls.uzh.ch\n");
+//  printf("hpc-clust homepage: http://www.hpc-clust.org/");
+
+  exit(0);
+}
+
 int emain()
 { 
   cout << "# " << date() << endl;
   cout << "# " << args2str(argvc,argv) << endl;
   float avgmutseq=0.0;
   epregister(avgmutseq);
+
+  cout << "# system RAM: " << getSystem()->getTotalRam()/1024 << "Mb" << endl;
+  cout << "# free system RAM: " << (getSystem()->getFreeRam()+getSystem()->getBufferRam())/1024 << "Mb" << endl;
+  cout << "# process memory limit: " << ((getSystem()->getMemLimit()&0x3fffffffffffff)==0x3fffffffffffff?estr("unlimited"):estr(getSystem()->getMemLimit()/1024/1024)+"Mb") << endl;
+
+  warnMemThres=MIN(MIN(getSystem()->getTotalRam(),getSystem()->getMemLimit()/1024),getSystem()->getFreeRam())*0.5/1024;
+  exitMemThres=MIN(MIN(getSystem()->getTotalRam(),getSystem()->getMemLimit()/1024),getSystem()->getFreeRam())*0.55/1024;
+
+  cout << "# warning memory threshold: " << warnMemThres << "Mb" << endl;
+  cout << "# exit memory threshold: " << exitMemThres << "Mb" << endl;
 
   bool cl=false;
   bool sl=false;
@@ -96,12 +133,17 @@ int emain()
 
   eoption<efunc> dfunc;
 
+  initLookupTable();
+
   dfunc.choice=0;
   dfunc.add("gap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+  dfunc.add("gap2",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed2>);
   dfunc.add("nogap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+  dfunc.add("nogap2",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>);
   dfunc.add("nogapsingle",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
-  dfunc.add("nogapwindow",t_calc_dists_window<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed_window>);
-  dfunc.add("tamura",t_calc_dists<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+//  dfunc.add("nogapwindow",t_calc_dists_window<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed_window>);
+  dfunc.add("tamura",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+  dfunc.add("tamura2",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed2>);
 //  dfunc.add("gap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
 //  dfunc.add("nogap+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
 //  dfunc.add("tamura+noise",t_calc_dists_noise<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
@@ -122,6 +164,7 @@ int emain()
   epregister(ncpus);
   epregister(ofile);
   epregister(dfile);
+  epregister(ignoreMemThres);
   eparseArgs(argvc,argv);
 
   ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <seqali>");
@@ -144,7 +187,7 @@ int emain()
   epregisterClassMethod(ebasicarray<eseqdist>,subset);
   epregisterClassSerializeMethod(ebasicarray<eseqdist>);
 
-  int i;
+  long int i,j;
 //  if (avgmutseq>0.0)
 //    load_seqs_mutate_compressed(argv[1],arr,seqlen,avgmutseq);
 //  else
@@ -157,7 +200,7 @@ int emain()
   earray<eintarray> dupslist;
   for (i=0; i<arr.size(); ++i){
     if (i%(arr.size()/10)==0)
-      fprintf(stderr,"\r%i/%i",i,arr.size());
+      fprintf(stderr,"\r%li/%i",i,arr.size());
     it=duphash.get(arr.values(i));
     if (it==duphash.end())
       { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
@@ -167,6 +210,20 @@ int emain()
   fprintf(stderr,"\n");
   cout << endl;
   cout << "# unique seqs: " << uniqind.size() << endl;
+
+  long int maxdists=uniqind.size()*(uniqind.size()-1)/2;
+  long int maxmem=maxdists*sizeof(eseqdist)/1024/1024;
+  cout << "# maximum number of distance pairs: " << maxdists << " (" << maxmem << "Mb)" << endl;
+
+  if (maxmem > warnMemThres){
+    cout << "# WARNING: Number of sequences provided may require more memory than is currently available on this system." << endl;
+    cout << "#           Please monitor the memory usage of this program and check the log at the end. This program will" << endl;
+    cout << "#           automatically exit if it reaches the exitMemThres value shown above. You can force the program" << endl;
+    cout << "#           to ignore this threshold using the argument: -ignoreMemThres true" << endl;
+    cout << "#           Memory requirements can be reduced by increasing the clustering threshold, or reducing the number" << endl;
+    cout << "#           of sequences to be clustered. For more information and tips on optimizing hpc-clust memory" << endl;
+    cout << "#           usage please refer to the documentation." << endl;
+  }
 
   
   float dtime,stime;
@@ -179,7 +236,7 @@ int emain()
 
   
   efile df(dfile);
-  if (dfile.len()==0 || !df.exists()){
+//  if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
     if (partsTotal>(arr.size()-1)*arr.size()/20) partsTotal=(arr.size()-1)*arr.size()/20;
     for (i=0; i<partsTotal; ++i)
@@ -202,27 +259,28 @@ int emain()
 //    cout << "# first pending: " << taskman.firstPendingTask << endl;
     stime=t1.lap()*0.001;
 
-/*
     if (dfile.len()){
       cout << "# saving distances to file: "<<dfile << endl;
-      estr str;
-      mindists.serial(str);
-      df.write(str);
+      for (i=0; i<dists.size(); ++i)
+        df.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+"\n");
+//      estr str;
+//      mindists.serial(str);
+//      df.write(str);
+      for (i=0; i<dupslist.size(); ++i){
+        for (j=1; j<dupslist[i].size(); ++j)
+          df.write(estr(dupslist[i][0])+" "+dupslist[i][j]+" 1.0\n");
+      }
       df.close();
     }
-*/
-  }else{
-
-
-    cout << "# loading distances from file: "<<dfile << endl;
-
+//  }else{
+//    cout << "# loading distances from file: "<<dfile << endl;
 /*
     estr str;
     df.read(str);
     ldieif(mindists.unserial(str,0)==-1,"problem loading distance file: "+dfile);
     df.close();
 */
-  } 
+//  } 
 
   totaldists=dists.size();
   cout << "# time sorting distances: " << stime << endl;
@@ -339,7 +397,7 @@ int emain()
   cout << "# samples: " << samples.size() << endl;
 */
 
-  int j,i2;
+//  int j,i2;
 //  float dist_mat[arr.size()*arr.size()/2];
 
 //  ebasicarray<float> cooc_dist_mat;

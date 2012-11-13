@@ -621,6 +621,8 @@ GSL_LIBS
 GSL_CFLAGS
 PKG_CONFIG
 GSL_CONFIG
+WITH_DL_FALSE
+WITH_DL_TRUE
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
 CXXDEPMODE
@@ -728,6 +730,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
+enable_dl
 with_gsl_prefix
 with_gsl_exec_prefix
 enable_gsltest
@@ -1378,6 +1381,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+  --disable-dl[=path]     Disable runtime dynamic linking support.
   --disable-gsltest       Do not try to compile and run a test GSL program
   --disable-mysqltest       Do not try to compile and run a test MYSQL program
   --disable-ncursestest       Do not try to compile and run a test NCURSES program
@@ -4803,6 +4807,32 @@ fi
 #export C_INCLUDE_PATH="${C_INCLUDE_PATH}"
 #export LIBRARY_PATH="${LIBRARY_PATH}"
 
+# Check whether --enable-dl was given.
+if test "${enable_dl+set}" = set; then :
+  enableval=$enable_dl;
+fi
+
+if test "x$enable_dl" != "xno"; then
+  echo "Compiling runtime dynamic linking support"
+
+cat >>confdefs.h <<_ACEOF
+#define WITH_DL 1
+_ACEOF
+
+  LIBS="$LIBS -ldl"
+else
+  echo "Disabling runtime dynamic linking support"
+fi
+ if test "x$enable_dl" != "xno"; then
+  WITH_DL_TRUE=
+  WITH_DL_FALSE='#'
+else
+  WITH_DL_TRUE='#'
+  WITH_DL_FALSE=
+fi
+
+
+
 # Check for GSL installation
 
 
@@ -7137,6 +7167,10 @@ else
   am__EXEEXT_FALSE=
 fi
 
+if test -z "${WITH_DL_TRUE}" && test -z "${WITH_DL_FALSE}"; then
+  as_fn_error "conditional \"WITH_DL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${HAVE_GMPLIB_TRUE}" && test -z "${HAVE_GMPLIB_FALSE}"; then
   as_fn_error "conditional \"HAVE_GMPLIB\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5

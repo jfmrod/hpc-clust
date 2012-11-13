@@ -20,6 +20,23 @@
 #include "eseqclustersingle.h"
 #include "eseqclustercount.h"
 
+extern float warnMemThres;
+extern bool warnedMemThres;
+extern float exitMemThres;
+extern bool ignoreMemThres;
+
+extern char lt_gap_count[0x1u << 16];
+
+extern char lt_nogap_count[0x1u << 16];
+extern char lt_nogap_len[0x1u << 16];
+
+extern char lt_tamura_p[0x1u << 16];
+extern char lt_tamura_q[0x1u << 16];
+extern char lt_tamura_len[0x1u << 16];
+extern char lt_tamura_gc[0x1u << 16];
+
+void initLookupTable();
+
 class eshortseq
 {
  public:
@@ -141,10 +158,23 @@ inline void dist_inc(long int a1,long int a2,long int mask,int& count){
     ++count;
 }
 
-inline void dist_nogap_inc(long int a1,long int a2,long int mask,int& count,int& len){
-  if ((a1&mask)==mask && (a2&mask)==mask)
+inline void dist_nogap_inc2(long int a1,long int a2,long int mask,int& count,int& len){
+  if ((a1&a2&mask)==mask)
     --len;
   else if ((a1&mask)==(a2&mask))
+    ++count;
+//  if ((a1&mask)==(a2&mask)){
+//    if ((a1&mask)!=mask)
+//      ++count;
+//    else
+//      --len;
+//  }
+}
+
+inline void dist_nogap_inc3(long int a1,long int a2,long int mask,int& count,int& len){
+  if ((a1&a2&mask)==mask)
+    ++len;
+  if ((a1&mask)==(a2&mask))
     ++count;
 //  if ((a1&mask)==(a2&mask)){
 //    if ((a1&mask)!=mask)
@@ -327,6 +357,66 @@ inline float dist_tamura_compressed(const estr& s1,const estr& s2,int seqlen)
   return(1+1.0*C*log(1.0-(float)P/(C*len)-(float)Q/len) + 0.5*(1.0-C)*log(1.0-2.0*Q/len));
 }
 
+inline float dist_tamura_compressed2(const estr& s1,const estr& s2,int seqlen)
+{
+  int len=0;
+  int P=0; // transitions
+  int Q=0; // transversions
+  int GC1=0; // GC content seq1
+  int GC2=0; // GC content seq2
+
+  unsigned long *ep1=(unsigned long*)(s1._str)+(s1._strlen/8);
+  unsigned long *p1=(unsigned long*)s1._str;
+  unsigned long *p2=(unsigned long*)s2._str;
+  unsigned long tx,ta;
+  for (; p1!=ep1; ++p1,++p2){
+    tx=((*p1)^(*p2));
+    ta=((*p1)&(*p2));
+    P+=lt_tamura_p[ tx&0xffffu ] + lt_tamura_p[ (tx>>16)&0xffffu ] + lt_tamura_p[ (tx>>32)&0xffffu ] + lt_tamura_p[ (tx>>48)&0xffffu ];
+    Q+=lt_tamura_q[ tx&0xffffu ] + lt_tamura_q[ (tx>>16)&0xffffu ] + lt_tamura_q[ (tx>>32)&0xffffu ] + lt_tamura_q[ (tx>>48)&0xffffu ];
+    len-=lt_tamura_len[ ta&0xffffu ] + lt_tamura_len[ (ta>>16)&0xffffu ] + lt_tamura_len[ (ta>>32)&0xffffu ] + lt_tamura_len[ (ta>>48)&0xffffu ];
+    GC1+=lt_tamura_gc[ (*p1)&0xffffu ] + lt_tamura_gc[ ((*p1)>>16)&0xffffu ] + lt_tamura_gc[ ((*p1)>>32)&0xffffu ] + lt_tamura_gc[ ((*p1)>>48)&0xffffu ];
+    GC2+=lt_tamura_gc[ (*p2)&0xffffu ] + lt_tamura_gc[ ((*p2)>>16)&0xffffu ] + lt_tamura_gc[ ((*p2)>>32)&0xffffu ] + lt_tamura_gc[ ((*p2)>>48)&0xffffu ];
+  }
+
+  switch (seqlen%16){
+   case 15:
+    dist_tamura_inc(*p1,*p2,b4_m14,P,Q,GC1,GC2,len);
+   case 14:
+    dist_tamura_inc(*p1,*p2,b4_m13,P,Q,GC1,GC2,len);
+   case 13:
+    dist_tamura_inc(*p1,*p2,b4_m12,P,Q,GC1,GC2,len);
+   case 12:
+    dist_tamura_inc(*p1,*p2,b4_m11,P,Q,GC1,GC2,len);
+   case 11:
+    dist_tamura_inc(*p1,*p2,b4_m10,P,Q,GC1,GC2,len);
+   case 10:
+    dist_tamura_inc(*p1,*p2,b4_m9,P,Q,GC1,GC2,len);
+   case 9:
+    dist_tamura_inc(*p1,*p2,b4_m8,P,Q,GC1,GC2,len);
+   case 8:
+    dist_tamura_inc(*p1,*p2,b4_m7,P,Q,GC1,GC2,len);
+   case 7:
+    dist_tamura_inc(*p1,*p2,b4_m6,P,Q,GC1,GC2,len);
+   case 6:
+    dist_tamura_inc(*p1,*p2,b4_m5,P,Q,GC1,GC2,len);
+   case 5:
+    dist_tamura_inc(*p1,*p2,b4_m4,P,Q,GC1,GC2,len);
+   case 4:
+    dist_tamura_inc(*p1,*p2,b4_m3,P,Q,GC1,GC2,len);
+   case 3:
+    dist_tamura_inc(*p1,*p2,b4_m2,P,Q,GC1,GC2,len);
+   case 2:
+    dist_tamura_inc(*p1,*p2,b4_m1,P,Q,GC1,GC2,len);
+   case 1:
+    dist_tamura_inc(*p1,*p2,b4_m0,P,Q,GC1,GC2,len);
+  }
+
+  float C=GC1/seqlen + GC2/seqlen - 2.0*GC1/seqlen*GC2/seqlen;
+  return(1+1.0*C*log(1.0-(float)P/(C*len)-(float)Q/len) + 0.5*(1.0-C)*log(1.0-2.0*Q/len));
+}
+
+
 /*
 void initDistMatrix();
 
@@ -458,6 +548,56 @@ inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
 }
 */
 
+
+inline float dist_compressed2(const estr& s1,const estr& s2,int seqlen)
+{
+  int len=seqlen;
+  int count=0;
+
+  unsigned long *ep1=(unsigned long*)(s1._str)+(s1._strlen/8);
+  unsigned long *p1=(unsigned long*)s1._str;
+  unsigned long *p2=(unsigned long*)s2._str;
+  unsigned long t;
+  for (; p1!=ep1; ++p1,++p2){
+    t=((*p1) ^ (*p2));
+    count+=lt_gap_count[ t&0xffffu ] + lt_gap_count[ (t>>16)&0xffffu ] + lt_gap_count[ (t>>32)&0xffffu ] + lt_gap_count[ (t>>48)&0xffffu ];
+  }
+  switch (seqlen%16){
+   case 15:
+    dist_inc(*p1,*p2,b4_m14,count);
+   case 14:
+    dist_inc(*p1,*p2,b4_m13,count);
+   case 13:
+    dist_inc(*p1,*p2,b4_m12,count);
+   case 12:
+    dist_inc(*p1,*p2,b4_m11,count);
+   case 11:
+    dist_inc(*p1,*p2,b4_m10,count);
+   case 10:
+    dist_inc(*p1,*p2,b4_m9,count);
+   case 9:
+    dist_inc(*p1,*p2,b4_m8,count);
+   case 8:
+    dist_inc(*p1,*p2,b4_m7,count);
+   case 7:
+    dist_inc(*p1,*p2,b4_m6,count);
+   case 6:
+    dist_inc(*p1,*p2,b4_m5,count);
+   case 5:
+    dist_inc(*p1,*p2,b4_m4,count);
+   case 4:
+    dist_inc(*p1,*p2,b4_m3,count);
+   case 3:
+    dist_inc(*p1,*p2,b4_m2,count);
+   case 2:
+    dist_inc(*p1,*p2,b4_m1,count);
+   case 1:
+    dist_inc(*p1,*p2,b4_m0,count);
+  }
+  return((float)count/(float)seqlen);
+}
+
+
 inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
 {
   int len=seqlen;
@@ -565,6 +705,56 @@ inline float dist_nogap_compressed_window(const estr& s1,const estr& s2,int seql
   return(maxdiff);
 }
 
+inline float dist_nogap_compressed2(const estr& s1,const estr& s2,int seqlen)
+{
+  int len=0;
+  int count=0;
+  unsigned long *ep1=(unsigned long*)(s1._str)+(s1._strlen/8);
+  unsigned long *p1=(unsigned long*)s1._str;
+  unsigned long *p2=(unsigned long*)s2._str;
+  unsigned long tx,ta;
+  for (; p1!=ep1; ++p1,++p2){
+    tx=((*p1) ^ (*p2));
+    ta=((*p1) & (*p2));
+    count+=lt_nogap_count[ tx&0xffffu ] + lt_nogap_count[ (tx>>16)&0xffffu ] + lt_nogap_count[ (tx>>32)&0xffffu ] + lt_nogap_count[ (tx>>48)&0xffffu ];
+    len+=lt_nogap_len[ ta&0xffffu ] + lt_nogap_len[ (ta>>16)&0xffffu ] + lt_nogap_len[ (ta>>32)&0xffffu ] + lt_nogap_len[ (ta>>48)&0xffffu ];
+  }
+
+  switch (seqlen%16){
+   case 15:
+    dist_nogap_inc3(*p1,*p2,b4_m14,count,len);
+   case 14:
+    dist_nogap_inc3(*p1,*p2,b4_m13,count,len);
+   case 13:
+    dist_nogap_inc3(*p1,*p2,b4_m12,count,len);
+   case 12:
+    dist_nogap_inc3(*p1,*p2,b4_m11,count,len);
+   case 11:
+    dist_nogap_inc3(*p1,*p2,b4_m10,count,len);
+   case 10:
+    dist_nogap_inc3(*p1,*p2,b4_m9,count,len);
+   case 9:
+    dist_nogap_inc3(*p1,*p2,b4_m8,count,len);
+   case 8:
+    dist_nogap_inc3(*p1,*p2,b4_m7,count,len);
+   case 7:
+    dist_nogap_inc3(*p1,*p2,b4_m6,count,len);
+   case 6:
+    dist_nogap_inc3(*p1,*p2,b4_m5,count,len);
+   case 5:
+    dist_nogap_inc3(*p1,*p2,b4_m4,count,len);
+   case 4:
+    dist_nogap_inc3(*p1,*p2,b4_m3,count,len);
+   case 3:
+    dist_nogap_inc3(*p1,*p2,b4_m2,count,len);
+   case 2:
+    dist_nogap_inc3(*p1,*p2,b4_m1,count,len);
+   case 1:
+    dist_nogap_inc3(*p1,*p2,b4_m0,count,len);
+  }
+  return((float)(count-len)/(float)(seqlen-len));
+}
+
 inline float dist_nogap_compressed(const estr& s1,const estr& s2,int seqlen)
 {
   int len=seqlen;
@@ -573,55 +763,55 @@ inline float dist_nogap_compressed(const estr& s1,const estr& s2,int seqlen)
   long int *p1=(long int*)s1._str;
   long int *p2=(long int*)s2._str;
   for (; p1!=ep1; ++p1,++p2){
-    dist_nogap_inc(*p1,*p2,b4_m0,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m1,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m2,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m3,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m4,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m5,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m6,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m7,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m8,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m9,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m10,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m11,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m12,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m13,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m14,count,len);
-    dist_nogap_inc(*p1,*p2,b4_m15,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m0,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m1,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m2,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m3,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m4,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m5,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m6,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m7,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m8,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m9,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m10,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m11,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m12,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m13,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m14,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m15,count,len);
   }
 
   switch (seqlen%16){
    case 15:
-    dist_nogap_inc(*p1,*p2,b4_m14,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m14,count,len);
    case 14:
-    dist_nogap_inc(*p1,*p2,b4_m13,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m13,count,len);
    case 13:
-    dist_nogap_inc(*p1,*p2,b4_m12,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m12,count,len);
    case 12:
-    dist_nogap_inc(*p1,*p2,b4_m11,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m11,count,len);
    case 11:
-    dist_nogap_inc(*p1,*p2,b4_m10,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m10,count,len);
    case 10:
-    dist_nogap_inc(*p1,*p2,b4_m9,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m9,count,len);
    case 9:
-    dist_nogap_inc(*p1,*p2,b4_m8,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m8,count,len);
    case 8:
-    dist_nogap_inc(*p1,*p2,b4_m7,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m7,count,len);
    case 7:
-    dist_nogap_inc(*p1,*p2,b4_m6,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m6,count,len);
    case 6:
-    dist_nogap_inc(*p1,*p2,b4_m5,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m5,count,len);
    case 5:
-    dist_nogap_inc(*p1,*p2,b4_m4,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m4,count,len);
    case 4:
-    dist_nogap_inc(*p1,*p2,b4_m3,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m3,count,len);
    case 3:
-    dist_nogap_inc(*p1,*p2,b4_m2,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m2,count,len);
    case 2:
-    dist_nogap_inc(*p1,*p2,b4_m1,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m1,count,len);
    case 1:
-    dist_nogap_inc(*p1,*p2,b4_m0,count,len);
+    dist_nogap_inc2(*p1,*p2,b4_m0,count,len);
   }
   return((float)count/(float)len);
 }
@@ -847,6 +1037,22 @@ int t_calc_dists_u(emutex& mutex,eintarray& uniqind,T& arr,K& dists,int seqlen,i
   }
   mutex.lock();
   dists+=tmpdists;
+  float memUsed=dists.size()*sizeof(eseqdist)/1024/1024;
+  cout << "# dists: " << dists.size() << "(" <<memUsed <<"Mb)" << endl;
+  if (!warnedMemThres && memUsed >= warnMemThres){
+    warnedMemThres=true;
+    cout << "# WARNING: Exceeded warnMemThres ("<< warnMemThres <<"Mb) with " << dists.size() << " ("<< memUsed <<"Mb) stored distance pairs" << endl;
+    cout << "#          hpc-clust will exit once it reaches the exitMemThres ("<< exitMemThres <<"Mb)" << endl;
+    cout << "#          in this event, increase the clustering threshold or provide fewer sequences for clustering." << endl;
+    cout << "#          Please refer to the documentation for further information and tips on improving the memory usage of hpc-clust." << endl;
+  }
+  if (memUsed >= exitMemThres && !ignoreMemThres){
+    cout << "# ERROR:   Exceeded exitMemThres ("<< exitMemThres <<"Mb) with " << dists.size() << " ("<< memUsed <<"Mb) stored distance pairs" << endl;
+    cout << "#          Increase the clustering threshold or provide fewer sequences for clustering. You can force the program to ignore this threshold" << endl;
+    cout << "#          and continue running with the argume: -ignoreMemThres true. Note that your system may become unresponsive or even crash if it runs out of memory" << endl;
+    cout << "#          Please refer to the documentation for further information and tips on improving the memory usage of hpc-clust." << endl;
+    exit(-1);
+  }
   mutex.unlock();
   return(0);
 }

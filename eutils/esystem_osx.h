@@ -38,6 +38,12 @@ class esystem
   earrayof<esystemCallback,int> callbacks;
   earrayof<esystemTimer,long int> timers;
 
+  int getTotalRam();
+  int getFreeRam();
+  int getBufferRam();
+
+  long int getMemLimit();
+
 /*
   earray<int> fds;
   vector<void*> fdrefs;

@@ -76,8 +76,8 @@ am__libeutils_a_SOURCES_DIST = eutils.h earray.h earray_dec.h \
 	evarmethodinfo.h edir.h esocket.h eutils-config.h \
 	estrarrayof.h ecgi.h esystem.h eiostream.h etime.h \
 	eblockarray.h eblockarray_dec.h eoption.h etest.h eparalgor.h \
-	emodule.h ethread.h ehttp.h ehtml.h edcserver.h ehttpServer.h \
-	ehttpHub.h ezlib.h esystem_win32.h esystem_linux.h \
+	ethread.h ehttp.h ehtml.h edcserver.h ehttpServer.h ehttpHub.h \
+	ezlib.h emodule.h esystem_win32.h esystem_linux.h \
 	esystem_osx.h empint.h empfloatr.h eutils.cpp ernd.cpp \
 	logger.cpp eparser.cpp vector2.cpp ematrix2.cpp vector3.cpp \
 	matrix3.cpp ematrix4.cpp quaternion.cpp files.cpp estr.cpp \
@@ -90,18 +90,19 @@ am__libeutils_a_SOURCES_DIST = eutils.h earray.h earray_dec.h \
 	eparserinterpreter.cpp estrhashof.cpp efuncbase.cpp \
 	ematrix.cpp efuncinfo.cpp edir.cpp esocket.cpp ecgi.cpp \
 	estrhash.cpp eiostream.cpp ethread.cpp etime.cpp earray.cpp \
-	ehttp.cpp ehtml.cpp ebasicarray.cpp edcserver.cpp emodule.cpp \
-	etest.cpp ehttpServer.cpp ehttpHub.cpp ezlib.cpp \
+	ehttp.cpp ehtml.cpp ebasicarray.cpp edcserver.cpp etest.cpp \
+	ehttpServer.cpp ehttpHub.cpp ezlib.cpp emodule.cpp \
 	esystem_win32.cpp esystem_linux.cpp esystem_osx.cpp empint.cpp \
 	empfloatr.cpp
 am__objects_1 =
 am__objects_2 = $(am__objects_1) $(am__objects_1) $(am__objects_1) \
-	$(am__objects_1) $(am__objects_1)
-#am__objects_3 = $(am__objects_1) esystem_win32.$(OBJEXT)
-am__objects_4 = $(am__objects_1) esystem_linux.$(OBJEXT)
-#am__objects_5 = $(am__objects_1) esystem_osx.$(OBJEXT)
-am__objects_6 = empint.$(OBJEXT)
-#am__objects_7 = empfloatr.$(OBJEXT)
+	$(am__objects_1) $(am__objects_1) $(am__objects_1)
+#am__objects_3 = $(am__objects_1) emodule.$(OBJEXT)
+#am__objects_4 = $(am__objects_1) esystem_win32.$(OBJEXT)
+am__objects_5 = $(am__objects_1) esystem_linux.$(OBJEXT)
+#am__objects_6 = $(am__objects_1) esystem_osx.$(OBJEXT)
+am__objects_7 = empint.$(OBJEXT)
+#am__objects_8 = empfloatr.$(OBJEXT)
 am_libeutils_a_OBJECTS = $(am__objects_2) eutils.$(OBJEXT) \
 	ernd.$(OBJEXT) logger.$(OBJEXT) eparser.$(OBJEXT) \
 	vector2.$(OBJEXT) ematrix2.$(OBJEXT) vector3.$(OBJEXT) \
@@ -121,10 +122,10 @@ am_libeutils_a_OBJECTS = $(am__objects_2) eutils.$(OBJEXT) \
 	ecgi.$(OBJEXT) estrhash.$(OBJEXT) eiostream.$(OBJEXT) \
 	ethread.$(OBJEXT) etime.$(OBJEXT) earray.$(OBJEXT) \
 	ehttp.$(OBJEXT) ehtml.$(OBJEXT) ebasicarray.$(OBJEXT) \
-	edcserver.$(OBJEXT) emodule.$(OBJEXT) emodule.$(OBJEXT) \
-	etest.$(OBJEXT) ehttpServer.$(OBJEXT) ehttpHub.$(OBJEXT) \
-	ezlib.$(OBJEXT) $(am__objects_3) $(am__objects_4) \
-	$(am__objects_5) $(am__objects_6) $(am__objects_7)
+	edcserver.$(OBJEXT) etest.$(OBJEXT) ehttpServer.$(OBJEXT) \
+	ehttpHub.$(OBJEXT) ezlib.$(OBJEXT) $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
+	$(am__objects_7) $(am__objects_8)
 libeutils_a_OBJECTS = $(am_libeutils_a_OBJECTS)
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -205,7 +206,7 @@ CPPFLAGS =  -I/home/jfmrod/usr/include
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -march=nocona -mtune=nocona -msse3 -O3 -fPIC -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
+CXXFLAGS = -funroll-loops -O2 -static -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -213,9 +214,9 @@ ECHO_C =
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-EUTILS_CXXFLAGS = -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -fPIC -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
-EUTILS_LDFLAGS =  -L/lib
-EUTILS_LIBS = eutils/libeutils.a -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
+EUTILS_CXXFLAGS = -I${prefix}/include -funroll-loops -O2 -static -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
+EUTILS_LDFLAGS = -static -L/lib
+EUTILS_LIBS = eutils/libeutils.a -lreadline -lmpi_cxx -lmpi -lrt  -lopen-rte -lopen-pal -libverbs -lnsl -lutil -lm -ldl -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
 EXEEXT = 
 GREP = /bin/grep
 GSL_CFLAGS = -I/home/jfmrod/usr/include
@@ -226,9 +227,9 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LDFLAGS =  -L/lib
+LDFLAGS = -static -L/lib
 LIBOBJS = 
-LIBS = -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
+LIBS = -lreadline -lmpi_cxx -lmpi -lrt  -lopen-rte -lopen-pal -libverbs -lnsl -lutil -lm -ldl -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
@@ -322,6 +323,8 @@ GMPLIBHDR = empint.h
 GMPLIBSRC = empint.cpp
 #MPFRLIBHDR = empfloatr.h
 #MPFRLIBSRC = empfloatr.cpp
+#DLHDR = emodule.h
+#DLSRC = $(DLHDR) emodule.cpp
 headers = eutils.h earray.h earray_dec.h earrayof.h earrayof_dec.h ecmpstr.h ecsv.h efile.h     \
   encurses.h emysql.h emain.h ekstract.h eintarray.h auxmath.h  \
   eregexp.h ernd.h estr.h ebasearray.h ebasearrayof.h estrarray.h etable.h etimer.h etypes.h eudl.h   \
@@ -333,9 +336,9 @@ headers = eutils.h earray.h earray_dec.h earrayof.h earrayof_dec.h ecmpstr.h ecs
   evarclasscout.h eheap.h efuncinfo.h evarmethodinfo.h edir.h esocket.h \
   eutils-config.h estrarrayof.h ecgi.h esystem.h eiostream.h etime.h \
   eblockarray.h eblockarray_dec.h \
-  eoption.h etest.h eparalgor.h emodule.h \
+  eoption.h etest.h eparalgor.h \
   ethread.h ehttp.h ehtml.h edcserver.h ehttpServer.h ehttpHub.h ezlib.h \
-  $(WIN32HDR) $(LINUXHDR) $(OSXHDR) $(GMPLIBHDR) $(MPFRLIBHDR)
+  $(DLHDR) $(WIN32HDR) $(LINUXHDR) $(OSXHDR) $(GMPLIBHDR) $(MPFRLIBHDR)
 
 libeutils_a_SOURCES = $(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp vector2.cpp ematrix2.h ematrix2.cpp \
   vector3.cpp matrix3.cpp ematrix4.h ematrix4.cpp quaternion.cpp files.cpp estr.cpp estr.h \
@@ -351,10 +354,10 @@ libeutils_a_SOURCES = $(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp vect
   estrarrayof.h ecgi.h ecgi.cpp estrhash.cpp esystem.h eiostream.h eiostream.cpp \
   ethread.h ethread.cpp etime.h etime.cpp earray.h earray_dec.h earray.cpp ehttp.h ehttp.cpp \
   ehtml.h ehtml.cpp ebasicarray.h ebasicarray_dec.h ebasicarray.cpp \
-  edcserver.cpp edcserver.h emodule.cpp emodule.cpp \
+  edcserver.cpp edcserver.h \
   eblockarray.h eblockarray_dec.h \
   eoption.h etest.cpp etest.h ehttpServer.h ehttpServer.cpp ehttpHub.h ehttpHub.cpp ezlib.h ezlib.cpp \
-  $(WIN32SRC) $(LINUXSRC) $(OSXSRC) $(GMPLIBSRC) $(MPFRLIBSRC)
+  $(DLSRC) $(WIN32SRC) $(LINUXSRC) $(OSXSRC) $(GMPLIBSRC) $(MPFRLIBSRC)
 
 
 #libeutils_a_includedir=$(includedir)/eutils

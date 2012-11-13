@@ -748,7 +748,7 @@ void doStartClient(edcBaseClient& client)
 {
 
   int pipefd[2];
-  pipe(pipefd);
+  ldieif(pipe(pipefd)!=0,"creating pipe");
   dup2(pipefd[1],1);
 
 //  dynamic_cast<edcmpi&>(client).outpipe=pipefd[0];

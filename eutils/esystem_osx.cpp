@@ -8,6 +8,108 @@
 
 #import <Cocoa/Cocoa.h>
 
+
+
+#import <sys/sysctl.h>
+#import <mach/host_info.h>
+#import <mach/mach_host.h>
+#import <mach/task_info.h>
+#import <mach/task.h>
+
+long int esystem::getMemLimit()
+{
+  return(-1); // unlimited
+}
+
+int esystem::getTotalRam()
+{
+  int mib[6]; 
+  mib[0] = CTL_HW;
+  mib[1] = HW_PAGESIZE;
+
+  int pagesize;
+  size_t length;
+  length = sizeof (pagesize);
+  if (sysctl (mib, 2, &pagesize, &length, NULL, 0) < 0)
+  {
+    fprintf (stderr, "getting page size");
+  }
+
+  mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+
+  vm_statistics_data_t vmstat;
+  if (host_statistics (mach_host_self (), HOST_VM_INFO, (host_info_t) &vmstat, &count) != KERN_SUCCESS)
+  {
+    fprintf (stderr, "Failed to get VM statistics.");
+  }
+
+//  double total = vmstat.wire_count + vmstat.active_count + vmstat.inactive_count + vmstat.free_count;
+//   double wired = vmstat.wire_count / total;
+//  double active = vmstat.active_count / total;
+//  double inactive = vmstat.inactive_count / total;
+//  double free = vmstat.free_count / total;
+
+//  task_basic_info_64_data_t info;
+//  unsigned size = sizeof (info);
+//  task_info (mach_task_self (), TASK_BASIC_INFO_64, (task_info_t) &info, &size);
+
+//  double unit = 1024 * 1024;
+//  memLabel.text = [NSString stringWithFormat: @"% 3.1f MB\n% 3.1f MB\n% 3.1f MB", vmstat.free_count * pagesize / unit, (vmstat.free_count + vmstat.inactive_count) * pagesize / unit, info.resident_size / unit];
+  return(((double)vmstat.wire_count+(double)vmstat.active_count+(double)vmstat.inactive_count+(double)vmstat.free_count)*(double)pagesize/1024);
+}
+
+int esystem::getFreeRam()
+{
+  int mib[6]; 
+  mib[0] = CTL_HW;
+  mib[1] = HW_PAGESIZE;
+
+  int pagesize;
+  size_t length;
+  length = sizeof (pagesize);
+  if (sysctl (mib, 2, &pagesize, &length, NULL, 0) < 0)
+  {
+    fprintf (stderr, "getting page size");
+  }
+
+  mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+
+  vm_statistics_data_t vmstat;
+  if (host_statistics (mach_host_self (), HOST_VM_INFO, (host_info_t) &vmstat, &count) != KERN_SUCCESS)
+  {
+    fprintf (stderr, "Failed to get VM statistics.");
+  }
+
+  return((double)vmstat.free_count*(double)pagesize/1024);
+}
+
+int esystem::getBufferRam()
+{
+  int mib[6]; 
+  mib[0] = CTL_HW;
+  mib[1] = HW_PAGESIZE;
+
+  int pagesize;
+  size_t length;
+  length = sizeof (pagesize);
+  if (sysctl (mib, 2, &pagesize, &length, NULL, 0) < 0)
+  {
+    fprintf (stderr, "getting page size");
+  }
+
+  mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+
+  vm_statistics_data_t vmstat;
+  if (host_statistics (mach_host_self (), HOST_VM_INFO, (host_info_t) &vmstat, &count) != KERN_SUCCESS)
+  {
+    fprintf (stderr, "Failed to get VM statistics.");
+  }
+
+  return((double)vmstat.inactive_count*(double)pagesize/1024);
+}
+
+
+
 esystem *esystem::cursystem=0x00;
 
 esystem *getSystem()
@@ -47,10 +149,13 @@ void esystem::handleFileCallback(CFFileDescriptorRef fdref, CFOptionFlags callBa
 //  esystem *psystem=(esystem*)info;
   esystemCallback *cb=(esystemCallback*)info;
 
+
+
   if ((callBackTypes & kCFFileDescriptorReadCallBack) && cb->readCallback.isSet())
     cb->readCallback.call(cb->readData);
   if ((callBackTypes & kCFFileDescriptorWriteCallBack) && cb->writeCallback.isSet())
     cb->writeCallback.call(cb->writeData);
+//  cout << "Got PIPE read: " << cb->fd << " " << cb->flags << " " << (cb->flags&kCFFileDescriptorReadCallBack) <<endl;
   CFFileDescriptorEnableCallBacks(fdref, cb->flags);
 
   // stops the loop from running and returns if the user called the ::wait function
@@ -189,7 +294,7 @@ void esystem::disableSocketReadWriteCallback(int fd)
   lddieif(i==-1,"socket not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags & !kCFSocketReadCallBack & !kCFSocketWriteCallBack;
+  cb->flags=(cb->flags ^ kCFSocketReadCallBack) ^ kCFSocketWriteCallBack;
   CFSocketDisableCallBacks((CFSocketRef)cb->fdref, kCFSocketReadCallBack | kCFSocketWriteCallBack);
 }
 
@@ -200,7 +305,7 @@ void esystem::disableSocketReadCallback(int fd)
   lddieif(i==-1,"socket not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags & !kCFSocketReadCallBack;
+  cb->flags=cb->flags ^ kCFSocketReadCallBack;
   CFSocketDisableCallBacks((CFSocketRef)cb->fdref, kCFSocketReadCallBack);
 }
 
@@ -211,7 +316,7 @@ void esystem::disableSocketWriteCallback(int fd)
   lddieif(i==-1,"socket not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags & !kCFSocketWriteCallBack;
+  cb->flags=cb->flags ^ kCFSocketWriteCallBack;
   CFSocketDisableCallBacks((CFSocketRef)cb->fdref, kCFSocketWriteCallBack);
 }
 
@@ -252,10 +357,10 @@ void esystem::disableReadWriteCallback(int fd)
 {
   int i;
   i=callbacks.findkey(fd);
-  lddieif(i==-1,"socket not found with fd: "+estr(fd));
+  lddieif(i==-1,"file not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags & !kCFFileDescriptorReadCallBack & !kCFFileDescriptorWriteCallBack;
+  cb->flags=(cb->flags ^ kCFFileDescriptorReadCallBack) ^ kCFFileDescriptorWriteCallBack;
   CFFileDescriptorDisableCallBacks((CFFileDescriptorRef)cb->fdref, kCFFileDescriptorReadCallBack | kCFFileDescriptorWriteCallBack);
 }
 
@@ -263,10 +368,10 @@ void esystem::disableReadCallback(int fd)
 {
   int i;
   i=callbacks.findkey(fd);
-  lddieif(i==-1,"socket not found with fd: "+estr(fd));
+  lddieif(i==-1,"file not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags & !kCFFileDescriptorReadCallBack;
+  cb->flags=cb->flags ^ kCFFileDescriptorReadCallBack;
   CFFileDescriptorDisableCallBacks((CFFileDescriptorRef)cb->fdref, kCFFileDescriptorReadCallBack);
 }
 
@@ -274,10 +379,10 @@ void esystem::disableWriteCallback(int fd)
 {
   int i;
   i=callbacks.findkey(fd);
-  lddieif(i==-1,"socket not found with fd: "+estr(fd));
+  lddieif(i==-1,"file not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags & !kCFFileDescriptorWriteCallBack;
+  cb->flags=cb->flags ^ kCFFileDescriptorWriteCallBack;
   CFFileDescriptorDisableCallBacks((CFFileDescriptorRef)cb->fdref, kCFFileDescriptorWriteCallBack);
 }
 
@@ -285,7 +390,7 @@ void esystem::enableReadWriteCallback(int fd)
 {
   int i;
   i=callbacks.findkey(fd);
-  lddieif(i==-1,"socket not found with fd: "+estr(fd));
+  lddieif(i==-1,"file not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
   cb->flags=cb->flags | kCFFileDescriptorReadCallBack | kCFFileDescriptorWriteCallBack;
@@ -296,7 +401,7 @@ void esystem::enableReadCallback(int fd)
 {
   int i;
   i=callbacks.findkey(fd);
-  lddieif(i==-1,"socket not found with fd: "+estr(fd));
+  lddieif(i==-1,"file not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
   cb->flags=cb->flags | kCFFileDescriptorReadCallBack;
@@ -307,7 +412,7 @@ void esystem::enableWriteCallback(int fd)
 {
   int i;
   i=callbacks.findkey(fd);
-  lddieif(i==-1,"socket not found with fd: "+estr(fd));
+  lddieif(i==-1,"file not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
   cb->flags=cb->flags | kCFFileDescriptorWriteCallBack;
@@ -364,6 +469,7 @@ void esystem::addReadWriteCallback(int fd,const efunc& readCallback,const evarar
   cb->readData=readData;
   cb->writeCallback=writeCallback;
   cb->writeData=writeData;
+  cb->flags=kCFFileDescriptorReadCallBack | kCFFileDescriptorWriteCallBack;
 
   CFFileDescriptorContext fdContext;
   bzero(&fdContext,sizeof(fdContext));
@@ -372,15 +478,13 @@ void esystem::addReadWriteCallback(int fd,const efunc& readCallback,const evarar
 
   CFFileDescriptorRef fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd, false, esystem::handleFileCallback, &fdContext);
   ldieif(fdref==NULL,"fdref is NULL");
-
   cb->fdref=fdref;
-  cb->flags=kCFFileDescriptorReadCallBack | kCFFileDescriptorWriteCallBack;
 
   CFFileDescriptorEnableCallBacks(fdref, cb->flags);
   cb->source = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
   CFRunLoopAddSource(CFRunLoopGetMain(), cb->source, kCFRunLoopDefaultMode);
-
   callbacks.addref(fd,cb);
+  CFFileDescriptorEnableCallBacks(fdref, cb->flags);
 }
 
 void esystem::addWriteCallback(int fd,const efunc& writeCallback,const evararray& writeData)
@@ -389,6 +493,7 @@ void esystem::addWriteCallback(int fd,const efunc& writeCallback,const evararray
   cb->fd=fd;
   cb->writeCallback=writeCallback;
   cb->writeData=writeData;
+  cb->flags=kCFFileDescriptorWriteCallBack;
 
   CFFileDescriptorContext fdContext;
   bzero(&fdContext,sizeof(fdContext));
@@ -397,14 +502,13 @@ void esystem::addWriteCallback(int fd,const efunc& writeCallback,const evararray
 
   CFFileDescriptorRef fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd, false, esystem::handleFileCallback, &fdContext);
   ldieif(fdref==NULL,"fdref is NULL");
-
   cb->fdref=fdref;
-  cb->flags=kCFFileDescriptorWriteCallBack;
 
   CFFileDescriptorEnableCallBacks(fdref, cb->flags);
   cb->source = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
   CFRunLoopAddSource(CFRunLoopGetMain(), cb->source, kCFRunLoopDefaultMode);
   callbacks.addref(fd,cb);
+  CFFileDescriptorEnableCallBacks(fdref, cb->flags);
 }
 
 void esystem::addReadCallback(int fd,const efunc& readCallback,const evararray& readData)
@@ -413,6 +517,7 @@ void esystem::addReadCallback(int fd,const efunc& readCallback,const evararray& 
   cb->fd=fd;
   cb->readCallback=readCallback;
   cb->readData=readData;
+  cb->flags=kCFFileDescriptorReadCallBack;
 
   CFFileDescriptorContext fdContext;
   bzero(&fdContext,sizeof(fdContext));
@@ -423,12 +528,12 @@ void esystem::addReadCallback(int fd,const efunc& readCallback,const evararray& 
   ldieif(fdref==NULL,"fdref is NULL");
 
   cb->fdref=fdref;
-  cb->flags=kCFFileDescriptorReadCallBack;
 
   CFFileDescriptorEnableCallBacks(fdref, cb->flags);
   cb->source = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
   CFRunLoopAddSource(CFRunLoopGetMain(), cb->source, kCFRunLoopDefaultMode);
   callbacks.addref(fd,cb);
+  CFFileDescriptorEnableCallBacks(fdref, cb->flags);
 }
 
 void esystem::add(int fd,const efunc& func,evar *data)

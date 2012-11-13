@@ -217,7 +217,7 @@ void serverProcessDists(int i,const estr& msg,int& count)
 
   // wrapped around circular buffer
   for (; j<count; ++j){
-    cmindists[i][cend[i]+j-buffersize].size()].x=*pstr; ++pstr;
+    cmindists[i][cend[i]+j-buffersize].x=*pstr; ++pstr;
     cmindists[i][cend[i]+j-buffersize].y=*pstr; ++pstr;
     cmindists[i][cend[i]+j-buffersize].dist=*(float*)pstr; ++pstr;
 //    cmindists[i][cend[i]+j].count=1;
@@ -745,7 +745,7 @@ void doStartClient()
   load_seqs_compressed(argv[1],nodeArr,seqlen);
 
   int pipefd[2];
-  pipe(pipefd);
+  ldieif(pipe(pipefd)!=0,"creating pipe");
   dup2(pipefd[1],1);
 
   client.outpipe=pipefd[0];

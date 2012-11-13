@@ -49,6 +49,15 @@ class esystem
 //  bool processMessagesWait();
   void run();
 
+  long int getMemLimit();
+
+  int getTotalRam();
+  int getFreeRam();
+  int getBufferRam();
+  int getSharedRam();
+  int getTotalSwap();
+  int getFreeSwap();
+
   void addTimer(const efunc& func,const evararray& args,double secs,double repeat);
   static void handleTimerSignal(int signal,siginfo_t *si,void *data);
 

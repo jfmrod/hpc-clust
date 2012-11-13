@@ -643,7 +643,9 @@ void epregisterCommon()
   epregisterFunc2(serial,void,(const evar&,estr&));
   epregisterFunc2(unserial,evar,(const estr&));
 
+#ifdef WITH_DL
   epregisterFunc(emodule_load);
+#endif
 
   epregister(rnd);
 #endif

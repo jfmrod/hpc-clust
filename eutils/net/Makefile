@@ -86,7 +86,7 @@ CPPFLAGS =  -I/home/jfmrod/usr/include
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -march=nocona -mtune=nocona -msse3 -O3 -fPIC -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
+CXXFLAGS = -funroll-loops -O2 -static -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -94,9 +94,9 @@ ECHO_C =
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-EUTILS_CXXFLAGS = -I${prefix}/include -march=nocona -mtune=nocona -msse3 -O3 -fPIC -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
-EUTILS_LDFLAGS =  -L/lib
-EUTILS_LIBS = eutils/libeutils.a -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
+EUTILS_CXXFLAGS = -I${prefix}/include -funroll-loops -O2 -static -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
+EUTILS_LDFLAGS = -static -L/lib
+EUTILS_LIBS = eutils/libeutils.a -lreadline -lmpi_cxx -lmpi -lrt  -lopen-rte -lopen-pal -libverbs -lnsl -lutil -lm -ldl -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
 EXEEXT = 
 GREP = /bin/grep
 GSL_CFLAGS = -I/home/jfmrod/usr/include
@@ -107,9 +107,9 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LDFLAGS =  -L/lib
+LDFLAGS = -static -L/lib
 LIBOBJS = 
-LIBS = -lreadline -lmpi++ -lmpi_cxx -lmpi -lrt   -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -ldl -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
+LIBS = -lreadline -lmpi_cxx -lmpi -lrt  -lopen-rte -lopen-pal -libverbs -lnsl -lutil -lm -ldl -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust/eutils/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
