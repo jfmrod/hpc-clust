@@ -562,38 +562,8 @@ inline float dist_compressed2(const estr& s1,const estr& s2,int seqlen)
     t=((*p1) ^ (*p2));
     count+=lt_gap_count[ t&0xffffu ] + lt_gap_count[ (t>>16)&0xffffu ] + lt_gap_count[ (t>>32)&0xffffu ] + lt_gap_count[ (t>>48)&0xffffu ];
   }
-  switch (seqlen%16){
-   case 15:
-    dist_inc(*p1,*p2,b4_m14,count);
-   case 14:
-    dist_inc(*p1,*p2,b4_m13,count);
-   case 13:
-    dist_inc(*p1,*p2,b4_m12,count);
-   case 12:
-    dist_inc(*p1,*p2,b4_m11,count);
-   case 11:
-    dist_inc(*p1,*p2,b4_m10,count);
-   case 10:
-    dist_inc(*p1,*p2,b4_m9,count);
-   case 9:
-    dist_inc(*p1,*p2,b4_m8,count);
-   case 8:
-    dist_inc(*p1,*p2,b4_m7,count);
-   case 7:
-    dist_inc(*p1,*p2,b4_m6,count);
-   case 6:
-    dist_inc(*p1,*p2,b4_m5,count);
-   case 5:
-    dist_inc(*p1,*p2,b4_m4,count);
-   case 4:
-    dist_inc(*p1,*p2,b4_m3,count);
-   case 3:
-    dist_inc(*p1,*p2,b4_m2,count);
-   case 2:
-    dist_inc(*p1,*p2,b4_m1,count);
-   case 1:
-    dist_inc(*p1,*p2,b4_m0,count);
-  }
+  t=((*p1) ^ (*p2));
+  count+=lt_gap_count[ t&0xffffu ] + lt_gap_count[ (t>>16)&0xffffu ] + lt_gap_count[ (t>>32)&0xffffu ] + lt_gap_count[ (t>>48)&0xffffu ] - (16-seqlen%16);
   return((float)count/(float)seqlen);
 }
 
@@ -720,38 +690,10 @@ inline float dist_nogap_compressed2(const estr& s1,const estr& s2,int seqlen)
     len+=lt_nogap_len[ ta&0xffffu ] + lt_nogap_len[ (ta>>16)&0xffffu ] + lt_nogap_len[ (ta>>32)&0xffffu ] + lt_nogap_len[ (ta>>48)&0xffffu ];
   }
 
-  switch (seqlen%16){
-   case 15:
-    dist_nogap_inc3(*p1,*p2,b4_m14,count,len);
-   case 14:
-    dist_nogap_inc3(*p1,*p2,b4_m13,count,len);
-   case 13:
-    dist_nogap_inc3(*p1,*p2,b4_m12,count,len);
-   case 12:
-    dist_nogap_inc3(*p1,*p2,b4_m11,count,len);
-   case 11:
-    dist_nogap_inc3(*p1,*p2,b4_m10,count,len);
-   case 10:
-    dist_nogap_inc3(*p1,*p2,b4_m9,count,len);
-   case 9:
-    dist_nogap_inc3(*p1,*p2,b4_m8,count,len);
-   case 8:
-    dist_nogap_inc3(*p1,*p2,b4_m7,count,len);
-   case 7:
-    dist_nogap_inc3(*p1,*p2,b4_m6,count,len);
-   case 6:
-    dist_nogap_inc3(*p1,*p2,b4_m5,count,len);
-   case 5:
-    dist_nogap_inc3(*p1,*p2,b4_m4,count,len);
-   case 4:
-    dist_nogap_inc3(*p1,*p2,b4_m3,count,len);
-   case 3:
-    dist_nogap_inc3(*p1,*p2,b4_m2,count,len);
-   case 2:
-    dist_nogap_inc3(*p1,*p2,b4_m1,count,len);
-   case 1:
-    dist_nogap_inc3(*p1,*p2,b4_m0,count,len);
-  }
+  tx=((*p1) ^ (*p2));
+  ta=((*p1) & (*p2));
+  count+=lt_nogap_count[ tx&0xffffu ] + lt_nogap_count[ (tx>>16)&0xffffu ] + lt_nogap_count[ (tx>>32)&0xffffu ] + lt_nogap_count[ (tx>>48)&0xffffu ] - (16-seqlen%16);
+  len+=lt_nogap_len[ ta&0xffffu ] + lt_nogap_len[ (ta>>16)&0xffffu ] + lt_nogap_len[ (ta>>32)&0xffffu ] + lt_nogap_len[ (ta>>48)&0xffffu ];
   return((float)(count-len)/(float)(seqlen-len));
 }
 

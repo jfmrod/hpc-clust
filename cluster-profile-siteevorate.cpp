@@ -232,6 +232,120 @@ inline float dist_short_compressed(const estr& s1,const estr& s2,int s,int seqle
   return((float)count/(float)(seqlen-s));
 }
 
+inline bool dist_nogap_short_compressed_single(const estr& s1,const estr& s2,int s)
+{
+  unsigned long int *p1=(long unsigned int*)(s1._str)+(s/16);
+  unsigned long int *p2=(long unsigned int*)(s2._str)+(s/16);
+  unsigned long m=(0x0ful<< (s%16)*4);
+  if ((*p1)&(*p2)&m == m) return(false);
+  if (((*p1)^(*p2))&m) return(false);
+  return(true);
+}
+
+inline float dist_nogap_short_compressed2(const estr& s1,const estr& s2,int s,int seqlen)
+{
+  int len=0;
+  int count=0;
+  unsigned long int *ep1=(long unsigned int*)(s1._str)+MIN(s1._strlen/8,seqlen/16);
+  unsigned long int *p1=(long unsigned int*)(s1._str)+(s/16);
+  unsigned long int *p2=(long unsigned int*)(s2._str)+(s/16);
+  unsigned long tx,ta;
+
+  if (p1<ep1 && s%16){
+    unsigned long m=~(0xfffffffffffffffful << (s%16)*4);
+    tx=((*p1) ^ (*p2))&m;
+    ta=((*p1) & (*p2))&m;
+    count+=lt_nogap_count[ tx&0xffffu ] + lt_nogap_count[ (tx>>16)&0xffffu ] + lt_nogap_count[ (tx>>32)&0xffffu ] + lt_nogap_count[ (tx>>48)&0xffffu ] - (16-s%16);
+    len+=lt_nogap_len[ ta&0xffffu ] + lt_nogap_len[ (ta>>16)&0xffffu ] + lt_nogap_len[ (ta>>32)&0xffffu ] + lt_nogap_len[ (ta>>48)&0xffffu ];
+/*
+    switch (s%16){
+     case 1:
+      dist_nogap_inc3(*p1,*p2,b4_m1,count,len);
+     case 2:
+      dist_nogap_inc3(*p1,*p2,b4_m2,count,len);
+     case 3:
+      dist_nogap_inc3(*p1,*p2,b4_m3,count,len);
+     case 4:
+      dist_nogap_inc3(*p1,*p2,b4_m4,count,len);
+     case 5:
+      dist_nogap_inc3(*p1,*p2,b4_m5,count,len);
+     case 6:
+      dist_nogap_inc3(*p1,*p2,b4_m6,count,len);
+     case 7:
+      dist_nogap_inc3(*p1,*p2,b4_m7,count,len);
+     case 8:
+      dist_nogap_inc3(*p1,*p2,b4_m8,count,len);
+     case 9:
+      dist_nogap_inc3(*p1,*p2,b4_m9,count,len);
+     case 10:
+      dist_nogap_inc3(*p1,*p2,b4_m10,count,len);
+     case 11:
+      dist_nogap_inc3(*p1,*p2,b4_m11,count,len);
+     case 12:
+      dist_nogap_inc3(*p1,*p2,b4_m12,count,len);
+     case 13:
+      dist_nogap_inc3(*p1,*p2,b4_m13,count,len);
+     case 14:
+      dist_nogap_inc3(*p1,*p2,b4_m14,count,len);
+     case 15:
+      dist_nogap_inc3(*p1,*p2,b4_m15,count,len);
+      ++p1;
+      ++p2;
+    }
+*/
+    ++p1; ++p2;
+  }
+
+  for (; p1<ep1; ++p1,++p2){
+    tx=((*p1) ^ (*p2));
+    ta=((*p1) & (*p2));
+    count+=lt_nogap_count[ tx&0xffffu ] + lt_nogap_count[ (tx>>16)&0xffffu ] + lt_nogap_count[ (tx>>32)&0xffffu ] + lt_nogap_count[ (tx>>48)&0xffffu ];
+    len+=lt_nogap_len[ ta&0xffffu ] + lt_nogap_len[ (ta>>16)&0xffffu ] + lt_nogap_len[ (ta>>32)&0xffffu ] + lt_nogap_len[ (ta>>48)&0xffffu ];
+  }
+
+  tx=((*p1) ^ (*p2));
+  ta=((*p1) & (*p2));
+  count+=lt_nogap_count[ tx&0xffffu ] + lt_nogap_count[ (tx>>16)&0xffffu ] + lt_nogap_count[ (tx>>32)&0xffffu ] + lt_nogap_count[ (tx>>48)&0xffffu ] - (16-seqlen%16);
+  len+=lt_nogap_len[ ta&0xffffu ] + lt_nogap_len[ (ta>>16)&0xffffu ] + lt_nogap_len[ (ta>>32)&0xffffu ] + lt_nogap_len[ (ta>>48)&0xffffu ];
+
+/*
+  switch (seqlen%16){
+   case 15:
+    dist_nogap_inc3(*p1,*p2,b4_m14,count,len);
+   case 14:
+    dist_nogap_inc3(*p1,*p2,b4_m13,count,len);
+   case 13:
+    dist_nogap_inc3(*p1,*p2,b4_m12,count,len);
+   case 12:
+    dist_nogap_inc3(*p1,*p2,b4_m11,count,len);
+   case 11:
+    dist_nogap_inc3(*p1,*p2,b4_m10,count,len);
+   case 10:
+    dist_nogap_inc3(*p1,*p2,b4_m9,count,len);
+   case 9:
+    dist_nogap_inc3(*p1,*p2,b4_m8,count,len);
+   case 8:
+    dist_nogap_inc3(*p1,*p2,b4_m7,count,len);
+   case 7:
+    dist_nogap_inc3(*p1,*p2,b4_m6,count,len);
+   case 6:
+    dist_nogap_inc3(*p1,*p2,b4_m5,count,len);
+   case 5:
+    dist_nogap_inc3(*p1,*p2,b4_m4,count,len);
+   case 4:
+    dist_nogap_inc3(*p1,*p2,b4_m3,count,len);
+   case 3:
+    dist_nogap_inc3(*p1,*p2,b4_m2,count,len);
+   case 2:
+    dist_nogap_inc3(*p1,*p2,b4_m1,count,len);
+   case 1:
+    dist_nogap_inc3(*p1,*p2,b4_m0,count,len);
+  }
+*/
+  if (seqlen-s-len==0) return(0.0);
+  return((float)(count-len)/(float)(seqlen-s-len));
+}
+
 inline float dist_nogap_short_compressed(const estr& s1,const estr& s2,int s,int seqlen)
 {
   int len=seqlen-s;
@@ -438,7 +552,8 @@ void calc_all_dists(int i,int s,int e,edoublearray& dists,int n,int tn)
   int end=((n+1)*arr.size())/tn;
 
   for (l=start; l<end; ++l)
-    dists[l]=dist_short_compressed(arr[i],arr[l],s,e);
+    dists[l]=dist_nogap_short_compressed2(arr[i],arr[l],s,e);
+//    dists[l]=dist_short_compressed(arr[i],arr[l],s,e);
 }
 
 float accCons(const efloatarray& avgcons,int s,int e)
@@ -448,8 +563,12 @@ float accCons(const efloatarray& avgcons,int s,int e)
   return(res);
 }
 
+eseqclusterData clusterData;
+
 int emain()
 { 
+  initLookupTable();
+
   cout << "# " << date() << endl;
   cout << "# " << args2str(argvc,argv) << endl;
 
@@ -462,32 +581,58 @@ int emain()
   epregister(ncpus);
   eparseArgs(argvc,argv);
 
-  ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <long-seqs>");
-
+  ldieif(argvc<2,"syntax: "+efile(argv[0]).basename()+" <long-seqs> [merge.log]");
   estrhashof<int> arrind;
   load_seqs_compressed(argv[1],arr,arrind,seqlen);
+
+  if (argvc>2) clusterData.load(efile(argv[2],"r"),arr.size());
 
   etaskman taskman;
   taskman.createThread(ncpus);
 
-  int i,j,k;
-  for (j=1; j<arr.size(); ++j){
-    ebin2 bin;
-    bin.xvalues.init(arr.size());
-    bin.yvalues.init(arr.size());
+  cout << "# seqs: " << arr.size() << endl;
+  earray<eintarray> otus;
+  clusterData.getOTU(0.95,otus,arr.size());
+  cout << "# otus: " << otus.size() << endl;
+
+  int i,j,k,l;
+  for (j=rnd.uniform()*arr.size(); j<arr.size(); ++j){
+    edoublearray dists;
+    dists.init(arr.size());
     for (i=0; i<ncpus; ++i)
-      taskman.addTask(calc_all_dists,evararray((const int&)j,0,seqlen,bin.xvalues,(const int&)i,(const int&)ncpus));
+      taskman.addTask(calc_all_dists,evararray((const int&)j,0,seqlen,dists,(const int&)i,(const int&)ncpus));
     taskman.wait();
 
+    edoublearray mfrq;
+    mfrq.init(otus.size(),0.0);
+
+    ebin2 bin;
+    bin.xvalues.init(otus.size(),0.0);
+    bin.yvalues.init(otus.size());
+    for (i=0; i<otus.size(); ++i){
+      for (l=0; l<otus[i].size(); ++l)
+        bin.xvalues[i]+=dists[otus[i][l]];
+      bin.xvalues[i]=bin.xvalues[i]/otus[i].size();
+    }
 
     for (k=0; k<seqlen; ++k){
-      for (i=0; i<arr.size(); ++i){
-        if (dist_short_compressed(arr[i],arr[j],k,k+1)<0.5)
+      for (i=0; i<otus.size(); ++i){
+        double tmp=0.0;
+        for (l=0; l<otus[i].size(); ++l){
+          if (!dist_nogap_short_compressed_single(arr[otus[i][l]],arr[j],k))
+            tmp+=1.0;
+        }
+        tmp=tmp/otus[i].size();
+        bin.yvalues[i]=tmp;
+
+/*
+        if (tmp>=0.5)
           bin.yvalues[i]=1;
         else
           bin.yvalues[i]=0;
+*/
       }
-      bin.calc(30);
+      bin.calc(15);
 
       for (i=0; i<bin.xbin.size(); ++i){
         if (bin.ycount[i]==0) continue;

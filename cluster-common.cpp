@@ -264,8 +264,9 @@ void load_seqs(const estr& filename,estrarray& arr,eintarray& arrgaps)
 estr seq_compress(const estr& seq)
 {
   int i;
+  int slen=((seq.len()+15)>>4)<<4; // Make string 64bit aligned. This is needed in the dist functions
   estr res;
-  res.reserve((seq.len()+1)/2);
+  res.reserve(slen);
   char tmp;
   for (i=0; i<seq.len()-2; i+=2){
     tmp=nuc_compress(seq[i]);
@@ -278,7 +279,8 @@ estr seq_compress(const estr& seq)
     tmp=tmp|(nuc_compress(seq[i+1])<<4);
   res._str[i/2]=tmp;
   res._strlen=(seq.len()+1)/2;
-  res._str[i/2+1]=0x00;
+  for (i=i/2+1; i<slen; ++i)  // Set remaining bytes to 0x00. This is required for the dist functions
+    res._str[i]=0x00;
   return(res);
 }
 

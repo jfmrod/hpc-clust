@@ -10,6 +10,7 @@ class eseqclusterData
   eseqclusterData();
 
   int getOTU(float dist,eintarray& otuarr);
+  int getOTU(float dist,earray<eintarray>& otuarr,int size);
 
   float getMergeDistance(int x,int y);
   void getCluster(const eintarray& seqs, eintarray& seqcluster, float& cdist);

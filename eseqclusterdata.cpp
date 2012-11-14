@@ -32,6 +32,34 @@ int eseqclusterData::getOTU(float dist,eintarray& otuarr)
   return(otucount);
 }
 
+int eseqclusterData::getOTU(float dist,earray<eintarray>& otus,int size)
+{
+  eintarray otuarr;
+  int i,j;
+  otuarr.init(size);
+  for (i=0; i<size; ++i)
+    otuarr[i]=i;
+
+  // point at the seq we merged with
+  for (i=0; i<mergearr.size() && mergearr[i].dist>=dist; ++i)
+    otuarr[mergearr[i].y]=mergearr[i].x;
+
+  eintarray otuind;
+  otuind.init(otuarr.size(),-1);
+
+  // translate all the merged seq ids to the last seq id of the otu
+  for (i=0; i<otuarr.size(); ++i){
+    for (j=otuarr[i]; j!=otuarr[j]; j=otuarr[j]);
+    if (otuind[j]==-1){
+      otuind[j]=otus.size();
+      otus.add(eintarray());
+    }
+    otuarr[i]=otuind[j];
+    otus[otuind[j]].add(i);
+  }
+  return(otus.size());
+}
+
 
 void eseqclusterData::getCluster(const eintarray& seqs, eintarray& seqcluster,float& cdist)
 {
