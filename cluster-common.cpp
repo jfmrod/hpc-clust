@@ -387,7 +387,12 @@ void load_short_compressed(const estr& filename,ebasicarray<eshortseq>& arr)
   estr name;
   estr start;
   estr end;
-  efile f(filename);
+  efile f;
+
+  if (filename=="-")
+    f.open(stdin);
+  else
+    f.open(filename,"r");
 
   eshortseq seq;
   int i;

@@ -87,18 +87,21 @@ else
 fi
 
 # Check for MYSQL installation
-AM_PATH_MYSQL(4.0.0)
-if test "$no_mysql" != yes; then
-  CXXFLAGS="$CXXFLAGS $MYSQL_CFLAGS"
-  CFLAGS="$CFLAGS $MYSQL_CFLAGS"
-  LIBS="$LIBS $MYSQL_LIBS"
-  AC_DEFINE_UNQUOTED(HAVE_LIBMYSQL,1,[define when libmysql exists])
-else
-  AC_MSG_WARN([
-    Continuing without MYSQL support.
-    If you want MYSQL support please install the mysql headers and libraries.
-    If MYSQL is installed you might need to indicate where using the argument: --with-mysql-prefix=DIR
-  ])
+AC_ARG_WITH(mysql,[AS_HELP_STRING([--with-mysql@<:@=path@:>@],[Specify path to MPI library installation.])])
+if test "x$with_mysql" != "xno"; then
+  AM_PATH_MYSQL(4.0.0)
+  if test "$no_mysql" != "yes"; then
+    CXXFLAGS="$CXXFLAGS $MYSQL_CFLAGS"
+    CFLAGS="$CFLAGS $MYSQL_CFLAGS"
+    LIBS="$LIBS $MYSQL_LIBS"
+    AC_DEFINE_UNQUOTED(HAVE_LIBMYSQL,1,[define when libmysql exists])
+  else
+    AC_MSG_WARN([
+      Continuing without MYSQL support.
+      If you want MYSQL support please install the mysql headers and libraries.
+      If MYSQL is installed you might need to indicate where using the argument: --with-mysql-prefix=DIR
+    ])
+  fi
 fi
 
 # Check for NCURSES installation

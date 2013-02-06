@@ -7,15 +7,35 @@
 #include <eutils/ethread.h>
 
 #include "cluster-common.h"
+#include "eseq.h"
+//#include "eotu.h"
 
 class eotuinfo
 {
  public:
   eintarray seqs;
+  estr tax;
   float mindist;
   float maxdist;
   float avgdist;
 };
+
+estr consensusTax(const estrhashof<eseq>& seqs,const eintarray& otuseqs)
+{
+  if (seqs.size()==0) return(estr());
+  int i,j;
+  bool first=true;
+  estrarray tax;
+  for (i=0; i<otuseqs.size(); ++i){
+    if (seqs[otuseqs[i]].tax.len()==0) continue;
+    if (first) { tax=seqs[otuseqs[i]].tax.explode(";"); first=false; continue; }
+    estrarray tmptax=seqs[otuseqs[i]].tax.explode(";");
+    for (j=0; j<tmptax.size() && j<tax.size() && tmptax[j]==tax[j]; ++j);
+    if (j<tax.size())
+      tax.del(j);
+  }
+  return(tax.join(";",""));
+}
 
 ostream& operator<<(ostream& stream,const eotuinfo& otuinfo)
 {
@@ -27,6 +47,7 @@ class ematchinfo
 {
  public:
   int otu;
+  int seq;
   float dist;
   float dist2;
   float mindist;
@@ -37,6 +58,10 @@ class ematchinfo
   eintarray seqlist;
   eintarray seqcluster;
   float cdist;
+  float cdist2;
+  bool incluster;
+  estr tax;
+  estr itax;
 
   bool operator<(const ematchinfo& minfo);
 };
@@ -64,7 +89,7 @@ eintarray seqotuid2;
 eseqclusterData clusterData;
 
 int seqlen=0;
-float eqthres=1.0;
+float eqthres=0.01;
 
 estr args2str(int argvc,char **argv)
 {
@@ -402,6 +427,7 @@ inline void dist_nogapsingle_inc(long int a1,long int a2,long int mask,int& coun
 }
 */
 
+
 inline float dist_nogapsingle_short_compressed(const estr& s1,const estr& s2,int s,int seqlen) // count a continuous gap as a single mismatch, gap-gap does not count
 {
   int gapmiss=0;
@@ -546,30 +572,40 @@ void place_short_task(earray<ematchinfo>& matchinfo,int n,int tn)
     s=arrshort[l].b;
     e=arrshort[l].e;
     
-    if (s>=e) continue;
-
-
-    matchinfo[l].eqcount=0;
+    matchinfo[l].eqcount=-1;
     matchinfo[l].bestcount=0;
     matchinfo[l].dist=0.0;
+    matchinfo[l].dist2=0.0;
+    matchinfo[l].cdist=1.0;
+    matchinfo[l].cdist2=0.0;
+
+    if (s>=e) continue;
+
     for (j=0; j<arr.size(); ++j)
       tmpdists[j]=dist_nogap_short_compressed(arrshort[l].seq,arr[j],s,e);
 
     tmpotu.init(otuinfo.size(),0);
     eintarray si(iheapsort(tmpdists));
     matchinfo[l].dist=tmpdists[si[si.size()-1]];
+    matchinfo[l].seq=si[si.size()-1];
     for (j=tmpdists.size()-1; j>=0 && tmpdists[si[j]]>=matchinfo[l].dist; --j){
+      if (tmpotu[ seqotuid[si[j]] ]==0)
+        ++matchinfo[l].eqcount;
       ++tmpotu[ seqotuid[si[j]] ]; 
       if (tmpotu[ seqotuid[si[j]]] > matchinfo[l].bestcount){
         matchinfo[l].bestcount=tmpotu[ seqotuid[si[j]] ];
         matchinfo[l].otu=seqotuid[si[j]];
       }
+      matchinfo[l].seqlist.add(si[j]);
     }
     for (; j>=0 && tmpdists[si[j]]>=matchinfo[l].dist-(1.0-matchinfo[l].dist)*eqthres; --j){
       if (tmpotu[ seqotuid[si[j]] ]==0)
         ++matchinfo[l].eqcount;
       ++tmpotu[ seqotuid[si[j]] ]; 
+      matchinfo[l].seqlist.add(si[j]);
     }
+    if (matchinfo[l].seqlist.size()>1)
+      clusterData.getCluster(matchinfo[l].seqlist, matchinfo[l].seqcluster, matchinfo[l].cdist);
   }
 }
 
@@ -829,6 +865,85 @@ void validate_short_task(int s,int e,earray<ematchinfo>& matchinfo,int n,int tn)
   }
 */
 }
+
+
+
+
+void profile_task(earray<ematchinfo>& matchinfo,const eintarray& iarr,const eintarray& oarr,int b,int e,int n,int tn)
+{
+  int j,l,k;
+
+  efloatarray tmpdists;
+  eintarray tmpotu;
+
+  tmpdists.init(oarr.size());
+
+  int start=(n*iarr.size())/tn;
+  int end=((n+1)*iarr.size())/tn;
+
+//  int s,e;
+
+  for (l=start; l<end; ++l){
+//    for (s=0; s<arrshort[l].len() && (unsigned char)arrshort[l][s]==0xFFu; ++s);
+//    e=arrshort[l].len()-1;
+//    if (arrshort[l].len()>0 && arrshort[l].len()%2==1 && (unsigned char)arrshort[l][e]&0x0F==0x0F) --e;
+//    for (; e>0 && (unsigned char)arrshort[l][e]==0xFFu; --e);
+
+    int iotu2=seqotuid2[iarr[l]];
+    matchinfo[l].eqcount=-1;
+    matchinfo[l].bestcount=0;
+    matchinfo[l].dist=-1.0;
+    matchinfo[l].dist2=-1.0;
+    matchinfo[l].cdist=1.0;
+    matchinfo[l].cdist2=1.0;
+    matchinfo[l].incluster=false;
+//    matchinfo[l].seqlist.add(iarr[l]);
+    for (j=0; j<oarr.size(); ++j){
+      if (oarr[j]==iarr[l]) { tmpdists[j]=0.0; continue; }  // ignore distance to self
+      tmpdists[j]=dist_nogapsingle_short_compressed(arr[iarr[l]],arr[oarr[j]],b,e);
+    }
+
+    tmpotu.init(otuinfo.size(),0);
+    eintarray si(iheapsort(tmpdists));
+    for (j=tmpdists.size()-1; j>=0 && (matchinfo[l].dist<0.0 || matchinfo[l].dist2<0.0); --j){
+      if (matchinfo[l].dist2<0.0 && seqotuid2[oarr[si[j]]]==iotu2) matchinfo[l].dist2=tmpdists[si[j]];
+      if (matchinfo[l].dist<0.0 && seqotuid2[oarr[si[j]]]!=iotu2) matchinfo[l].dist=tmpdists[si[j]];
+    }
+    float bestdist=tmpdists[si[si.size()-1]];
+//    matchinfo[l].dist=tmpdists[si[si.size()-1]];
+    for (j=tmpdists.size()-1; j>=0 && tmpdists[si[j]]>=bestdist; --j){
+//      if (seqoutid[si[j]]==iotu) continue;
+      if (tmpotu[ seqotuid[oarr[si[j]]] ]==0)
+        ++matchinfo[l].eqcount;
+      ++tmpotu[ seqotuid[oarr[si[j]]] ]; 
+      if (tmpotu[ seqotuid[oarr[si[j]]]] > matchinfo[l].bestcount){
+        matchinfo[l].bestcount=tmpotu[ seqotuid[oarr[si[j]]] ];
+        matchinfo[l].otu=seqotuid[oarr[si[j]]];
+      }
+      matchinfo[l].seqlist.add(oarr[si[j]]);
+    }
+    for (; j>=0 && tmpdists[si[j]]>=bestdist-(1.0-bestdist)*eqthres; --j){
+//      if (seqoutid[si[j]]==iotu) continue;
+      if (tmpotu[ seqotuid[oarr[si[j]]] ]==0)
+        ++matchinfo[l].eqcount;
+      ++tmpotu[ seqotuid[oarr[si[j]]] ]; 
+      matchinfo[l].seqlist.add(oarr[si[j]]);
+    }
+    if (matchinfo[l].seqlist.size()>1){
+      clusterData.getCluster(matchinfo[l].seqlist, matchinfo[l].seqcluster, matchinfo[l].cdist);
+      for (j=0; j<matchinfo[l].seqcluster.size(); ++j){
+        if (iarr[l]==matchinfo[l].seqcluster[j]) { matchinfo[l].incluster=true; break; }
+      }
+    }
+    matchinfo[l].cdist2=matchinfo[l].cdist;
+    if (matchinfo[l].incluster==false){
+      matchinfo[l].seqlist.add(iarr[l]);
+      matchinfo[l].seqcluster.clear();
+      clusterData.getCluster(matchinfo[l].seqlist, matchinfo[l].seqcluster, matchinfo[l].cdist2);
+    }
+  }
+}
+
 
 
 
@@ -1349,7 +1464,7 @@ void rnd_permutation(eintarray& arr)
 {
   int i,t;
   for (i=0; i<arr.size()-1; ++i){
-    t=i+rnd.uniform()*(arr.size()-i);
+    t=(int)(i+rnd.uniform()*(arr.size()-i));
     if (t!=i)
       arr.swap(i,t);
   }
@@ -1360,6 +1475,7 @@ int emain()
   cout << "# " << date() << endl;
   cout << "# " << args2str(argvc,argv) << endl;
 
+
   epregister(eqthres);
   int minotusize=1;
   epregister(minotusize);
@@ -1369,8 +1485,9 @@ int emain()
 
   float ct=0.98;
   epregister(ct);
-  float vct=0.99;
-  epregister(vct);
+  float ct2=0.97;
+  epregister(ct2);
+
 
 
   eoption<efunc> dfunc;
@@ -1397,27 +1514,53 @@ int emain()
 //  estr otufile;
 //  epregister(otufile);
 
+  int kinit=300;
+  epregister(kinit);
   int winlen=150;
   epregister(winlen);
   int ncpus=4;
   epregister(ncpus);
+  int profile=1;
+  epregister(profile);
+
+  float dsample=0.02;
+  epregister(dsample);
+
+  estr infofile;
+  epregister(infofile);
 
   eparseArgs(argvc,argv);
 
 
+  cout << "# kinit: " << kinit << endl;
+  cout << "# winlen: " << winlen << endl;
+  cout << "# eqthres: " << eqthres << endl;
+
 //  cout << "# distance function: " << dfunc.key() << endl;
 
   ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" <cluster-file> <long-seqs> [short-seqs]");
+
+  estrhashof<eseq> seqs;
 
   int i,j,k;
   estrhashof<int> arrind;
   load_seqs_compressed(argv[2],arr,arrind,seqlen);
 
   clusterData.load(estr(argv[1]),arr.size());
+
+  if (infofile.len()){
+    for (i=0; i<arr.size(); ++i)
+      seqs.add(arr.keys(i),eseq(arr.keys(i)));
+    loadSeqsInfo(seqs,infofile);
+    cout << "# starting to infer taxonomy" << endl;
+    clusterData.inferTaxonomy(seqs);
+    cout << "# done infering taxonomy" << endl;
+  }
+
   seqotuid.init(arr.size(),-1);
   seqotuid2.init(arr.size(),-1);
 
-  clusterData.getOTU(vct,seqotuid2);
+  clusterData.getOTU(ct2,seqotuid2);
 
   int otucount=clusterData.getOTU(ct,seqotuid);
   otuinfo.init(otucount);
@@ -1428,6 +1571,8 @@ int emain()
   for (i=0; i<otuinfo.size(); ++i){
     if (otuinfo[i].seqs.size()==1)
       ++singletons;
+
+    otuinfo[i].tax=consensusTax(seqs,otuinfo[i].seqs);
   }
   cout << "# otus: " << otuinfo.size() << endl;
   cout << "# singletons: " << singletons << endl;
@@ -1450,12 +1595,31 @@ int emain()
         taskman.addTask(place_short_task,evararray(matchinfo,(const int&)i,(const int&)ncpus));
       taskman.wait();
 
+      eintarray otucount;
+      estr tmpstr;
       for (j=0; j<arrshort.size(); ++j){
-        if (matchinfo[j].eqcount>0 || otuinfo[matchinfo[j].otu].seqs.size()<=minotusize) {
-          cout << "# " << arrshort[j].name << " " << matchinfo[j].dist << " " << otuinfo[matchinfo[j].otu].seqs.size() << " " << arr.keys(otuinfo[matchinfo[j].otu].seqs[0]) << " " << matchinfo[j] << endl;
-          continue;
+//        if (matchinfo[j].eqcount>0 || otuinfo[matchinfo[j].otu].seqs.size()<=minotusize) {
+//          cout << "# " << arrshort[j].name << " " << matchinfo[j].dist << " " << otuinfo[matchinfo[j].otu].seqs.size() << " " << arr.keys(otuinfo[matchinfo[j].otu].seqs[0]) << " " << matchinfo[j] << endl;
+//          continue;
+//        }
+        tmpstr=arr.keys(otuinfo[matchinfo[j].otu].seqs[0]);
+        if (matchinfo[j].cdist < ct && matchinfo[j].cdist>0.0 && matchinfo[j].eqcount < 10){
+          tmpstr.clear();
+          otucount.init(otuinfo.size(),0);
+          for (k=0; k<matchinfo[j].seqlist.size(); ++k){
+            if (otucount[seqotuid[matchinfo[j].seqlist[k]]]>0) continue;
+            ++otucount[seqotuid[matchinfo[j].seqlist[k]]];
+            tmpstr+=","+arr.keys(otuinfo[seqotuid[matchinfo[j].seqlist[k]]].seqs[0]);
+          }
+          tmpstr.del(0,1);
         }
-        cout << arrshort[j].name << " " << matchinfo[j].dist << " " << otuinfo[matchinfo[j].otu].seqs.size() << " " << arr.keys(otuinfo[matchinfo[j].otu].seqs[0]) << " " << matchinfo[j] << endl;
+        if (matchinfo[j].cdist>=ct)
+          matchinfo[j].tax=otuinfo[matchinfo[j].otu].tax;
+        else if (matchinfo[j].seqcluster.size())
+          matchinfo[j].tax=consensusTax(seqs,matchinfo[j].seqcluster);
+        matchinfo[j].itax=seqs[matchinfo[j].seq].itax;
+          
+        cout << arrshort[j].name << "\t" << matchinfo[j].dist << "\t" << matchinfo[j].eqcount << "\t" << matchinfo[j].cdist << "\t" << matchinfo[j].seqlist.size() << "\t" << tmpstr << "\t" << matchinfo[j].tax << "\t" << arr.keys(matchinfo[j].seq) << "\t" << matchinfo[j].itax << endl;
       }
     } else { // adaptive placement
       load_short_compressed(argv[3],arrshort);
@@ -1470,7 +1634,80 @@ int emain()
         cout << arrshort[j].name << " " << arr.keys(matchinfo[j].seqlist[0]) << " " << matchinfo[j].dist  << " " << matchinfo[j].seqlist.size() << " " << matchinfo[j].cdist << " " << matchinfo[j].seqcluster.size() << endl;
       }
     }
-  }else{
+  }else if (profile==1) {
+    cout << "# computing short sequence distance profiles 1" << endl;
+    eintarray nonsingleton,nonsingletonseqs;
+
+    eintarray rnds(sequence(arr.size()));
+    rnd_permutation(rnds);
+
+    eintarray totucount;
+    totucount.init(otuinfo.size(),0);
+
+    eintarray seqcount;
+    seqcount.init(arr.size(),0);
+
+    for (i=0; i<rnds.size()*dsample; ++i){
+      int oid=seqotuid[rnds[i]];
+      if (otuinfo[oid].seqs.size()<=1) continue;
+      if (totucount[oid]==0)
+        nonsingleton.add(rnds[i]);
+      nonsingletonseqs.add(rnds[i]);
+      seqcount[rnds[i]]=1;
+      ++totucount[oid];
+    }
+    for (i=0; i<totucount.size(); ++i){
+      if (totucount[i]==0) continue;
+
+      if (totucount[i]==1){
+        for (j=0; j<otuinfo[i].seqs.size(); ++j){
+          if (seqcount[otuinfo[i].seqs[j]]>0) continue;
+          nonsingletonseqs.add(otuinfo[i].seqs[j]);
+          ++totucount[i];
+          if (totucount[i]==2)
+            break;
+        }
+      }
+    }
+
+/*
+    for (i=0; i<otuinfo.size(); ++i){
+      if (otuinfo[i].seqs.size()>1) {
+        nonsingleton.add(otuinfo[i].seqs[0]);
+        for (j=0; j<otuinfo[i].seqs.size(); ++j)
+          nonsingletonseqs.add(otuinfo[i].seqs[j]);
+      }
+    }
+*/
+    matchinfo.init(nonsingleton.size());
+  
+    cout << "# starting short sequence placement. nonsingleton otus: " << nonsingleton.size() << " seqs: " << nonsingletonseqs.size() << endl;
+    for (i=0; i<ncpus; ++i)
+      taskman.addTask(profile_task,evararray(matchinfo,nonsingleton,nonsingletonseqs,(const int&)kinit,kinit+winlen,(const int&)i,(const int&)ncpus));
+    taskman.wait();
+
+    for (j=0; j<matchinfo.size(); ++j){
+//      if (matchinfo[j].eqcount>0 || otuinfo[matchinfo[j].otu].seqs.size()<=minotusize) {
+//        cout << "# " << arr.keys(nonsingleton[j]) << " " << matchinfo[j].dist << " " << matchinfo[j].dist2 << " " << matchinfo[j].cdist << " " << matchinfo[j].cdist2 << " " << matchinfo[j].incluster << " " << otuinfo[matchinfo[j].otu].seqs.size() << " " << otuinfo[seqotuid[nonsingleton[j]]].seqs.size() << " " << arr.keys(otuinfo[matchinfo[j].otu].seqs[0]) << " " << matchinfo[j] << endl;
+//        continue;
+//      }
+//      if (matchinfo[j].cdist>ct)
+//        if (seqotuid[nonsingleton[j]]==matchinfo[j].otu) matchinfo[j].incluster=true;
+      cout << arr.keys(nonsingleton[j]) << " " << matchinfo[j].dist << " " << matchinfo[j].dist2 << " " << matchinfo[j].cdist << " " << matchinfo[j].cdist2 << " " << matchinfo[j].incluster << " " << (seqotuid[nonsingleton[j]]==matchinfo[j].otu )<< " " << otuinfo[matchinfo[j].otu].seqs.size() << " " << otuinfo[seqotuid[nonsingleton[j]]].seqs.size() << " " << arr.keys(otuinfo[matchinfo[j].otu].seqs[0]) << " " << matchinfo[j] << endl;
+    }
+  }else if (profile==2) {
+    cout << "# computing short sequence distance profiles 2" << endl;
+    for (i=0; i<otuinfo.size(); ++i){
+      if (otuinfo[i].seqs.size()==1) continue;
+      for (j=1; j<otuinfo[i].seqs.size() && j<100; ++j)
+        cout << i << " " << j << " " << 1 << " " << dist_nogapsingle_compressed(arr[otuinfo[i].seqs[0]],arr[otuinfo[i].seqs[j]],seqlen) << " " << dist_nogapsingle_short_compressed(arr[otuinfo[i].seqs[0]],arr[otuinfo[i].seqs[j]],kinit,kinit+winlen) << endl;
+
+      for (j=i+1; j<otuinfo.size() && j<i+100; ++j){
+        if (otuinfo[j].seqs.size()==1) continue;
+        cout << i << " " << j << " " << 0 << " " << dist_nogapsingle_compressed(arr[otuinfo[i].seqs[0]],arr[otuinfo[j].seqs[0]],seqlen) << " " << dist_nogapsingle_short_compressed(arr[otuinfo[i].seqs[0]],arr[otuinfo[j].seqs[0]],kinit,kinit+winlen) << endl;
+      }
+    }
+  } else {
     cout << "# validating short sequence placement" << endl;
     for (i=0; i<otuinfo.size(); ++i){
       if (otuinfo[i].seqs.size()>1)
@@ -1479,7 +1716,7 @@ int emain()
     matchinfo.init(varr.size());
 
 //    for (k=0; k+winlen<seqlen; k+=20){
-    k=300;
+    k=kinit;
     {
       cout << "## k " << k << endl;
       for (i=0; i<ncpus; ++i)

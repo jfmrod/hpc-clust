@@ -160,6 +160,8 @@ int emain()
   estr dfile;
   float t=0.90;
   int ncpus=1;
+  bool ignoreUnique=false;
+  epregister(ignoreUnique);
   epregister(t);
   epregister(ncpus);
   epregister(ofile);
@@ -195,19 +197,25 @@ int emain()
 
   ebasicstrhashof<int> duphash;
   ebasicstrhashof<int>::iter it;
-  duphash.reserve(arr.size());
   eintarray uniqind;
   earray<eintarray> dupslist;
-  for (i=0; i<arr.size(); ++i){
-    if (i%(arr.size()/10)==0)
-      fprintf(stderr,"\r%li/%i",i,arr.size());
-    it=duphash.get(arr.values(i));
-    if (it==duphash.end())
-      { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
-    else 
-      dupslist[it.value()].add(i);
+  if (!ignoreUnique){
+    duphash.reserve(arr.size());
+    for (i=0; i<arr.size(); ++i){
+      if (i%(arr.size()/10)==0)
+        fprintf(stderr,"\r%li/%i",i,arr.size());
+      it=duphash.get(arr.values(i));
+      if (it==duphash.end())
+        { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
+      else 
+        dupslist[it.value()].add(i);
+    }
+    fprintf(stderr,"\n");
+  }else{
+    uniqind.init(arr.size());
+    for (i=0; i<uniqind.size(); ++i)
+      uniqind[i]=i;
   }
-  fprintf(stderr,"\n");
   cout << endl;
   cout << "# unique seqs: " << uniqind.size() << endl;
 

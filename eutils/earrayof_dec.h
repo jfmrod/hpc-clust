@@ -109,7 +109,7 @@ class earrayof : public ebasearrayof
   void remove(int i);
   inline void erase(int i) { remove(i); }
   inline void rem(int i)   { remove(i); }
-  inline void del(int i)   { remove(i); }
+  inline void del(int i,int l=-1)   { if (i<0) i+=size(); if (l<0) l+=size()-i+1; if (i>=size() || i<0 || l<=0) return; if (i+l>size()) l=size()-i; for (; l>0; --l) remove(i); }
 
   void clear();
 

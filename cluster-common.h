@@ -212,69 +212,6 @@ inline void dist_nogapsingle_inc(long int a1,long int a2,long int mask,int& coun
   }
 }
 
-inline float dist_nogapsingle_compressed(const estr& s1,const estr& s2,int seqlen) // count a continuous gap mismatch as a single mismatch, gap-gap does not count
-{
-  int gapmiss=0;
-  int len=seqlen;
-  int count=0;
-  long int *ep1=(long int*)(s1._str)+MIN(s1._strlen/8,seqlen/16);
-  long int *p1=(long int*)(s1._str);
-  long int *p2=(long int*)(s2._str);
-
-  for (; p1<ep1; ++p1,++p2){
-    dist_nogapsingle_inc(*p1,*p2,b4_m0,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m1,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m2,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m3,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m4,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m5,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m6,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m7,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m8,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m9,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m10,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m11,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m12,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m13,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m14,count,len,gapmiss);
-    dist_nogapsingle_inc(*p1,*p2,b4_m15,count,len,gapmiss);
-  }
-
-  switch (seqlen%16){
-   case 15:
-    dist_nogapsingle_inc(*p1,*p2,b4_m14,count,len,gapmiss);
-   case 14:
-    dist_nogapsingle_inc(*p1,*p2,b4_m13,count,len,gapmiss);
-   case 13:
-    dist_nogapsingle_inc(*p1,*p2,b4_m12,count,len,gapmiss);
-   case 12:
-    dist_nogapsingle_inc(*p1,*p2,b4_m11,count,len,gapmiss);
-   case 11:
-    dist_nogapsingle_inc(*p1,*p2,b4_m10,count,len,gapmiss);
-   case 10:
-    dist_nogapsingle_inc(*p1,*p2,b4_m9,count,len,gapmiss);
-   case 9:
-    dist_nogapsingle_inc(*p1,*p2,b4_m8,count,len,gapmiss);
-   case 8:
-    dist_nogapsingle_inc(*p1,*p2,b4_m7,count,len,gapmiss);
-   case 7:
-    dist_nogapsingle_inc(*p1,*p2,b4_m6,count,len,gapmiss);
-   case 6:
-    dist_nogapsingle_inc(*p1,*p2,b4_m5,count,len,gapmiss);
-   case 5:
-    dist_nogapsingle_inc(*p1,*p2,b4_m4,count,len,gapmiss);
-   case 4:
-    dist_nogapsingle_inc(*p1,*p2,b4_m3,count,len,gapmiss);
-   case 3:
-    dist_nogapsingle_inc(*p1,*p2,b4_m2,count,len,gapmiss);
-   case 2:
-    dist_nogapsingle_inc(*p1,*p2,b4_m1,count,len,gapmiss);
-   case 1:
-    dist_nogapsingle_inc(*p1,*p2,b4_m0,count,len,gapmiss);
-  }
-  return((float)count/(float)len);
-}
-
 inline void dist_tamura_inc(long int a1,long int a2,long int mask,int& P,int& Q,int& GC1,int& GC2,int& len){
   if ((a1&mask)==mask || (a2&mask)==mask)
     --len;
@@ -757,6 +694,72 @@ inline float dist_nogap_compressed(const estr& s1,const estr& s2,int seqlen)
   }
   return((float)count/(float)len);
 }
+
+
+inline float dist_nogapsingle_compressed(const estr& s1,const estr& s2,int seqlen) // count a continuous gap as a single mismatch, gap-gap does not count
+{
+  int gapmiss=0;
+  int len=seqlen;
+  int count=0;
+  long int *ep1=(long int*)(s1._str)+MIN(s1._strlen/8,seqlen/16);
+  long int *p1=(long int*)(s1._str);
+  long int *p2=(long int*)(s2._str);
+  for (; p1<ep1; ++p1,++p2){
+    dist_nogapsingle_inc(*p1,*p2,b4_m0,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m1,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m2,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m3,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m4,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m5,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m6,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m7,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m8,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m9,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m10,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m11,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m12,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m13,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m14,count,len,gapmiss);
+    dist_nogapsingle_inc(*p1,*p2,b4_m15,count,len,gapmiss);
+  }
+
+  switch (seqlen%16){
+   case 15:
+    dist_nogapsingle_inc(*p1,*p2,b4_m14,count,len,gapmiss);
+   case 14:
+    dist_nogapsingle_inc(*p1,*p2,b4_m13,count,len,gapmiss);
+   case 13:
+    dist_nogapsingle_inc(*p1,*p2,b4_m12,count,len,gapmiss);
+   case 12:
+    dist_nogapsingle_inc(*p1,*p2,b4_m11,count,len,gapmiss);
+   case 11:
+    dist_nogapsingle_inc(*p1,*p2,b4_m10,count,len,gapmiss);
+   case 10:
+    dist_nogapsingle_inc(*p1,*p2,b4_m9,count,len,gapmiss);
+   case 9:
+    dist_nogapsingle_inc(*p1,*p2,b4_m8,count,len,gapmiss);
+   case 8:
+    dist_nogapsingle_inc(*p1,*p2,b4_m7,count,len,gapmiss);
+   case 7:
+    dist_nogapsingle_inc(*p1,*p2,b4_m6,count,len,gapmiss);
+   case 6:
+    dist_nogapsingle_inc(*p1,*p2,b4_m5,count,len,gapmiss);
+   case 5:
+    dist_nogapsingle_inc(*p1,*p2,b4_m4,count,len,gapmiss);
+   case 4:
+    dist_nogapsingle_inc(*p1,*p2,b4_m3,count,len,gapmiss);
+   case 3:
+    dist_nogapsingle_inc(*p1,*p2,b4_m2,count,len,gapmiss);
+   case 2:
+    dist_nogapsingle_inc(*p1,*p2,b4_m1,count,len,gapmiss);
+   case 1:
+    dist_nogapsingle_inc(*p1,*p2,b4_m0,count,len,gapmiss);
+  }
+  return((float)count/(float)len);
+}
+
+
+
 
 
 inline void dist_nogap_inc_dash(long int a1,long int a2,long int mask,long int dash,int& count,int& len){

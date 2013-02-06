@@ -388,9 +388,13 @@ void eparser::parseArgs(int& _argvc,char** &_argv)
   newargs+=(*argv)[0]; 
  
   int i;
+
+  bool process=true;
   for (i=1; i<*argvc; ++i){
-    if ((*argv)[i][0]!='-' && (*argv)[i][0]!='+')
+    if (!process || ((*argv)[i][0]!='-' && (*argv)[i][0]!='+'))
       { newargs+=(*argv)[i]; continue; }
+
+    if (!strcmp("--",(*argv)[i])) { process=false; continue; } // do not parse arguments after a -- command
 
     fcmd=(*argv)[i];
     fargs="";

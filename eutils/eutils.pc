@@ -6,5 +6,5 @@ includedir=${prefix}/include
 Name: easycpp.eutils
 Description: The easy programming library
 Version: 1.0.0
-Libs: eutils/libeutils.a -lreadline -lmpi_cxx -lmpi -lrt  -lopen-rte -lopen-pal -libverbs -lnsl -lutil -lm -ldl -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline -lreadline -lmpi_cxx -lmpi -lrt  -lopen-rte -lopen-pal -libverbs -lnsl -lutil -lm -ldl -L/home/jfmrod/usr/lib -lgsl -lgslcblas -lm -L/home/jfmrod/usr/lib -lncurses -lgmp -lgmpxx -lmpi -lapophenia -lz -lreadline
-Cflags: -I${prefix}/include -funroll-loops -O2 -static -pthread -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include -I/home/jfmrod/usr/include/ncurses -I/include
+Libs: eutils/libeutils.a -lreadline -lmpi_cxx -lrt   -ldl -lgsl -lgslcblas -lm -lncurses -ldl -L/usr/lib64/openmpi/1.4-gcc/lib -lmpi   -lmpi -lz -lreadline -lreadline -lmpi_cxx -lrt   -ldl -lgsl -lgslcblas -lm -lncurses -ldl -L/usr/lib64/openmpi/1.4-gcc/lib -lmpi   -lmpi -lz -lreadline
+Cflags: -I${prefix}/include -O3 -pthread -I/usr/include  -I/include -m64 -I/usr/lib64/openmpi/1.4-gcc/include  

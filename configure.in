@@ -91,6 +91,8 @@ if test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
   echo "Compiling MPI library support"
   AC_DEFINE_UNQUOTED(HAVE_MPILIB,1,[define when MPI library exists])
   LIBS="$LIBS -lmpi"
+  AC_CHECK_LIB(mpi_cxx,main)
+  AC_CHECK_LIB(mpi++,main)
 fi
 AM_CONDITIONAL(HAVE_MPILIB, test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno")
 

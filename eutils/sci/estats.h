@@ -43,6 +43,9 @@ class ebin2
   edoublearray ybin;
   eintarray    ycount;
   int maxcount;
+
+  double xmin;
+  double xmax;
   
   eintarray iv;
   edoublearray xvalues;

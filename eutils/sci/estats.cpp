@@ -107,7 +107,7 @@ void ebin2::calc(int nbins)
 
   iv=iheapsort(xvalues);
   xbin.init(nbins);
-  double xmin,xmax,xlen;
+  double xlen;
   xmin=xvalues[iv[0]];
   xmax=xvalues[iv[iv.size()-1]];
   xlen=(xmax-xmin);

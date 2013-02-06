@@ -32,7 +32,7 @@ class eseqclustersingle
   void merge(int x,int y,float dist);
   void init(int count,const estr& ofile,const estr& seqsfile,const earray<eintarray>& dupslist);
   void add(int ind);
-  void add(eseqdist& sdist);
+  void add(const eseqdist& sdist);
 
 //  int update(ebasicarray<eseqdist>& dists,int s);
 

@@ -652,7 +652,7 @@ void nodeMakeDists(int count,estr& msg)
   }
   *(uint32_t*)msg._str=i;
   msg._strlen=sizeof(uint32_t)*3*i+sizeof(uint32_t);
-  cerr << "# sent " << i << " dists" << endl;
+//  cerr << "# sent " << i << " dists" << endl;
 }
 
 void nodeSendDistances(edcBaseClient& client)
@@ -749,7 +749,7 @@ void doStartClient(edcBaseClient& client)
 
   int pipefd[2];
   ldieif(pipe(pipefd)!=0,"creating pipe");
-  dup2(pipefd[1],1);
+//  dup2(pipefd[1],1);
 
 //  dynamic_cast<edcmpi&>(client).outpipe=pipefd[0];
 //  getSystem()->addReadCallback(client.outpipe,efunc(client,&edcclient::sendOutput),evararray());
@@ -807,11 +807,16 @@ int emain()
   cout << "# " << date() << endl;
   cout << "# " << args2str(argvc,argv) << endl;
 
+  initLookupTable();
+
   dfunc.choice=0;
 //  dfunc.add("gap",gap_calc_dists);
 //  dfunc.add("gap+noise",gapnoise_calc_dists);
   dfunc.add("gap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+  dfunc.add("gap2",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed2>);
   dfunc.add("nogap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+  dfunc.add("nogap2",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>);
+  dfunc.add("nogapsingle",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
   dfunc.add("tamura",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
 //  dfunc.add("gap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
 //  dfunc.add("nogap+noise",t_calc_dists_noise<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);

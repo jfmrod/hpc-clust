@@ -3,6 +3,82 @@
 
 eseqclusterData::eseqclusterData(): count(0) {}
 
+void eseqclusterData::inferTaxonomy(estrhashof<eseq>& seqs)
+{
+//  eintarray otuarr;
+//  otuarr.init(count);
+
+  earray<estrarray> otutax;
+  otutax.init(count);
+
+  earray<eintarray> otumembers;
+  otumembers.init(count);
+
+  int i,j;
+  for (i=0; i<otumembers.size(); ++i){
+//    otuarr[i]=i;
+    otumembers[i].add(i);
+    if (seqs.values(i).tax.len()){
+      otutax[i].add("root");
+      otutax[i]+=seqs.values(i).tax.explode(";");
+//      seqs.values(i).itax=otutax[i][otutax[i].size()-1];
+    }
+  }
+
+  int k,l;
+  // point at the seq we merged with
+  for (i=0; i<mergearr.size(); ++i){
+//    otuarr[mergearr[i].y]=mergearr[i].x;
+    if (otutax[mergearr[i].y].size()==0 && otutax[mergearr[i].x].size()>0){
+      // all members of otu Y should get their first inferred taxonomy
+      eintarray& ymembers(otumembers[mergearr[i].y]);
+      for (j=0; j<ymembers.size(); ++j)
+        seqs[ymembers[j]].itax=estr("(")+mergearr[i].dist+")";
+    } else if (otutax[mergearr[i].y].size()>0 && otutax[mergearr[i].x].size()==0){
+      eintarray& xmembers(otumembers[mergearr[i].x]);
+      for (j=0; j<xmembers.size(); ++j)
+        seqs[xmembers[j]].itax=estr("(")+mergearr[i].dist+")";
+      otutax[mergearr[i].x]=otutax[mergearr[i].y];
+    } else if (otutax[mergearr[i].y].size()>0 && otutax[mergearr[i].x].size()>0){
+      for (j=1; j<otutax[mergearr[i].y].size() && j<otutax[mergearr[i].x].size() && otutax[mergearr[i].y][j]==otutax[mergearr[i].x][j]; ++j);
+
+      if (j<otutax[mergearr[i].y].size()){
+        estr tax;
+        for (l=j; l<otutax[mergearr[i].y].size(); ++l)
+          tax+=estr(";(")+mergearr[i].dist+")"+otutax[mergearr[i].y][l];
+        eintarray& ymembers(otumembers[mergearr[i].y]);
+        for (k=0; k<ymembers.size(); ++k)
+          seqs[ymembers[k]].itax=tax+seqs[ymembers[k]].itax;
+//        otutax[mergearr[i].y].del(j);
+      }
+      if (j<otutax[mergearr[i].x].size()){
+        estr tax;
+        for (l=j; l<otutax[mergearr[i].x].size(); ++l)
+          tax+=estr(";(")+mergearr[i].dist+")"+otutax[mergearr[i].x][l];
+        eintarray& xmembers(otumembers[mergearr[i].x]);
+        for (k=0; k<xmembers.size(); ++k)
+          seqs[xmembers[k]].itax=tax+seqs[xmembers[k]].itax;
+        otutax[mergearr[i].x].del(j);
+      }
+    }
+    otumembers[mergearr[i].x]+=otumembers[mergearr[i].y];
+    otumembers[mergearr[i].y].clear();
+  }
+  for (j=0; j<otumembers.size(); ++j){
+    if (otutax[j].size()>1){
+      estr tax;
+      for (l=1; l<otutax[j].size(); ++l)
+        tax+=estr(";()")+otutax[j][l];
+      eintarray& members(otumembers[j]);
+      for (k=0; k<members.size(); ++k)
+        seqs[members[k]].itax=tax+seqs[members[k]].itax;
+    }
+  }
+  for (i=0; i<seqs.size(); ++i)
+    seqs[i].itax.del(0,1);
+}
+
+
 int eseqclusterData::getOTU(float dist,eintarray& otuarr)
 {
   int i,j;
@@ -58,6 +134,71 @@ int eseqclusterData::getOTU(float dist,earray<eintarray>& otus,int size)
     otus[otuind[j]].add(i);
   }
   return(otus.size());
+}
+
+int eseqclusterData::getTree(const efloatarray& dists,earray<earray<eintarray> >& otus,earray<eintarray>& otusanc,int size)
+{
+  if (dists.size()==0) return(0);
+
+  eintarray otuarr;
+  int i,j,k;
+  otuarr.init(size);
+  for (i=0; i<size; ++i)
+    otuarr[i]=i;
+
+  otus.init(dists.size());
+  otusanc.init(dists.size());
+  // point at the seq we merged with
+  for (k=0; k<mergearr.size() && mergearr[k].dist>=dists[0]; ++k)
+    otuarr[mergearr[k].y]=mergearr[k].x;
+
+  eintarray otuind,otuind2;
+  otuind.init(otuarr.size(),-1);
+
+  // translate all the merged seq ids to the last seq id of the otu
+  for (i=0; i<otuarr.size(); ++i){
+    for (j=otuarr[i]; j!=otuarr[j]; j=otuarr[j]);
+    otuarr[i]=j;
+    if (otuind[j]==-1){
+      otuind[j]=otus[0].size();
+      otus[0].add(eintarray());
+    }
+    otus[0][otuind[j]].add(i);
+  }
+
+  otusanc[0].init(otus[0].size());
+  for (i=0; i<otusanc[0].size(); ++i)
+    otusanc[0][i]=i;
+  int l;
+  eintarray otuarr2;
+
+  for (l=1; l<dists.size(); ++l){
+    otusanc[l].init(otus[0].size());
+
+    otuarr2.init(otus[l-1].size());
+    for (i=0; i<otuarr2.size(); ++i)
+      otuarr2[i]=i;
+
+    for (; k<mergearr.size() && mergearr[k].dist>=dists[l]; ++k)
+      otuarr2[otusanc[l-1][otuind[otuarr[mergearr[k].y]]]]=otusanc[l-1][otuind[otuarr[mergearr[k].x]]];
+
+    otuind2.init(otuarr2.size(),-1);
+    for (i=0; i<otuarr2.size(); ++i){
+      for (j=otuarr2[i]; j!=otuarr2[j]; j=otuarr2[j]);
+      otuarr2[i]=j;
+      if (otuind2[j]==-1){
+        otuind2[j]=otus[l].size();
+        otus[l].add(eintarray());
+      }
+      otus[l][otuind2[j]].add(i);
+    }
+
+    for (i=0; i<otus[0].size(); ++i){
+      j=otuarr2[otusanc[l-1][i]];
+      otusanc[l][i]=otuind2[j];
+    }
+  }
+  return(otus[0].size());
 }
 
 
@@ -125,10 +266,10 @@ void eseqclusterData::getCluster(const eintarray& seqs, eintarray& seqcluster,fl
     for (k=seqs[j]; k!=otuarr[k]; k=otuarr[k]);
     otuarr[seqs[j]]=k;
   }
-  estr str;
-  for (j=0; j<seqs.size(); ++j)
-    str+=","+estr(otuarr[seqs[j]]);
-  cout << str.substr(1) << endl; 
+//  estr str;
+//  for (j=0; j<seqs.size(); ++j)
+//    str+=","+estr(otuarr[seqs[j]]);
+//  cout << str.substr(1) << endl; 
   cdist=-1.0;
 }
 
