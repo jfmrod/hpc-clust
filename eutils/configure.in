@@ -56,44 +56,51 @@ AM_INIT_AUTOMAKE("eutils","1.0.0")
 
 AC_CHECK_LIB(rt,main)
 
-AC_ARG_WITH(mpi,[AS_HELP_STRING([--with-mpi@<:@=path@:>@],[Specify path to MPI library installation.])])
+AC_ARG_WITH(mpi,[AS_HELP_STRING([--with-mpi@<:@=path@:>@],[Specify path to MPI library installation.])],,with_mpi=yes)
 if test "x$with_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
   CXXFLAGS="${CXXFLAGS} -I${with_mpi}/include"
   LDFLAGS="${LDFLAGS} -L${with_mpi}/lib"
 fi
-AC_CHECK_LIB(mpi,main,,no_mpi=yes)
-if test "x$no_mpi" != "xyes"; then
-  AC_CHECK_HEADER([mpi.h],,no_mpi=yes)
+AC_CHECK_PROG([MPICPP],[mpic++],[/usr/bin/mpic++],[no])
+if test "x$MPICPP" != "xno"; then
+  LDFLAGS="${LDFLAGS} `mpic++ --showme:links`"
+  CXXFLAGS="${CXXFLAGS} `mpic++ --showme:compile`"
+else
   if test "x$no_mpi" = "xyes"; then
-    no_mpi=""
-    AC_CHECK_HEADER([mpi/mpi.h],,no_mpi=yes)
-    if test "$x$no_mpi" != "xyes"; then
-      CXXFLAGS="${CXXFLAGS} -I/usr/include/mpi"
+    PKG_CHECK_MODULES(MPI,"openmpi-1.4-gcc",no_mpi="")
+    LIBS="${LIBS} $MPI_LIBS"
+    CXXFLAGS="${CXXFLAGS} $MPI_CFLAGS"
+  else
+    AC_CHECK_LIB(mpi,main,,no_mpi=yes)
+    if test "x$no_mpi" != "xyes"; then
+      AC_CHECK_HEADER([mpi.h],,no_mpi=yes)
+      if test "x$no_mpi" = "xyes"; then
+        no_mpi=""
+        AC_CHECK_HEADER([mpi/mpi.h],,no_mpi=yes)
+        if test "$x$no_mpi" != "xyes"; then
+          CXXFLAGS="${CXXFLAGS} -I/usr/include/mpi"
+        fi
+      fi
     fi
   fi
 fi
-if test "x$no_mpi" = "xyes"; then
-  PKG_CHECK_MODULES(MPI,"openmpi-1.4-gcc",no_mpi="")
-  LIBS="${LIBS} $MPI_LIBS"
-  CXXFLAGS="${CXXFLAGS} $MPI_CFLAGS"
+if test "x$no_mpi" = "xyes" -a "x$with_mpi" != "xno"; then
+  AC_MSG_ERROR([
+*** MPI library not found.
+*** The MPI library is needed to compile the MPI version of hpc-clust ("hpc-clust-mpi") program.
+*** If you do *not* need the MPI version of hpc-clust, you can explicitly disable it with ./configure --without-mpi.
+*** If you want the MPI version to be compiled, you can try installing the MPI library using the package manager in your system or by downloading and installing manually (http://www.open-mpi.org/).
+*** Some examples of commands for packet managers are: apt-get install libopenmpi (on Debian, Ubuntu, ...), yum install openmpi (on Redhat, Rocks, ...).
+*** If you know that the MPI library is installed, please make sure that the libmpi.a (or libmpi.so) library can be found in /usr/lib, and that the mpi.h header can be found in /usr/include.
+*** If the files exist elsewhere please use ./configure CXXFLAGS="-I/include/path/to/mpi.h_directory/" LDFLAGS="-L/library/path/to/libmpi.a_directory/", or create symbolic links to the correct files in the /usr/include and /usr/lib directories.])
 fi
+
 if test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
   echo "Compiling MPI library support"
+  AC_DEFINE_UNQUOTED(HAVE_MPILIB,1,[define when MPI library exists])
   LIBS="$LIBS -lmpi"
   AC_CHECK_LIB(mpi_cxx,main)
   AC_CHECK_LIB(mpi++,main)
-  AC_DEFINE_UNQUOTED(HAVE_MPILIB,1,[define when MPI library exists])
-else
-  if test "x$no_mpi" = "xyes" -a "x$with_mpi" != "xno" -a "x$with_mpi" != "x"; then
-    AC_MSG_ERROR([
-*** MPI library support requested but not found.
-*** If you do *not* need the MPI version of hpc-clust, you can explicitly disable it with ./configure --without-mpi.
-*** If you want the MPI support to be compiled, you need to install an MPI library using the package manager in your system or by downloading and installing manually (http://www.open-mpi.org/).
-*** Some examples of commands for packet managers are: apt-get install libopenmpi (on Debian, Ubuntu, ...), yum install openmpi (on Redhat, Rocks, ...).
-*** If you know that the MPI library is installed, please make sure that the libmpi.a (or libmpi.so) library can be found in /usr/lib, and that the mpi.h header can be found in /usr/include.
-*** If the files were installed elsewhere you can specify where with: ./configure --with-mpi=/path/to/mpi/location/, or use ./configure CXXFLAGS="-I/include/path/to/mpi.h_directory/" LDFLAGS="-L/library/path/to/libmpi.a_directory/". You can also create symbolic links to the correct files in the /usr/include and /usr/lib directories.
-    ])
-  fi
 fi
 AM_CONDITIONAL(HAVE_MPILIB, test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno")
 

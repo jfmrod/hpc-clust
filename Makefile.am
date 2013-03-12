@@ -5,7 +5,8 @@ if HAVE_MPILIB
   MPIBIN=hpc-clust-mpi
 endif
 
-man_MANS=man/hpc-clust.1
+man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
+dist_man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
 
 bin_PROGRAMS=hpc-clust $(MPIBIN)
 

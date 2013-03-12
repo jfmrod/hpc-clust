@@ -54,11 +54,11 @@ while test $# -gt 0; do
 	;;
 
     --cxxflags)
-       	echo -I${prefix}/include -O3 -pthread -I/include 
+       	echo -I${prefix}/include -O3 -pthread -I/usr/local/include -pthread 
        	;;
 
     --libs)
-       	echo  -L/lib eutils/libeutils.a -lmpi -lrt   -lmpi -lz
+       	echo  -pthread -L/usr/local/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -ldl -Wl,--export-dynamic -lnsl -lutil -lm -ldl eutils/libeutils.a -lmpi++ -lmpi_cxx -lrt   -lmpi -lz
        	;;
 
     *)

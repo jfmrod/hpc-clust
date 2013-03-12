@@ -12,23 +12,23 @@
 /* #undef HAVE_GMPLIB */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#ifndef EUTILS_HAVE_INTTYPES_H 
-#define EUTILS_HAVE_INTTYPES_H  1 
-#endif
+/* #undef HAVE_INTTYPES_H */
 
 /* define when libgsl exists */
 /* #undef HAVE_LIBGSL */
 
 /* Define to 1 if you have the `mpi' library (-lmpi). */
-#ifndef EUTILS_HAVE_LIBMPI 
-#define EUTILS_HAVE_LIBMPI  1 
-#endif
+/* #undef HAVE_LIBMPI */
 
 /* Define to 1 if you have the `mpi_cxx' library (-lmpi_cxx). */
-/* #undef HAVE_LIBMPI_CXX */
+#ifndef EUTILS_HAVE_LIBMPI_CXX 
+#define EUTILS_HAVE_LIBMPI_CXX  1 
+#endif
 
 /* Define to 1 if you have the `mpi++' library (-lmpi++). */
-/* #undef HAVE_LIBMPI__ */
+#ifndef EUTILS_HAVE_LIBMPI__ 
+#define EUTILS_HAVE_LIBMPI__  1 
+#endif
 
 /* define when libmysql exists */
 /* #undef HAVE_LIBMYSQL */
@@ -45,9 +45,7 @@
 #endif
 
 /* Define to 1 if you have the <memory.h> header file. */
-#ifndef EUTILS_HAVE_MEMORY_H 
-#define EUTILS_HAVE_MEMORY_H  1 
-#endif
+/* #undef HAVE_MEMORY_H */
 
 /* define when mpfr library exists */
 /* #undef HAVE_MPFRLIB */
@@ -74,39 +72,25 @@
 #endif
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#ifndef EUTILS_HAVE_STDINT_H 
-#define EUTILS_HAVE_STDINT_H  1 
-#endif
+/* #undef HAVE_STDINT_H */
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#ifndef EUTILS_HAVE_STDLIB_H 
-#define EUTILS_HAVE_STDLIB_H  1 
-#endif
+/* #undef HAVE_STDLIB_H */
 
 /* Define to 1 if you have the <strings.h> header file. */
-#ifndef EUTILS_HAVE_STRINGS_H 
-#define EUTILS_HAVE_STRINGS_H  1 
-#endif
+/* #undef HAVE_STRINGS_H */
 
 /* Define to 1 if you have the <string.h> header file. */
-#ifndef EUTILS_HAVE_STRING_H 
-#define EUTILS_HAVE_STRING_H  1 
-#endif
+/* #undef HAVE_STRING_H */
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#ifndef EUTILS_HAVE_SYS_STAT_H 
-#define EUTILS_HAVE_SYS_STAT_H  1 
-#endif
+/* #undef HAVE_SYS_STAT_H */
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#ifndef EUTILS_HAVE_SYS_TYPES_H 
-#define EUTILS_HAVE_SYS_TYPES_H  1 
-#endif
+/* #undef HAVE_SYS_TYPES_H */
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#ifndef EUTILS_HAVE_UNISTD_H 
-#define EUTILS_HAVE_UNISTD_H  1 
-#endif
+/* #undef HAVE_UNISTD_H */
 
 /* define when zlib exists */
 #ifndef EUTILS_HAVE_ZLIB 
@@ -153,9 +137,7 @@
 #endif
 
 /* Define to 1 if you have the ANSI C header files. */
-#ifndef EUTILS_STDC_HEADERS 
-#define EUTILS_STDC_HEADERS  1 
-#endif
+/* #undef STDC_HEADERS */
 
 /* Version number of package */
 #ifndef EUTILS_VERSION 
