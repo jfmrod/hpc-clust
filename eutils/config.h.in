@@ -1,16 +1,7 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
-/* define when apophenia library exists */
-#undef HAVE_APOLIB
-
-/* define when gnu mp library exists */
-#undef HAVE_GMPLIB
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* define when libgsl exists */
-#undef HAVE_LIBGSL
 
 /* Define to 1 if you have the `mpi' library (-lmpi). */
 #undef HAVE_LIBMPI
@@ -21,23 +12,11 @@
 /* Define to 1 if you have the `mpi++' library (-lmpi++). */
 #undef HAVE_LIBMPI__
 
-/* define when libmysql exists */
-#undef HAVE_LIBMYSQL
-
-/* define when ncurses exists */
-#undef HAVE_LIBNCURSES
-
-/* Define to 1 if you have the `readline' library (-lreadline). */
-#undef HAVE_LIBREADLINE
-
 /* Define to 1 if you have the `rt' library (-lrt). */
 #undef HAVE_LIBRT
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* define when mpfr library exists */
-#undef HAVE_MPFRLIB
 
 /* define when MPI library exists */
 #undef HAVE_MPILIB
@@ -47,9 +26,6 @@
 
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
-
-/* define when readline.h exists */
-#undef HAVE_READLINE_H
 
 /* define when regex exists */
 #undef HAVE_REGEX
@@ -93,6 +69,9 @@
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
@@ -108,6 +87,3 @@
 
 /* Version number of package */
 #undef VERSION
-
-/* include dynamic linking routines */
-#undef WITH_DL
