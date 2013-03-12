@@ -179,8 +179,10 @@ Would generate the clusters produced at the 97% identity threshold from the sing
 merge file.
 
 
-For further information contact: Joao F. Matias Rodrigues <jfmrod@konceptfx.com>
-
+FAQ
+=================================================
+Frequently asked questions and other documentation can be found at
+http://www.konceptfx.com/hpc-clust/faq
 
 
 ACKNOWLEDGMENTS
@@ -188,3 +190,7 @@ ACKNOWLEDGMENTS
 
 Sebastian Schmidt
 
+
+
+
+For further information contact: Joao F. Matias Rodrigues <jfmrod@konceptfx.com>
