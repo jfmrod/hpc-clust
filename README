@@ -1,5 +1,5 @@
 
-HPC-CLUST
+HPC-CLUST v1.0.0
 =================================================
 
 HPC-CLUST is a set of tools designed to cluster large numbers (1 million or more)
@@ -51,29 +51,17 @@ your home directory (i.e.: $HOME/usr/bin/hpc-clust), after you type
 the command "make install".
 
 
-ii) Windows
-
-To install HPC-CLUST on a windows machine simply unpack the package
-contents and run the executables from a command line prompt.
-
-
-HPC-CLUST, HPC-CLUST-MPI, and HPC-CLUST-DIST
+HPC-CLUST, HPC-CLUST-MPI
 =================================================
 
-Three programs are provided in the HPC-CLUST package.
+Two programs are provided in the HPC-CLUST package.
 
 When running on a single machine you should use HPC-CLUST. It is multi-threaded
 so it can make use of several processors if you run it on a multi-core computer.
 
-HPC-CLUST-MPI, and HPC-CLUST-DIST, are the distributed computing versions of
+HPC-CLUST-MPI is the distributed computing version of
 HPC-CLUST to be used on a cluster of computers. HPC-CLUST-MPI uses the MPI library
 to automatically setup the communication between master and slave instances.
-HPC-CLUST-DIST requires the user to start the program on a master machine (where the
-clustering takes place), and other instances of the program on the slave machines
-where the distance computations are performed. The slave machines need to be provided
-with the ip address and port where the master program is running at. While it is
-a little less convenient than the MPI version, this approach is more versatile
-and useful in some cases.
 
 
 USING HPC-CLUST
@@ -152,28 +140,14 @@ thread per node, in this manner the sequence data is shared between the threads.
 increase the number of threads to use in each node by specifying the -nthreads <number_threads>
 argument to hpc-clust-mpi.
 
-
-USING HPC-CLUST-DIST
+EXAMPLE MERGE FILE
 =================================================
 
-HPC-CLUST-DIST works like HPC-CLUST-MPI, but does not require the MPI library, and can be used
-without a queuing system. To start a distributed clustering of sequences using HPC-CLUST-DIST
-you need to start HPC-CLUST-DIST on a master computer, for example to start the clustering
-with 10 slave computers and 1 master:
-
-hpc-clust-dist -nodes 10 -sl true alignedseqs.sto
-
-Make note of the ip address and port of the master program, which is printed when it starts.
-Then, on the slave nodes, you simply type:
-
-hpc-clust-dist --host <ipaddress:port> alignedseqs.sto
-
-At this point, each slave computer will connect to the master program.
-Once, all slave programs are connected, the clustering will start and the output will be
-written in the master computer.
 
 
-PRODUCING CLUSTERS FROM THE MERGE RESULTS
+
+
+OBTAINING CLUSTERS FROM THE MERGE RESULTS
 =================================================
 
 Once the merge result files (.sl,.cl,.al) have been computed, you can produce the clusters
@@ -185,4 +159,4 @@ Would generate the clusters produced at the 97% identity threshold from the sing
 merge file.
 
 
-
+For further information contact: Joao F. Matias Rodrigues <jfmrod@konceptfx.com>

@@ -70,16 +70,20 @@ void initLookupTable()
       lt_nogap_init(i,j,lt_nogap_len,lt_nogap_count,0xf00u);
       lt_nogap_init(i,j,lt_nogap_len,lt_nogap_count,0xf000u);
 
+/*
       lt_tamura_len[i&j]=0;
       lt_tamura_p[i^j]=0;
       lt_tamura_q[i^j]=0;
       lt_tamura_init(i,j,lt_tamura_len,lt_tamura_p,lt_tamura_q,0xfu);
+*/
     }
+/*
     lt_tamura_gc[i]=0;
     lt_tamura_gcinit(i,lt_tamura_gc,0xfu);
     lt_tamura_gcinit(i,lt_tamura_gc,0xf0u);
     lt_tamura_gcinit(i,lt_tamura_gc,0xf00u);
     lt_tamura_gcinit(i,lt_tamura_gc,0xf000u);
+*/
   }
 }
 

@@ -11,22 +11,11 @@
 #include "estr.h"
 #include "efile.h"
 #include "edir.h"
-#include "etable.h"
-#include "ecsv.h"
-#include "emysql.h"
 #include "etimer.h"
 
 #include "evarclassconstructor.h"
 #include "evarclasscout.h"
 #include "eparser.h"
-#include "eudl.h"
-//#include "efilesys.h"
-
-#include "ematrix.h"
-#include "vector2.h"
-#include "vector3.h"
-//#include "ethread.h"
-
 
 #include "eregexp.h"
 
@@ -34,7 +23,6 @@
 
 #include "ernd.h"
 #include "eparserinterpreter.h"
-#include "emodule.h"
 
 typedef unsigned int uint;
 
@@ -527,76 +515,6 @@ void epregisterCommon()
   epregisterFunc2(env,estrarray,());
   
 
-  epregisterClass(etable);
-  epregisterClassCout(etable);
-  epregisterClassSerializeMethod(etable);
-  epregisterClassMethod2(etable,operator[],evararray&,(int));
-  epregisterClassMethod2(etable,operator[],evararray&,(const estr&));
-  epregisterClassMethod(etable,row);
-  epregisterClassMethod(etable,filter);
-  epregisterClassMethod(etable,addfield);
-  epregisterClassMethod2(etable,add,void,(const estrarray&));
-  epregisterClassMethod2(etable,add,void,(const estr&,const evar&));
-  epregisterClassMethod(etable,size);
-  epregisterClassMethod(etable,clear);
-  epregisterClassMethod(etable,load);
-  epregisterClassMethod(etable,save);
-  epregisterClassProperty(etable,cols);
-  epregisterClassMethod2(erow,operator[],evar&,(int));
-  epregisterClassMethod2(erow,operator[],evar&,(const estr&));
-  epregisterClassMethod(erow,size);
-
-  epregisterFunc(loadWSV);
-
-
-  epregisterClass(evector2);
-  epregisterClassCout(evector2);
-  epregisterClassConstructor(evector2,(float,float));
-  epregisterClassProperty(evector2,x);
-  epregisterClassProperty(evector2,y);
-  epregisterClassMethod(evector2,len);
-  epregisterClassMethod(evector2,unit);
-  epregisterClassMethod(evector2,perp);
-  epregisterClassMethod(evector2,operator+);
-  epregisterClassMethod2(evector2,operator-,evector2,(const evector2&) const);
-  epregisterClassMethod(evector2,operator+=);
-  epregisterClassMethod(evector2,operator-=);
-  epregisterClassMethod2(evector2,operator*,float,(const evector2&) const);
-  epregisterClassMethod2(evector2,operator*,evector2,(float) const);
-  epregisterClassMethod(evector2,operator/);
-
-  epregisterClass(evector3);
-  epregisterClassCout(evector3);
-
-  epregisterClass(ematrix);
-  epregisterClassCout(ematrix);
-  epregisterClassMethod(ematrix,load);
-  epregisterClassMethod(ematrix,save);
-  epregisterClassMethod(ematrix,create);
-  epregisterClassMethod(ematrix,mulrow);
-  epregisterClassMethod(ematrix,addmulrow);
-  epregisterClassMethod(ematrix,swap);
-  epregisterClassMethod2(ematrix,operator(),double&,(int,int));
-  epregisterClassMethod2(ematrix,row,evector,(int) const);
-  epregisterClassMethod2(ematrix,col,evector,(int) const);
-  epregisterClassMethod2(ematrix,operator*,evector,(const evector&) const);
-  epregisterClassMethod2(ematrix,copytranspose,void,(const ematrix&));
-  epregisterClassProperty(ematrix,w);
-  epregisterClassProperty(ematrix,h);
-
-  epregisterClass(evector);
-  epregisterClassCout(evector);
-  epregisterClassMethod(evector,create);
-  epregisterClassMethod2(evector,operator(),double&,(int));
-  epregisterClassMethod2(evector,operator[],double&,(int));
-  epregisterClassMethod2(evector,operator*,evector,(const ematrix&) const);
-  epregisterClassMethod(evector,length);
-  epregisterClassProperty(evector,w);
-
-  epregisterClassConstructor(emysql,());
-  epregisterClassMethodD(emysql,connect,evararray("localhost","root","","",3306));
-  epregisterClassMethod(emysql,query);
-
   epregisterClassMethod(ernd,uniform);
 #ifdef EUTILS_HAVE_LIBGSL
   epregisterClassMethod(ernd,gamma);
@@ -605,32 +523,8 @@ void epregisterCommon()
   epregisterClassMethod(ernd,geometric);
 #endif
 
-  epregisterClassMethod(emresult,size);
-  epregisterClassMethod(emresult,clear);
-  epregisterClassMethod(emresult,load);
-  epregisterClassMethod(emresult,save);
-
   epregisterFunc2(grep,estr,(estr&,const eregexp&,int));
 
-  epregisterFunc(udl_load);
-
-  epregisterFunc(eigenvalues);
-  epregisterFunc(svd);
-  epregisterFunc(rref);
-  epregisterFunc(nullspace);
-  epregisterFunc(nullspacer);
-
-  epregisterFunc(sin);
-  epregisterFunc(cos);
-  epregisterFunc(tan);
-  epregisterFunc(asin);
-  epregisterFunc(acos);
-  epregisterFunc(atan);
-  epregisterFunc(sqrt);
-  epregisterFunc(log);
-  epregisterFunc(log2);
-  epregisterFunc(log10);
-  epregisterFunc(exp);
   epregisterFunc(sleep);
   epregisterFunc2(popen,efile,(const estr&));
   epregisterFunc2(system,void,(const estr&));
@@ -642,10 +536,6 @@ void epregisterCommon()
   epregisterFunc3(getParser(),varaddress,"addr");
   epregisterFunc2(serial,void,(const evar&,estr&));
   epregisterFunc2(unserial,evar,(const estr&));
-
-#ifdef WITH_DL
-  epregisterFunc(emodule_load);
-#endif
 
   epregister(rnd);
 #endif

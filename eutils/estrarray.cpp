@@ -1,6 +1,5 @@
-
+#include "evar.h"
 #include "estrarray.h"
-#include "etable.h"
 #include "efile.h"
 
 

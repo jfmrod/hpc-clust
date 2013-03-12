@@ -54,11 +54,11 @@ while test $# -gt 0; do
 	;;
 
     --cxxflags)
-       	echo -I${prefix}/include -O3 -pthread -I/usr/include  -I/include -m64 -I/usr/lib64/openmpi/1.4-gcc/include   
+       	echo -I${prefix}/include -O3 -pthread -I/include 
        	;;
 
     --libs)
-       	echo  -L/lib eutils/libeutils.a -lreadline -lmpi_cxx -lrt   -ldl -lgsl -lgslcblas -lm -lncurses -ldl -L/usr/lib64/openmpi/1.4-gcc/lib -lmpi   -lmpi -lz -lreadline
+       	echo  -L/lib eutils/libeutils.a -lmpi -lrt   -lmpi -lz
        	;;
 
     *)
