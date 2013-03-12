@@ -39,6 +39,7 @@ void eseqclusteravg::init(int count,const estr& filename,const estr& seqsfile,co
 {
   ofile.open(filename,"w");
   ofile.write("# seqsfile: "+seqsfile+"\n");
+  ofile.write("# OTU_count Merge_distance Merged_OTU_id1 Merged_OTU_id2\n");
   int i,j;
   incmaxdist=0.0;
   lastdist=0.0;

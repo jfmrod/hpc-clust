@@ -142,11 +142,29 @@ thread per node, in this manner the sequence data is shared between the threads.
 increase the number of threads to use in each node by specifying the -nthreads <number_threads>
 argument to hpc-clust-mpi.
 
-EXAMPLE MERGE FILE
+EXAMPLE MERGE FILE OUTPUT
 =================================================
 
+# seqsfile: aligned-archaea-seqs.sto
+# OTU_count Merge_distance Merged_OTU_id1 Merged_OTU_id2
+51094 1.0 37 38
+51093 1.0 37 12176
+51092 1.0 37 33214
+51091 1.0 42 79
+51090 1.0 42 2734
+51089 1.0 42 2746
+51088 1.0 42 2747
+51087 1.0 42 2748
+51086 1.0 42 2749
+51085 1.0 42 2750
+51084 1.0 42 2751
+...
 
-
+In the merge file output, each line indicates a merging event. For each merge event, the
+number of OTUs existing after the merge, the identity distance at which the merge occurred,
+and the OTU ids are shown. When a merge event occurs, the new OTU will have the same id 
+as the smallest OTU id merged. For example, if OTUs' 37 and 12176 are merged, the new OTU
+will have id 37.
 
 
 OBTAINING CLUSTERS FROM THE MERGE RESULTS
@@ -162,3 +180,11 @@ merge file.
 
 
 For further information contact: Joao F. Matias Rodrigues <jfmrod@konceptfx.com>
+
+
+
+ACKNOWLEDGMENTS
+=================================================
+
+Sebastian Schmidt
+
