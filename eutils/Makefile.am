@@ -56,7 +56,6 @@ libeutils_a_SOURCES=$(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp \
 EXTRA_DIST = m4 bootstrap eutils-config.in eutils.pc.in configure.in eutils.m4
 
 dist-hook:
-	rm -rf `find $(distdir)/examples -name .svn`
 	rm -rf `find $(distdir)/m4 -name .svn`
 
 

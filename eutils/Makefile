@@ -759,7 +759,6 @@ uninstall-am:
 esystem_osx.o: CXXFLAGS := $(CXXFLAGS) -ObjC++
 
 dist-hook:
-	rm -rf `find $(distdir)/examples -name .svn`
 	rm -rf `find $(distdir)/m4 -name .svn`
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

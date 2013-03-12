@@ -121,7 +121,7 @@ am__uninstall_files_from_dir = { \
   }
 man1dir = $(mandir)/man1
 NROFF = nroff
-MANS = $(dist_man_MANS) $(man_MANS)
+MANS = $(dist_man_MANS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
@@ -285,7 +285,8 @@ top_srcdir = .
 SUBDIRS = $(subdirs)
 DIST_SUBDIRS = $(subdirs)
 MPIBIN = hpc-clust-mpi
-man_MANS = man/hpc-clust.1 man/hpc-clust-mpi.1
+
+#man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
 dist_man_MANS = man/hpc-clust.1 man/hpc-clust-mpi.1
 EXTRA_DIST = make-otus.sh examples/aligned-archaea-seqs.sto
 hpc_clust_SOURCES = hpc-clust.cpp cluster-common.h cluster-common.cpp eseqcluster.h eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp eseqclustercount.h eseqclustercount.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp
@@ -417,12 +418,12 @@ include ./$(DEPDIR)/hpc-clust.Po
 #	source='$<' object='$@' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
 #	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-install-man1: $(dist_man_MANS) $(man_MANS)
+install-man1: $(dist_man_MANS)
 	@$(NORMAL_INSTALL)
 	test -z "$(man1dir)" || $(MKDIR_P) "$(DESTDIR)$(man1dir)"
 	@list=''; test -n "$(man1dir)" || exit 0; \
 	{ for i in $$list; do echo "$$i"; done; \
-	l2='$(dist_man_MANS) $(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	l2='$(dist_man_MANS)'; for i in $$l2; do echo "$$i"; done | \
 	  sed -n '/\.1[a-z]*$$/p'; \
 	} | while read p; do \
 	  if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
@@ -448,7 +449,7 @@ uninstall-man1:
 	@$(NORMAL_UNINSTALL)
 	@list=''; test -n "$(man1dir)" || exit 0; \
 	files=`{ for i in $$list; do echo "$$i"; done; \
-	l2='$(dist_man_MANS) $(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	l2='$(dist_man_MANS)'; for i in $$l2; do echo "$$i"; done | \
 	  sed -n '/\.1[a-z]*$$/p'; \
 	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
 	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
