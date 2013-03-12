@@ -91,6 +91,10 @@ eseqclusterData clusterData;
 int seqlen=0;
 float eqthres=0.01;
 
+estrhashof<eseq> seqs;
+float ct=0.98;
+
+
 estr args2str(int argvc,char **argv)
 {
   estr tmpstr;
@@ -550,7 +554,9 @@ void calc_best_dist(const estr& shortseq,const estrarray& seqs,int seqlen,int& b
   }
 }
 
-void place_short_task(earray<ematchinfo>& matchinfo,int n,int tn)
+emutex mutexOutput;
+
+void place_short_task(int n,int tn)
 {
   int j,l,k;
 
@@ -563,7 +569,10 @@ void place_short_task(earray<ematchinfo>& matchinfo,int n,int tn)
   int end=((n+1)*arrshort.size())/tn;
 
   int s,e;
-
+  ematchinfo matchinfo;
+  estr tmpstr;
+  eintarray otucount;
+  
   for (l=start; l<end; ++l){
 //    for (s=0; s<arrshort[l].len() && (unsigned char)arrshort[l][s]==0xFFu; ++s);
 //    e=arrshort[l].len()-1;
@@ -572,12 +581,14 @@ void place_short_task(earray<ematchinfo>& matchinfo,int n,int tn)
     s=arrshort[l].b;
     e=arrshort[l].e;
     
-    matchinfo[l].eqcount=-1;
-    matchinfo[l].bestcount=0;
-    matchinfo[l].dist=0.0;
-    matchinfo[l].dist2=0.0;
-    matchinfo[l].cdist=1.0;
-    matchinfo[l].cdist2=0.0;
+    matchinfo.eqcount=-1;
+    matchinfo.bestcount=0;
+    matchinfo.dist=0.0;
+    matchinfo.dist2=0.0;
+    matchinfo.cdist=1.0;
+    matchinfo.cdist2=0.0;
+    matchinfo.seqlist.clear();
+    matchinfo.seqcluster.clear();
 
     if (s>=e) continue;
 
@@ -586,26 +597,47 @@ void place_short_task(earray<ematchinfo>& matchinfo,int n,int tn)
 
     tmpotu.init(otuinfo.size(),0);
     eintarray si(iheapsort(tmpdists));
-    matchinfo[l].dist=tmpdists[si[si.size()-1]];
-    matchinfo[l].seq=si[si.size()-1];
-    for (j=tmpdists.size()-1; j>=0 && tmpdists[si[j]]>=matchinfo[l].dist; --j){
+    matchinfo.dist=tmpdists[si[si.size()-1]];
+    matchinfo.seq=si[si.size()-1];
+    for (j=tmpdists.size()-1; j>=0 && tmpdists[si[j]]>=matchinfo.dist; --j){
       if (tmpotu[ seqotuid[si[j]] ]==0)
-        ++matchinfo[l].eqcount;
+        ++matchinfo.eqcount;
       ++tmpotu[ seqotuid[si[j]] ]; 
-      if (tmpotu[ seqotuid[si[j]]] > matchinfo[l].bestcount){
-        matchinfo[l].bestcount=tmpotu[ seqotuid[si[j]] ];
-        matchinfo[l].otu=seqotuid[si[j]];
+      if (tmpotu[ seqotuid[si[j]]] > matchinfo.bestcount){
+        matchinfo.bestcount=tmpotu[ seqotuid[si[j]] ];
+        matchinfo.otu=seqotuid[si[j]];
       }
-      matchinfo[l].seqlist.add(si[j]);
+      matchinfo.seqlist.add(si[j]);
     }
-    for (; j>=0 && tmpdists[si[j]]>=matchinfo[l].dist-(1.0-matchinfo[l].dist)*eqthres; --j){
+    for (; j>=0 && tmpdists[si[j]]>=matchinfo.dist-(1.0-matchinfo.dist)*eqthres; --j){
       if (tmpotu[ seqotuid[si[j]] ]==0)
-        ++matchinfo[l].eqcount;
+        ++matchinfo.eqcount;
       ++tmpotu[ seqotuid[si[j]] ]; 
-      matchinfo[l].seqlist.add(si[j]);
+      matchinfo.seqlist.add(si[j]);
     }
-    if (matchinfo[l].seqlist.size()>1)
-      clusterData.getCluster(matchinfo[l].seqlist, matchinfo[l].seqcluster, matchinfo[l].cdist);
+    if (matchinfo.seqlist.size()>1)
+      clusterData.getCluster(matchinfo.seqlist, matchinfo.seqcluster, matchinfo.cdist);
+
+    tmpstr=arr.keys(otuinfo[matchinfo.otu].seqs[0]);
+    if (matchinfo.cdist < ct && matchinfo.cdist>0.0 && matchinfo.eqcount < 10){
+      tmpstr.clear();
+      otucount.init(otuinfo.size(),0);
+      for (k=0; k<matchinfo.seqlist.size(); ++k){
+        if (otucount[seqotuid[matchinfo.seqlist[k]]]>0) continue;
+        ++otucount[seqotuid[matchinfo.seqlist[k]]];
+        tmpstr+=","+arr.keys(otuinfo[seqotuid[matchinfo.seqlist[k]]].seqs[0]);
+      }
+      tmpstr.del(0,1);
+    }
+    if (matchinfo.cdist>=ct)
+      matchinfo.tax=otuinfo[matchinfo.otu].tax;
+    else if (matchinfo.seqcluster.size())
+      matchinfo.tax=consensusTax(seqs,matchinfo.seqcluster);
+    if (seqs.size())
+      matchinfo.itax=seqs[matchinfo.seq].itax;
+    mutexOutput.lock();
+    cout << arrshort[l].name << "\t" << matchinfo.dist << "\t" << matchinfo.eqcount << "\t" << matchinfo.cdist << "\t" << matchinfo.seqlist.size() << "\t" << tmpstr << "\t" << matchinfo.tax << "\t" << arr.keys(matchinfo.seq) << "\t" << matchinfo.itax << endl;
+    mutexOutput.unlock();
   }
 }
 
@@ -1483,7 +1515,6 @@ int emain()
   bool adaptive=false;
   epregister(adaptive);
 
-  float ct=0.98;
   epregister(ct);
   float ct2=0.97;
   epregister(ct2);
@@ -1540,8 +1571,6 @@ int emain()
 
   ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" <cluster-file> <long-seqs> [short-seqs]");
 
-  estrhashof<eseq> seqs;
-
   int i,j,k;
   estrhashof<int> arrind;
   load_seqs_compressed(argv[2],arr,arrind,seqlen);
@@ -1588,13 +1617,13 @@ int emain()
   if (argvc==4){
     if (!adaptive){
       load_short_compressed(argv[3],arrshort);
-      matchinfo.init(arrshort.size());
   
       cout << "# starting short sequence placement" << endl;
       for (i=0; i<ncpus; ++i)
-        taskman.addTask(place_short_task,evararray(matchinfo,(const int&)i,(const int&)ncpus));
+        taskman.addTask(place_short_task,evararray((const int&)i,(const int&)ncpus));
       taskman.wait();
 
+/*
       eintarray otucount;
       estr tmpstr;
       for (j=0; j<arrshort.size(); ++j){
@@ -1617,10 +1646,12 @@ int emain()
           matchinfo[j].tax=otuinfo[matchinfo[j].otu].tax;
         else if (matchinfo[j].seqcluster.size())
           matchinfo[j].tax=consensusTax(seqs,matchinfo[j].seqcluster);
-        matchinfo[j].itax=seqs[matchinfo[j].seq].itax;
+        if (seqs.size())
+          matchinfo[j].itax=seqs[matchinfo[j].seq].itax;
           
         cout << arrshort[j].name << "\t" << matchinfo[j].dist << "\t" << matchinfo[j].eqcount << "\t" << matchinfo[j].cdist << "\t" << matchinfo[j].seqlist.size() << "\t" << tmpstr << "\t" << matchinfo[j].tax << "\t" << arr.keys(matchinfo[j].seq) << "\t" << matchinfo[j].itax << endl;
       }
+*/
     } else { // adaptive placement
       load_short_compressed(argv[3],arrshort);
       matchinfo.init(arrshort.size());

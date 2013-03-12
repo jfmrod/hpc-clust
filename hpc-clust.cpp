@@ -334,20 +334,15 @@ int emain()
     cout << "# done writing step single linkage clustering to: "<<ofile+".sotu" << endl;
   }
   if (cdist){
-    if (sl){
-      efile f(ofile+".sl.dist");
-      for (i=dists.size()-1; i>=0; --i)
-        f.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+slcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
-    }
-    if (cl){
-      efile f(ofile+".cl.dist");
-      for (i=dists.size()-1; i>=0; --i)
-        f.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+clcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
-    }
-    if (al){
-      efile f(ofile+".al.dist");
-      for (i=dists.size()-1; i>=0; --i)
-        f.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+alcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
+    efile fsl,fcl,fal;
+    if (sl) fsl.open(ofile+".sl.dist","w");
+    if (cl) fcl.open(ofile+".cl.dist","w");
+    if (al) fal.open(ofile+".cl.dist","w");
+
+    for (i=dists.size()-1; i>=0; --i){
+      if (sl) fsl.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+slcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
+      if (cl) fcl.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+clcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
+      if (al) fal.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+alcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
     }
   }
 //  clcluster.save(ofile+".cl.otu",arr);

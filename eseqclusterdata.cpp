@@ -306,8 +306,8 @@ float eseqclusterData::getMergeDistance(int x,int y)
     if (mergearr[i].y==y) y=mergearr[i].x;
     if (x==y) return(mergearr[i].dist);
   }
-  ldie("did not find merge distance");
-  return(0.0);
+//  ldie("did not find merge distance");
+  return(-1.0);
 }
 
 
