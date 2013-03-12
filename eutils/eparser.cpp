@@ -316,7 +316,7 @@ void eparser::execArg(estr cmd,const estr& args)
       epinterpret(cmd+"=1;");
     else
       ldie("invalid value for boolean argument: "+cmd);
-  }else
+  } else
     epinterpret(cmd+"=\""+args+"\";");
 
 /*
