@@ -275,8 +275,8 @@ void eparser::registerParser()
   epregisterClassPropertyI(eparser,objects,"global variables");
   epregisterCommon();
   epregister(parser);
-  epregisterAlias("h","parser.help");
-  epregisterAlias("help","parser.help");
+//  epregisterAlias("h","parser.help");
+//  epregisterAlias("help","parser.help");
   epregisterAlias("save","parser.save");
   epregisterAlias("load","parser.load");
 //  getLogger()->level=1;
@@ -301,7 +301,9 @@ void eparser::execArg(estr cmd,const estr& args)
   }
 
 //  cout << cmd << " --- " << var.getClass() << endl;
-  if (var.getTypeid()==typeid(estr) || var.getTypeid()==typeid(estrarray))
+  if (var.getTypeid()==typeid(efunc))
+    var.get<efunc>().call(evararray(args));
+  else if (var.getTypeid()==typeid(estr) || var.getTypeid()==typeid(estrarray))
     epinterpret(cmd+"=\""+args+"\";");
   else if (var.getTypeid()==typeid(int))
     epinterpret(cmd+"="+args.i()+";");

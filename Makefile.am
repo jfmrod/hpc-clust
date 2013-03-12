@@ -10,7 +10,7 @@ if HAVE_MPILIB
   MPIBIN=hpc-clust-mpi
 endif
 
-man_MANS=man/hpc-clust.1
+dist_man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1 man/hpc-clust-dist.1
 
 bin_PROGRAMS=hpc-clust hpc-clust-dist $(MPIBIN) cluster-uniq cluster2 cluster-sorted cluster-partition cluster-fast cluster-matchshort cluster-chimera cluster-profile-siteevorate cluster-short
 # cluster-cmp cluster-check cluster-evolve cluster-regen 
