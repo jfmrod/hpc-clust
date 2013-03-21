@@ -22,6 +22,10 @@ elogger *getLogger();
   #define lassert( cond )      {}
 
   #define ldinfo2( infomsg , function ) {}
+  #define ldwarn2( infomsg , module )   {}
+  #define lderror2( infomsg , module )  {}
+  #define lddie2( infomsg , module )    {}
+
 
   #define  ldtodo( todomsg )   {}
   #define   ldtip( tipmsg  )   {}
@@ -43,7 +47,7 @@ elogger *getLogger();
   #define ldinfo2( infomsg , module )  linfo2(infomsg,estr("devel,")+module)
   #define ldwarn2( infomsg , module )  lwarn2(infomsg,estr("devel,")+module)
   #define lderror2( infomsg , module )  lerror2(infomsg,estr("devel,")+module)
-  #define lddie2( infomsg , module )  ldie2(infomsg,estr("debel,")+module)
+  #define lddie2( infomsg , module )  ldie2(infomsg,estr("devel,")+module)
 
   #define  ldtodo( tipmsg   )  lwarn2(estr("todo: ")+tipmsg,"devel")
   #define   ldtip( tipmsg   )  lwarn2(estr("tip: ")+tipmsg,"devel")

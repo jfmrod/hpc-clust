@@ -31,5 +31,7 @@ class etimer
 };
 
 
+long egettimestamp();
+
 #endif
 

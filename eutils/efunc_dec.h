@@ -17,7 +17,7 @@ class eclassMethodBase;
 class efunc
 {
   void updateInfo();
-  void setDefaultArgs(evararray& args);
+  void setDefaultArgs(evararray& args) const;
  public:
   efuncBase* func;
   evararray  defargs;
@@ -38,8 +38,7 @@ class efunc
 
 
   efunc(const efunc& func);
-  
-  virtual ~efunc();
+  ~efunc();
 
   void clear();
 
@@ -51,27 +50,31 @@ class efunc
   efunc& operator=(const efunc& func);
   efunc& setFunc(efuncBase* func);
 
-  evar call(const estr& args="");
-  virtual evar call(evararray& args);
-  virtual evar call(const evararray& args);
-  template <class R,class A1>
-  R call(A1 a1);
+//  evar call(const estr& args="") const;
+  evar call() const;
+  evar call(evararray& args) const;
+  evar call(const evararray& args) const;
+  evar call2(const evararray& args) const;
+  void call(evar& rval,const evararray& args) const;
 
-  evar operator()();
+  template <class R,class A1>
+  R call(A1 a1) const;
+
+  evar operator()() const;
   
-  evar operator()(const evararray& args);
-  evar operator()(evararray& args);
+  evar operator()(const evararray& args) const;
+  evar operator()(evararray& args) const;
 
   template <class A1>
-  evar operator()(A1 a1);
+  evar operator()(A1 a1) const;
   template <class A1,class A2>
-  evar operator()(A1 a1,A2 a2);
+  evar operator()(A1 a1,A2 a2) const;
   template <class A1,class A2,class A3>
-  evar operator()(A1 a1,A2 a2,A3 a3);
+  evar operator()(A1 a1,A2 a2,A3 a3) const;
   template <class A1,class A2,class A3,class A4>
-  evar operator()(A1 a1,A2 a2,A3 a3,A4 a4);
+  evar operator()(A1 a1,A2 a2,A3 a3,A4 a4) const;
   template <class A1,class A2,class A3,class A4,class A5>
-  evar operator()(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5);
+  evar operator()(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5) const;
 };
 
 ostream& operator<<(ostream& stream,const efunc& func);

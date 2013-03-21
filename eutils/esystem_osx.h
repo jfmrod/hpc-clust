@@ -38,6 +38,8 @@ class esystem
   earrayof<esystemCallback,int> callbacks;
   earrayof<esystemTimer,long int> timers;
 
+  estrarray getLocalAddresses();
+
   int getTotalRam();
   int getFreeRam();
   int getBufferRam();

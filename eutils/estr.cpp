@@ -13,7 +13,7 @@ void estr::serial(estr& data) const
 {
   data.reserve(data.len()+sizeof(uint32_t)+len());
   *((uint32_t*)&data[data._strlen])=len();
-  strcpy(&data[data._strlen+sizeof(uint32_t)],_str);
+  memcpy(&data[data._strlen+sizeof(uint32_t)],_str,len());
   data._strlen+=len()+sizeof(uint32_t);
 }
 
@@ -356,21 +356,21 @@ void estr::clean(const char *ignore_chars)
   }
 }
 
-estrarray estr::explode(const estr &seperator) const
+estrarray estr::explode(const estr &sep) const
 {
   estrarray res;
   long int i,k;
   if (len()==0) return(res);
 
   k=0;
-  i=find(seperator);
+  i=find(sep);
   while (i!=-1 && i<len()){
     res.add(substr(k,i-k));
-    k=i+seperator.len(); 
-    i=find(seperator,i+1);
+    k=i+sep.len(); 
+    i=find(sep,i+1);
   }
   
-  if (k!=len())
+  if (len())
     res.add(substr(k));
 
   return(res);
@@ -440,7 +440,7 @@ estr &estr::operator+=(const char *str)
   long int slen;
   slen = strlen(str)+_strlen;
   _checkSize(slen);
-  strcat(_str,str);
+  memcpy(&_str[len()],str,strlen(str)+1);
   _strlen = slen;
   return(*this);
 }
@@ -472,11 +472,7 @@ estr &estr::operator=(const wchar_t *str)
 
 estr estr::operator+(const char *str) const
 {
-  long int slen;
-  estr str2;
-  
-  slen=strlen(str);
-  str2 =_str;
+  estr str2(*this);
   str2+=str;
   return(str2);
 }

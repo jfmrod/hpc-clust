@@ -19,60 +19,60 @@ class ehashitem
 };
 
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 class ehashmap : public ebasearrayof
 {
   earray<K> _keys;
   mutable ehashitem<K,T> **_hashitems;
  public:
-  mutable unsigned int _hashmask;
+  mutable size_t _hashmask;
 //  unsigned int (*hashfunc)(const K&);
 
   ehashmap();
   ehashmap(const ehashmap<K,T,hashfunc>& oldhm);
   ~ehashmap();
 
-  inline unsigned int size() const { return(_keys.size()); }
+  inline size_t size() const { return(_keys.size()); }
 
 //  void add(const T& value);
   T& add(const K& key,const T& value);
   T& addref(const K& key,T* value);
 
   inline const T& operator[](const K& key) const;
-  const T& operator[](int i) const;
+  const T& operator[](size_t i) const;
   T& operator[](const K& key);
-  T& operator[](int i);
+  T& operator[](size_t i);
 
   ehashmap<K,T,hashfunc>& operator+=(const ehashmap<K,T,hashfunc>& hm);
 
 
-  inline T& at(int i)   { return(values( _keys.at(i) ) ); }
-  inline T& values(int i) { return(values( _keys.at(i) ) ); }
-  inline K& keys(int i) { return( _keys.at(i)); }
+  inline T& at(size_t i)   { return(values( _keys.at(i) ) ); }
+  inline T& values(size_t i) { return(values( _keys.at(i) ) ); }
+  inline K& keys(size_t i) { return( _keys.at(i)); }
   T& values(const K& key);
-  inline const T& at(int i) const  { return(values( _keys.at(i) ) ); }
-  inline const T& values(int i) const { return(values( _keys.at(i) ) ); }
-  inline const K& keys(int i) const { return( _keys.at(i)); }
+  inline const T& at(size_t i) const  { return(values( _keys.at(i) ) ); }
+  inline const T& values(size_t i) const { return(values( _keys.at(i) ) ); }
+  inline const K& keys(size_t i) const { return( _keys.at(i)); }
   const T& values(const K& key) const;
 
   bool exists(const K& key) const ;
-  int findkey(const K& key,int pos=0) const;
+  long findkey(const K& key,size_t pos=0) const;
 
   void clear();
-  void resizehash(unsigned int i=0) const;
+  void resizehash(size_t i=0) const;
 
-  void reserve(unsigned int i);
+  void reserve(size_t i);
   void erase(const K& key);
-  void erase(int i);
+  void erase(size_t i);
 
-  ehashitem<K,T>* gethashitem(unsigned int khash,const K& key) const;
+  ehashitem<K,T>* gethashitem(size_t khash,const K& key) const;
 
-  inline unsigned int hash(const K& key) const { return(hashfunc(key) & _hashmask); }
+  inline size_t hash(const K& key) const { return(hashfunc(key) & _hashmask); }
 
   void addvar(evar& key,evar& var);
-  evar getvar(int i) const;
+  evar getvar(size_t i) const;
   evar getvarByKey(const evar& var) const;
-  evar getvarkey(int i) const;
+  evar getvarkey(size_t i) const;
 };
 
 #endif

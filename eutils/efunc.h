@@ -35,7 +35,7 @@ efunc& efunc::operator=(F _func)
 }
 
 template <class R,class A1>
-R efunc::call(A1 a1)
+R efunc::call(A1 a1) const
 {
   if (func==0x00) return(R());
 
@@ -55,7 +55,7 @@ R efunc::call(A1 a1)
 }
 
 template <class A1>
-evar efunc::operator()(A1 a1)
+evar efunc::operator()(A1 a1) const
 {
   if (func==0x00) return(evar());
 
@@ -70,7 +70,7 @@ evar efunc::operator()(A1 a1)
 }
 
 template <class A1,class A2>
-evar efunc::operator()(A1 a1,A2 a2)
+evar efunc::operator()(A1 a1,A2 a2) const
 {
   if (func==0x00) return(evar());
 
@@ -85,7 +85,7 @@ evar efunc::operator()(A1 a1,A2 a2)
 }
 
 template <class A1,class A2,class A3>
-evar efunc::operator()(A1 a1,A2 a2,A3 a3)
+evar efunc::operator()(A1 a1,A2 a2,A3 a3) const
 {
   if (func==0x00) return(evar());
 
@@ -97,7 +97,7 @@ evar efunc::operator()(A1 a1,A2 a2,A3 a3)
 }
 
 template <class A1,class A2,class A3,class A4>
-evar efunc::operator()(A1 a1,A2 a2,A3 a3,A4 a4)
+evar efunc::operator()(A1 a1,A2 a2,A3 a3,A4 a4) const
 {
   if (func==0x00) return(evar());
 
@@ -110,7 +110,7 @@ evar efunc::operator()(A1 a1,A2 a2,A3 a3,A4 a4)
 }
 
 template <class A1,class A2,class A3,class A4,class A5>
-evar efunc::operator()(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5)
+evar efunc::operator()(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5) const
 {
   if (func==0x00) return(evar());
 

@@ -27,6 +27,7 @@
 #endif
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <fcntl.h>
 
 #include <zlib.h>
@@ -38,7 +39,10 @@
 
 egzfile::egzfile(): f(0x00),opened(false){}
 egzfile::egzfile(const estr& _name,const estr& _mode): name(_name),mode(_mode) {}
-egzfile::~egzfile() { close(); }
+egzfile::~egzfile()
+{
+// close();
+}
 
 void egzfile::close()
 {
@@ -56,7 +60,7 @@ bool egzfile::open()
 bool egzfile::open(const estr& _name,const estr& _mode)
 {
   ldinfo("openning gzfile: "+_name+" mode: "+_mode);
-  close();
+//  close();
 
   name=_name;
   mode=_mode;
@@ -68,6 +72,7 @@ bool egzfile::open(const estr& _name,const estr& _mode)
   }
   return(true);
 }
+
 /*
 bool egzfile::open(const estr& mode)
 {
@@ -166,24 +171,51 @@ bool egzfile::readln(estr& str)
 }
 
 
+
 ostream& operator<<(ostream& stream,const efile& file)
 {
-  stream << "[efile name: "<<file.name<<"]";
+  if (file.f!=0x00)
+    stream << "[efile name: "<<file.name<<" fd: " << file.fileno() << "]";
+  else
+    stream << "[efile name: "<<file.name<<"]";
   return(stream);
 }
 
 
 efile::~efile()
 {
-  close();
+//  close();
 }
+
+
+efile::efile(const efile& file): f(file.f),opened(file.opened),blocking(file.blocking),name(file.name),mode(file.mode) {}
 
 efile::efile(): f(0x00),opened(false),blocking(false) {}
 efile::efile(const estr& _name): f(0x00),opened(false),name(_name),mode("r"),blocking(false) {}
+efile::efile(const char* _name): f(0x00),opened(false),name(_name),mode("r"),blocking(false) {}
+efile::efile(char* _name): f(0x00),opened(false),name(_name),mode("r"),blocking(false) {}
 efile::efile(const estr& _name,const estr& _mode): f(0x00),opened(false),name(_name),mode(_mode),blocking(false) {}
+efile::efile(int fd,const estr& mode): blocking(false)
+{
+  open(fd,mode);
+//  fcntl(fileno(file),F_SETFL,O_NONBLOCK);
+}
+
 efile::efile(FILE* file): f(file),opened(true),blocking(false)
 {
 //  fcntl(fileno(file),F_SETFL,O_NONBLOCK);
+}
+
+bool efile::eof() const
+{
+  if (f==0x00){ lerror("file handle is null"); return(-1); }
+  return(::feof(f));
+}
+
+int efile::fileno() const
+{
+  if (f==0x00){ lerror("file handle is null"); return(-1); }
+  return(::fileno(f));
 }
 
 estr efile::extension() const
@@ -206,6 +238,11 @@ estr efile::dirname() const
   return(::dirname(tmpname._str));
 }
 
+void efile::disableBuffer() const
+{
+  setvbuf(f,0x00,_IONBF,0);
+}
+
 void efile::close() const
 {
   if (f && opened)
@@ -217,14 +254,28 @@ void efile::close() const
 bool efile::open(FILE *_file)
 {
   ldinfo("openning file descritor");
-  close();
+//  close();
   opened=true;
   f=_file;
   if (f==0x00){
+    opened=false;
     lwarn("efile: invalid file handle");
     return(false);
   }
   return(true);
+}
+
+bool efile::open(int fd,const estr& mode)
+{
+  ldinfo("openning file descritor");
+  opened=true;
+  f=fdopen(fd,mode._str);
+  if (f==0x00){
+    opened=false;
+    lwarn("efile: invalid file handle");
+    return(false);
+  }
+  return(true); 
 }
 
 bool efile::open() const
@@ -243,7 +294,7 @@ bool efile::open() const
 bool efile::open(const estr& _name,const estr& _mode)
 {
   ldinfo("openning file: "+_name+" mode: "+_mode);
-  close();
+//  close();
 
   name=_name;
   mode=_mode;
@@ -304,22 +355,56 @@ void efile::flush() const
   fflush(f);
 }
 
-void efile::write(const evar& var) const
+evar efile::read() const
 {
+  if (f==0x00){
+    mode="r";
+    if (!open()) return(false);
+  }
 
+  char tmpsz[4];
+  int l=fread(tmpsz,sizeof(char),4,f);
+  int i;
+
+  if (l<4) {
+    for (i=l-1; i>=0; --l)
+      ungetc(tmpsz[i],f);
+    return(evar());
+  }
+
+  estr data;
+  int size=*(uint32_t*)tmpsz;
+  l=read(data,size);
+  if (l!=size) { lerror("reading variable: expected length: "+estr(size)+" got: "+estr(l)); return(evar()); }
+  evar var;
+  var.unserial(data);
+  return(var);
 }
 
-void efile::write(const estr& str) const
+int efile::write(const evar& var) const
+{
+  estr data;
+  // reserving space for unsigned int length specifier
+  data.reserve(4);
+  data._strlen=4;
+
+  var.serial(data); 
+  *(uint32_t*)data._str=(data.len()-sizeof(uint32_t)); // data packet length
+  return(write(data));
+}
+
+int efile::write(const estr& str) const
 {
   if (f==0x00){
     mode="w";
-    if (!open()) return;
+    if (!open()) return(0);
   }
 
-  fwrite(str._str,sizeof(char),str.len(),f);
+  int len=fwrite(str._str,sizeof(char),str.len(),f);
+  return(len);
 }
 
-bool efile::read(estr& str,long int len) const
+int efile::read(estr& str,long int len) const
 {
   if (f==0x00){
     mode="r";
@@ -334,14 +419,14 @@ bool efile::read(estr& str,long int len) const
    
   str.reserve(str.len()+len);
   len=fread(&str._str[str.len()],sizeof(char),len,f);
-  if (len){
+  if (len>0){
     str._strlen+=len;
     str._str[str._strlen]=0x00;
-    return(true);
+    return(len);
   }
   str._str[0]=0x00;
   str._strlen=0;
-  return(false);
+  return(0);
 }
 
 /*
@@ -399,11 +484,11 @@ bool efile::readln(estr& str) const
   do {
     str.reserve(len);
     linfo("getting string");
-    if (!blocking && fileno(f) == fileno(stdin)){
+    if (!blocking && fileno() == ::fileno(stdin)){
       #ifdef _MSC_VER
        getSystem()->wait(GetStdHandle(STD_INPUT_HANDLE));
       #else
-       getSystem()->wait(fileno(stdin));
+       getSystem()->wait(::fileno(stdin));
       #endif
     }
     res=fgets(&str._str[p],len-p,f);
@@ -445,9 +530,16 @@ bool efile::readln(estr& str) const
 }
 
 
+void efile::setNonBlocking() const
+{
+  fcntl(fileno(),F_SETFL,O_NONBLOCK);
+}
+
+
 efile popen(const estr& cmd)
 {
   FILE* res=popen(cmd._str,"r+");
+  lwarnif(res==0x00,"error in popen command: "+cmd);
   return(res);
 }
 
@@ -456,9 +548,9 @@ void pclose(efile& file)
   pclose(file.f);
 }
 
-void system(const estr& cmd)
+int system(const estr& cmd)
 {
-  system(cmd._str);
+  return(system(cmd._str));
 }
 
 

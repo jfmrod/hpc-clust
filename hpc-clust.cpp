@@ -5,7 +5,7 @@
 #include <eutils/etime.h>
 #include <eutils/etimer.h>
 #include <eutils/eoption.h>
-#include <eutils/eparalgor.h>
+//#include <eutils/eparalgor.h>
 #include <eutils/esystem.h>
 
 #include "hpc-clust-config.h"
@@ -26,9 +26,9 @@ unsigned totaldists;
 
 int seqlen=0;
 
-unsigned int radixKey(eblockarray<eseqdist>& dists,long int i)
+float radixKey(eblockarray<eseqdist>& dists,long int i)
 {
-  return((unsigned int)(dists[i].dist*10000));
+  return(dists[i].dist);
 }
 
 estr args2str(int argvc,char **argv)
@@ -88,13 +88,15 @@ int emain()
   eoption<efunc> dfunc;
 
   dfunc.choice=0;
-  dfunc.add("gap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
-  dfunc.add("nogap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
+  dfunc.add("gap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed2>);
+  dfunc.add("nogap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>);
+  dfunc.add("gap2",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+  dfunc.add("nogap2",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
   dfunc.add("nogapsingle",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
   dfunc.add("tamura",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
 
   epregisterClass(eoption<efunc>);
-  epregisterClassMethod2(eoption<efunc>,operator=,int,(const estr& val));
+  epregisterClassMethod4(eoption<efunc>,operator=,int,(const estr& val),"=");
 
   epregister(dfunc);
 
@@ -141,13 +143,10 @@ int emain()
   cout << "# warning memory threshold: " << warnMemThres << "Mb" << endl;
   cout << "# exit memory threshold: " << exitMemThres << "Mb" << endl;
 
+  cout << "# distance function: " << dfunc.key() << endl;
 
- 
   if (ofile.len()==0)
     ofile=argv[1];
-
-
-  cout << "# distance function: " << dfunc.key() << endl;
 
   epregisterClass(eseqdist);
   epregisterClassSerializeMethod(eseqdist);
@@ -161,7 +160,8 @@ int emain()
   epregisterClassSerializeMethod(ebasicarray<eseqdist>);
 
   long int i,j;
-    load_seqs_compressed(argv[1],arr,seqlen);
+  cout << "# loading seqs file: " << argv[1] << endl;
+  load_seqs_compressed(argv[1],arr,seqlen);
 
   ebasicstrhashof<int> duphash;
   ebasicstrhashof<int>::iter it;
@@ -209,36 +209,33 @@ int emain()
   etaskman taskman;
 
   efile df(dfile);
-    cout << "# computing distances" << endl;
-    if (partsTotal>(arr.size()-1)*arr.size()/20) partsTotal=(arr.size()-1)*arr.size()/20;
-    for (i=0; i<partsTotal; ++i)
-      taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t,(const int&)winlen));
+  cout << "# computing distances" << endl;
+  if (partsTotal>(arr.size()-1)*arr.size()/20) partsTotal=(arr.size()-1)*arr.size()/20;
+  for (i=0; i<partsTotal; ++i)
+    taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t,(const int&)winlen));
 
-    taskman.createThread(ncpus);
-    taskman.wait();
+  taskman.createThread(ncpus);
+  taskman.wait();
 
-    dtime=t1.lap()*0.001;
-    cout << "# time calculating distances: " << dtime << endl;
-    cout << "# distances within threshold: " << dists.size() << endl;
+  dtime=t1.lap()*0.001;
+  cout << "# time calculating distances: " << dtime << endl;
+  cout << "# distances within threshold: " << dists.size() << endl;
 
-    cout << "# number of tasks: " << taskman.tasks.size() << endl;
-    radix256sort<eblockarray<eseqdist>,radixKey>(dists);
-    cout << "# number of tasks: " << taskman.tasks.size() << endl;
-    stime=t1.lap()*0.001;
+  cout << "# number of tasks: " << taskman.tasks.size() << endl;
+  fradix256sort<eblockarray<eseqdist>,radixKey>(dists);
+  cout << "# number of tasks: " << taskman.tasks.size() << endl;
+  stime=t1.lap()*0.001;
 
-    if (dfile.len()){
-      cout << "# saving distances to file: "<<dfile << endl;
-      for (i=0; i<dists.size(); ++i)
-        df.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+"\n");
-//      estr str;
-//      mindists.serial(str);
-//      df.write(str);
-      for (i=0; i<dupslist.size(); ++i){
-        for (j=1; j<dupslist[i].size(); ++j)
-          df.write(estr(dupslist[i][0])+" "+dupslist[i][j]+" 1.0\n");
-      }
-      df.close();
+  if (dfile.len()){
+    cout << "# saving distances to file: "<<dfile << endl;
+    for (i=0; i<dists.size(); ++i)
+      df.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+"\n");
+    for (i=0; i<dupslist.size(); ++i){
+      for (j=1; j<dupslist[i].size(); ++j)
+        df.write(estr(dupslist[i][0])+" "+dupslist[i][j]+" 1.0\n");
     }
+    df.close();
+  }
 //  }else{
 //    cout << "# loading distances from file: "<<dfile << endl;
 /*
@@ -262,7 +259,6 @@ int emain()
 
   cout << "# starting clustering"<<endl;
   t1.reset();
-  int tmp;
   int lastupdate=0;
   for (i=dists.size()-1; i>=0; --i){
     if (cl)

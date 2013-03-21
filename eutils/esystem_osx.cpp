@@ -4,7 +4,7 @@
 #include "evar.h"
 
 #include <stdio.h>
-#include <MacMemory.h>
+//#include <MacMemory.h>
 
 #import <Cocoa/Cocoa.h>
 
@@ -15,6 +15,53 @@
 #import <mach/mach_host.h>
 #import <mach/task_info.h>
 #import <mach/task.h>
+
+
+
+#include <stdio.h>      
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <netinet/in.h> 
+#include <string.h> 
+#include <arpa/inet.h>
+
+
+
+
+estrarray esystem::getLocalAddresses()
+{
+  estrarray tmpstr;
+  struct ifaddrs * ifAddrStruct=NULL;
+  struct ifaddrs * ifa=NULL;
+  void * tmpAddrPtr=NULL;
+
+  getifaddrs(&ifAddrStruct);
+
+  for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+    if (ifa ->ifa_addr->sa_family==AF_INET) { // check it is IP4
+      // is a valid IP4 Address
+      tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+      char addressBuffer[INET_ADDRSTRLEN];
+      inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+      printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer); 
+      tmpstr.add(ifa->ifa_name,addressBuffer);
+    }
+/*
+    else if (ifa->ifa_addr->sa_family==AF_INET6) { // check it is IP6
+      // is a valid IP6 Address
+      tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+      char addressBuffer[INET6_ADDRSTRLEN];
+      inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+      printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer); 
+    }
+*/
+  }
+  if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
+}
+
+
+
+
 
 long int esystem::getMemLimit()
 {
@@ -155,7 +202,7 @@ void esystem::handleFileCallback(CFFileDescriptorRef fdref, CFOptionFlags callBa
     cb->readCallback.call(cb->readData);
   if ((callBackTypes & kCFFileDescriptorWriteCallBack) && cb->writeCallback.isSet())
     cb->writeCallback.call(cb->writeData);
-//  cout << "Got PIPE read: " << cb->fd << " " << cb->flags << " " << (cb->flags&kCFFileDescriptorReadCallBack) <<endl;
+//  cerr << "Got PIPE read: " << cb->fd << " " << cb->flags << " " << (cb->flags&kCFFileDescriptorReadCallBack)<< " isValid: " << (CFFileDescriptorIsValid(fdref)?"1":"0") << " fdref: " << fdref << " cb.fdref: " << cb->fdref << " fd: "<< CFFileDescriptorGetNativeDescriptor(fdref) << endl;
   CFFileDescriptorEnableCallBacks(fdref, cb->flags);
 
   // stops the loop from running and returns if the user called the ::wait function
@@ -294,7 +341,7 @@ void esystem::disableSocketReadWriteCallback(int fd)
   lddieif(i==-1,"socket not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=(cb->flags ^ kCFSocketReadCallBack) ^ kCFSocketWriteCallBack;
+  cb->flags=cb->flags & ~kCFSocketReadCallBack & ~kCFSocketWriteCallBack;
   CFSocketDisableCallBacks((CFSocketRef)cb->fdref, kCFSocketReadCallBack | kCFSocketWriteCallBack);
 }
 
@@ -305,7 +352,7 @@ void esystem::disableSocketReadCallback(int fd)
   lddieif(i==-1,"socket not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags ^ kCFSocketReadCallBack;
+  cb->flags=cb->flags & ~kCFSocketReadCallBack;
   CFSocketDisableCallBacks((CFSocketRef)cb->fdref, kCFSocketReadCallBack);
 }
 
@@ -316,7 +363,7 @@ void esystem::disableSocketWriteCallback(int fd)
   lddieif(i==-1,"socket not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags ^ kCFSocketWriteCallBack;
+  cb->flags=cb->flags & ~kCFSocketWriteCallBack;
   CFSocketDisableCallBacks((CFSocketRef)cb->fdref, kCFSocketWriteCallBack);
 }
 
@@ -360,7 +407,7 @@ void esystem::disableReadWriteCallback(int fd)
   lddieif(i==-1,"file not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=(cb->flags ^ kCFFileDescriptorReadCallBack) ^ kCFFileDescriptorWriteCallBack;
+  cb->flags=cb->flags & ~kCFFileDescriptorReadCallBack & ~kCFFileDescriptorWriteCallBack;
   CFFileDescriptorDisableCallBacks((CFFileDescriptorRef)cb->fdref, kCFFileDescriptorReadCallBack | kCFFileDescriptorWriteCallBack);
 }
 
@@ -371,7 +418,7 @@ void esystem::disableReadCallback(int fd)
   lddieif(i==-1,"file not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags ^ kCFFileDescriptorReadCallBack;
+  cb->flags=cb->flags & ~kCFFileDescriptorReadCallBack;
   CFFileDescriptorDisableCallBacks((CFFileDescriptorRef)cb->fdref, kCFFileDescriptorReadCallBack);
 }
 
@@ -382,7 +429,7 @@ void esystem::disableWriteCallback(int fd)
   lddieif(i==-1,"file not found with fd: "+estr(fd));
 
   esystemCallback *cb=&callbacks.values(i);
-  cb->flags=cb->flags ^ kCFFileDescriptorWriteCallBack;
+  cb->flags=cb->flags & ~kCFFileDescriptorWriteCallBack;
   CFFileDescriptorDisableCallBacks((CFFileDescriptorRef)cb->fdref, kCFFileDescriptorWriteCallBack);
 }
 

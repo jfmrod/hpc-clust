@@ -42,11 +42,13 @@ class earrayof : public ebasearrayof
 
   T &add_keysorted(const K& key,const T& value);
   
+  earrayof<T,K> operator[](const eintarray& i) const;
+
   T& operator[](const K& key);
   const T& operator[](const K& key) const;
   
-  T& operator[](int i);
-  const T& operator[](int i) const;
+  T& operator[](size_t i);
+  const T& operator[](size_t i) const;
 
 //  earrayof<T,K> operator[](const eintarray& arr) const;
 
@@ -64,61 +66,64 @@ class earrayof : public ebasearrayof
   inline earrayof<T,K>  operator+(const T &a) const { earrayof<T,K> tmp; tmp += *this; tmp.add(a); return(tmp); }
 //  inline earrayof<T,K>  operator+(const ebasicarray<T> &a) const { earrayof<T,K> tmp; tmp += *this; tmp.add(a); return(tmp); }
 
-   inline void swap(int i,int j){ _values.swap(i,j); _keys.swap(i,j); }
+  T& insert(size_t i,const T& value);
+  T& insert(size_t i,const K& key,const T& value);
 
-  inline K& keys(int i) { return(*_keys[i]); }
-  inline const K& keys(int i) const  { return(*_keys[i]); }
+  inline void swap(size_t i,size_t j){ _values.swap(i,j); _keys.swap(i,j); }
+
+  inline K& keys(size_t i) { return(*_keys[i]); }
+  inline const K& keys(size_t i) const  { return(*_keys[i]); }
 
   T& at(const K& key);
   const T& at(const K& key) const;
 
-  inline T& values(int i) { return(*_values[i]); }
-  inline const T& values(int i) const { return(*_values[i]); }
+  inline T& values(size_t i) { return(*_values[i]); }
+  inline const T& values(size_t i) const { return(*_values[i]); }
 
 //  inline T& at(int i) { return(*_values[i]); }
 //  inline const T& at(int i) const { return(*_values[i]); }
 
-  inline unsigned int size() const { return(_values.size()); }
+  inline size_t size() const { return(_values.size()); }
 
 //  inline const earray<T> &values() const { return(_values); }
 //  inline const ebasicarray<T>& values() const { return(_values); }
 
 
-  earrayof<T,K> subset(int i,int l=-1) const;
+  earrayof<T,K> subset(long i,long l=-1) const;
 
 
   static bool equal(T* const &a, T* const &b);
   static bool equalkey(K* const &a, K* const &b);
 
-  int findkey(const K& value,int i=0,bool (*matchkey)(K* const &a,K* const &b)=equalkey) const
+  long findkey(const K& value,size_t i=0,bool (*matchkey)(K* const &a,K* const &b)=equalkey) const
     { return( _keys.find((K*)&value,i,matchkey) ); }
-  int find(const T& value,int i=0,bool (*match)(T* const &a,T* const &b)=equal) const
+  long find(const T& value,size_t i=0,bool (*match)(T* const &a,T* const &b)=equal) const
     { return( _values.find((T*)&value,i,match) ); }
 
-  eintarray findkeyall(const K& key,int i=0,bool (*match)(const K* const &a,const K* const &b)=equalkey) const;
-  eintarray findkeyall(const earrayof<T,K>& keys,int i=0,bool (*match)(const K* const &a,const K* const &b)=equalkey) const;
+  eintarray findkeyall(const K& key,size_t i=0,bool (*match)(const K* const &a,const K* const &b)=equalkey) const;
+  eintarray findkeyall(const earrayof<T,K>& keys,size_t i=0,bool (*match)(const K* const &a,const K* const &b)=equalkey) const;
 
-  eintarray findall(const T& value,int i=0,bool (*match)(const T* const &a,const T* const &b)=equal) const;
-  eintarray findall(const earrayof<T,K>& value,int i=0,bool (*match)(const T* const &a,const T* const &b)=equal) const;
+  eintarray findall(const T& value,size_t i=0,bool (*match)(const T* const &a,const T* const &b)=equal) const;
+  eintarray findall(const earrayof<T,K>& value,size_t i=0,bool (*match)(const T* const &a,const T* const &b)=equal) const;
 
-  earrayof<T,K> afindall(const earrayof<T,K>& values,int i=0,bool (*match)(const T* const& a,const T* const& b)=equal) const
+  earrayof<T,K> afindall(const earrayof<T,K>& values,size_t i=0,bool (*match)(const T* const& a,const T* const& b)=equal) const
     { return( operator[](findall(values,i,match))); }
-  earrayof<T,K> afindkeyall(const earrayof<T,K>& keys,int i=0,bool (*match)(const K* const& a,const K* const& b)=equalkey) const
+  earrayof<T,K> afindkeyall(const earrayof<T,K>& keys,size_t i=0,bool (*match)(const K* const& a,const K* const& b)=equalkey) const
     { return( operator[](findkeyall(keys,i,match)) ); }
 
-  void remove(int i);
-  inline void erase(int i) { remove(i); }
-  inline void rem(int i)   { remove(i); }
-  inline void del(int i,int l=-1)   { if (i<0) i+=size(); if (l<0) l+=size()-i+1; if (i>=size() || i<0 || l<=0) return; if (i+l>size()) l=size()-i; for (; l>0; --l) remove(i); }
+  void remove(size_t i);
+  inline void erase(size_t i) { remove(i); }
+  inline void rem(size_t i)   { remove(i); }
+  inline void del(long int i,long int l=-1)   { if (i<0) i+=size(); if (l<0) l+=size()-i+1; if (i>=size() || i<0l || l<=0l) return; if (i+l>size()) l=size()-i; for (; l>0; --l) remove(i); }
 
   void clear();
 
   friend ostream &operator<< <>(ostream &stream,const earrayof<T,K> &var);
 
   void addvar(evar& key,evar& var);
-  evar getvar(int i) const;
+  evar getvar(size_t i) const;
   evar getvarByKey(const evar& var) const;
-  evar getvarkey(int i) const;
+  evar getvarkey(size_t i) const;
 };
 
 #endif

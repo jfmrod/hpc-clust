@@ -72,7 +72,7 @@ eparser* getParser();
 #include "evararray.h"
 #include "evarclass.h"
 
-#include "eparserinterpreter.h"
+//#include "eparserinterpreter.h"
 
 // epregisterClassHeader(eparser);
 // epregisterClassHeader(elogger);
@@ -183,6 +183,8 @@ void epregisterFunc3(eparser* parser,F func,const estr& funcname,const evararray
 void epregisterAlias(const estr& alias,const estr& var);
 void epregisterEnd();
 void eparseArgs(int& _argvc,char** &_argv);
+
+evar apply(const efunc& func,const evararray& args);
 
 
 

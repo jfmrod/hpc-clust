@@ -49,6 +49,8 @@ class esystem
 //  bool processMessagesWait();
   void run();
 
+  estrarray getLocalAddresses();
+
   long int getMemLimit();
 
   int getTotalRam();

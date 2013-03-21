@@ -10,6 +10,7 @@
 
 class evar;
 
+typedef earrayof<evar,evar> evvararray;
 typedef earray<evar> evararray;
 typedef estrarrayof<evar> esvararray;
 

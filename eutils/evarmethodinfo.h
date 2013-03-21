@@ -272,6 +272,16 @@ void eclassMethodInfo(R (T::*pmethod)(A1,A2,A3,A4) const,eclassMethodBase& metho
   method.fArgs.add( &typeid(A3) ); 
   method.fArgs.add( &typeid(A4) ); 
 }
+template <class T,class R,class A1,class A2,class A3,class A4,class A5>
+void eclassMethodInfo(R (T::*pmethod)(A1,A2,A3,A4,A5) const,eclassMethodBase& method)
+{
+  method.fReturn=&typeid(R);
+  method.fArgs.add( &typeid(A1) ); 
+  method.fArgs.add( &typeid(A2) ); 
+  method.fArgs.add( &typeid(A3) ); 
+  method.fArgs.add( &typeid(A4) ); 
+  method.fArgs.add( &typeid(A5) ); 
+}
 
 template <class T,class R>
 void eclassMethodInfo(R& (T::*pmethod)() const,eclassMethodBase& method)
@@ -307,6 +317,16 @@ void eclassMethodInfo(R& (T::*pmethod)(A1,A2,A3,A4) const,eclassMethodBase& meth
   method.fArgs.add( &typeid(A2) ); 
   method.fArgs.add( &typeid(A3) ); 
   method.fArgs.add( &typeid(A4) ); 
+}
+template <class T,class R,class A1,class A2,class A3,class A4,class A5>
+void eclassMethodInfo(R& (T::*pmethod)(A1,A2,A3,A4,A5) const,eclassMethodBase& method)
+{
+  method.fReturn=&typeid(R);
+  method.fArgs.add( &typeid(A1) ); 
+  method.fArgs.add( &typeid(A2) ); 
+  method.fArgs.add( &typeid(A3) ); 
+  method.fArgs.add( &typeid(A4) ); 
+  method.fArgs.add( &typeid(A5) ); 
 }
 
 

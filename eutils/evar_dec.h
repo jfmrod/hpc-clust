@@ -56,18 +56,46 @@ class evar
   template <class T>
   evar(T& value);
 
+  evar(void (*)());
+  template <class T1>
+  evar(void (*)(T1));
+  template <class T1,class T2>
+  evar(void (*)(T1,T2));
+  template <class T1,class T2,class T3>
+  evar(void (*)(T1,T2,T3));
+  template <class T1,class T2,class T3,class T4>
+  evar(void (*)(T1,T2,T3,T4));
+  template <class T1,class T2,class T3,class T4,class T5>
+  evar(void (*)(T1,T2,T3,T4,T5));
+  template <class T1,class T2,class T3,class T4,class T5,class T6>
+  evar(void (*)(T1,T2,T3,T4,T5,T6));
+
+  template <class R>
+  evar(R (*)());
+  template <class R,class T1>
+  evar(R (*)(T1));
+  template <class R,class T1,class T2>
+  evar(R (*)(T1,T2));
+  template <class R,class T1,class T2,class T3>
+  evar(R (*)(T1,T2,T3));
+  template <class R,class T1,class T2,class T3,class T4>
+  evar(R (*)(T1,T2,T3,T4));
+  template <class R,class T1,class T2,class T3,class T4,class T5>
+  evar(R (*)(T1,T2,T3,T4,T5));
+  template <class R,class T1,class T2,class T3,class T4,class T5,class T6>
+  evar(R (*)(T1,T2,T3,T4,T5,T6));
 
   ~evar();
   void clear();
 
-  estr getClass() const;
+  const char *getClass() const;
   const type_info& getTypeid() const;
 
   bool isNull() const;
 
   void create(const estr& type);
   void serial(estr& data) const;
-  int unserial(const estr& data,int i=0);
+  size_t unserial(const estr& data,size_t i=0);
 
 
   evar& get() const;
@@ -116,7 +144,8 @@ class evar
   bool hasMethod(const estr& mname);
 
   evar  property(const estr& pname) const;
-  evar  call(const estr& mname,evararray& args) const;
+  evar  call(const estr& mname,const evararray& args) const;
+  void  call(evar& rvar,const estr& mname,const evararray& args) const;
 
 
   evar operator()(const evararray& args);
@@ -161,7 +190,7 @@ class evar
 void evarSplitArgs(evararray &arr,const estr& args);
 ostream& operator<<(ostream& stream,const evar& variable);
 
-int unserialint(unsigned int& v,const estr& data,int i);
+size_t unserialint(unsigned int& v,const estr& data,size_t i);
 void serialint(unsigned int v,estr &data);
 
 void serial(const evar& var,estr& data);
@@ -171,7 +200,7 @@ template <class T>
 void serial(const T& var,estr& data);
 
 template <class T>
-int unserial(T& var,const estr& data,int i);
+size_t unserial(T& var,const estr& data,size_t i);
 
 
 #endif

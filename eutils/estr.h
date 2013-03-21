@@ -65,6 +65,7 @@ class estr
 
 
   inline bool icmp(const estr& str) const { return(_strlen==str._strlen && !strncasecmp(_str,str._str,_strlen)); }
+  inline bool cmp(const estr& str,long int l=-1l) const { if (l<len() || l==-1l) l=len(); if (str.len()<l) l=str.len(); return(!memcmp(_str,str._str,l)); }
 
   inline bool operator>(const estr &str)  const { return(memcmp(_str,str._str,min(_strlen,str._strlen))>0); }
   inline bool operator>=(const estr &str)  const { return(memcmp(_str,str._str,min(_strlen,str._strlen))>=0); }

@@ -6,20 +6,20 @@
 #include "ebasearrayof.h"
 #include "ehashmap_dec.h"
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 class ebasichashmap : public ebasearrayof
 {
   mutable ehashitem<K,T> **_hashitems;
-  unsigned int count;
+  size_t count;
  public:
-  mutable unsigned int _hashmask;
+  mutable size_t _hashmask;
 //  unsigned int (*hashfunc)(const K&);
 
   ebasichashmap();
   ebasichashmap(const ebasichashmap<K,T,hashfunc>& oldhm);
   ~ebasichashmap();
 
-  inline unsigned int size() const { return(count); }
+  inline size_t size() const { return(count); }
 
 //  void add(const T& value);
   T& add(const K& key,const T& value);
@@ -43,22 +43,22 @@ class ebasichashmap : public ebasearrayof
   const T& values(const K& key) const;
 
   bool exists(const K& key) const ;
-  int findkey(const K& key,int pos=0) const;
+  long findkey(const K& key,size_t pos=0) const;
 
   void clear();
-  void resizehash(unsigned int i=0) const;
+  void resizehash(size_t i=0) const;
 
-  void reserve(unsigned int i);
+  void reserve(size_t i);
   void erase(const K& key);
 //  void erase(int i);
 
-  ehashitem<K,T>* gethashitem(unsigned int khash,const K& key) const;
+  ehashitem<K,T>* gethashitem(size_t khash,const K& key) const;
 
-  inline unsigned int hash(const K& key) const { return(hashfunc(key) & _hashmask); }
+  inline size_t hash(const K& key) const { return(hashfunc(key) & _hashmask); }
 
   void addvar(evar& key,evar& var);
-  evar getvar(int i) const;
-  evar getvarkey(int i) const;
+  evar getvar(size_t i) const;
+  evar getvarkey(size_t i) const;
   evar getvarByKey(const evar& var) const;
 
 //  template <typename K,typename T>
@@ -67,7 +67,7 @@ class ebasichashmap : public ebasearrayof
    public:
     const ebasichashmap<K,T,hashfunc> *hashmap;
     ehashitem<K,T> *hitem;
-    unsigned int  bucket;
+    size_t  bucket;
 
     iter();
 

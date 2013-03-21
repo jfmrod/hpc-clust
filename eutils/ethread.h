@@ -6,11 +6,14 @@
 
 class econdsig;
 
+enum EMUTEX_TYPE { EMUTEX_RECURSIVE };
+
 class emutex
 {
  private:
   pthread_mutex_t _mutex;
  public:
+  emutex(int type);
   emutex();
   ~emutex();
 
@@ -51,7 +54,7 @@ class ethread
 
   emutex runMutex;
   econdsig runCond;
-  emutex finishedMutex;
+//  emutex finishedMutex;
   econdsig finishedCond;
 
   evar _runJob();
@@ -61,14 +64,23 @@ class ethread
 
   ethread();
   ~ethread();
-  void waitrun(const efunc& func,const evararray& args);
-  bool run(const efunc& func,const evararray& args);
+  void waitrun(const efunc& func,const evararray& args=evararray());
+  bool run(const efunc& func,const evararray& args=evararray());
+
+  void finish();
 
   void wait();
   bool isBusy();
 };
 
 
+class ethreads
+{
+ public:
+  ebasicarray<ethread*> threads;
+  void run(const efunc& func,const evararray& args=evararray(),int nthreads=1);
+  void finish();
+};
 
 class etask
 {

@@ -19,23 +19,29 @@
 #include "eseqcluster.h"
 #include "eseqclustersingle.h"
 #include "eseqclustercount.h"
+#include "lookuptables.h"
 
 extern float warnMemThres;
 extern bool warnedMemThres;
 extern float exitMemThres;
 extern bool ignoreMemThres;
 
+/*
 extern char lt_gap_count[0x1u << 16];
 
 extern char lt_nogap_count[0x1u << 16];
 extern char lt_nogap_len[0x1u << 16];
+*/
 
 extern char lt_tamura_p[0x1u << 16];
 extern char lt_tamura_q[0x1u << 16];
 extern char lt_tamura_len[0x1u << 16];
 extern char lt_tamura_gc[0x1u << 16];
 
-void initLookupTable();
+
+//void gap_initLookupTable();
+//void nogap_initLookupTable();
+//void initLookupTable();
 
 class eshortseq
 {

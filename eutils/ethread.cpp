@@ -4,7 +4,20 @@
 
 // Find out number of processors: sysconf(_SC_NPROCESSORS_ONLN); 
 
+emutex::emutex(int type)
+{
+ 
+  pthread_mutexattr_t attr;
 
+  pthread_mutexattr_init(&attr);
+  if (type!=EMUTEX_RECURSIVE)
+    ldie("unknown type: "+estr(type));
+
+  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init(&_mutex, &attr);
+  pthread_mutexattr_destroy(&attr);
+}
 
 emutex::emutex()
 {
@@ -98,12 +111,36 @@ void* ethread_run(void *ptinfo)
   return(0x00);
 }
 
-ethread::ethread(): active(true), _isBusy(false)
+void ethreads::run(const efunc& func,const evararray& args,int nthreads)
 {
-  pthread_create(&_pthread,NULL,ethread::entrypoint, this);
+  int i;
+  finish();
+
+  for (i=0; i<nthreads; ++i)
+    threads.add(new ethread);
+  for (i=0; i<threads.size(); ++i)
+    threads[i]->run(func,args);
+}
+
+void ethreads::finish()
+{
+  int i;
+  for (i=0; i<threads.size(); ++i){
+    threads[i]->finish();
+    delete threads[i];
+  }
+  threads.clear();
+}
+
+ethread::ethread(): active(true), _isBusy(false), _pthread(0x00)
+{
 }
 
 ethread::~ethread()
+{
+}
+
+void ethread::finish()
 {
   active=false;
   runMutex.lock();
@@ -112,10 +149,11 @@ ethread::~ethread()
   pthread_join(_pthread,0x00);
 }
 
-
-
 void ethread::waitrun(const efunc& func,const evararray& args)
 {
+  if (_pthread==0x00)
+    pthread_create(&_pthread,NULL,ethread::entrypoint, this);
+
   runMutex.lock();
   if (_isBusy)
     finishedCond.wait(runMutex);
@@ -128,6 +166,9 @@ void ethread::waitrun(const efunc& func,const evararray& args)
 
 bool ethread::run(const efunc& func,const evararray& args)
 {
+  if (_pthread==0x00)
+    pthread_create(&_pthread,NULL,ethread::entrypoint, this);
+
   runMutex.lock();
   if (_isBusy){ runMutex.unlock(); return(false); }
   _func=func;
@@ -147,10 +188,12 @@ int ethread::_runThread()
 {
   evar tmpresult;
   // should not lock mutexes in different threads than they will be unlocked
-  runMutex.lock();
-  if (!_isBusy)
-    runCond.wait(runMutex);
-  while (active) {
+  while (1) {
+    runMutex.lock();
+    while (!_isBusy && active)
+      runCond.wait(runMutex);
+    if (!active) { runMutex.unlock(); break; }
+
     runMutex.unlock();
     tmpresult.set(_runJob());
     runMutex.lock();
@@ -158,7 +201,7 @@ int ethread::_runThread()
     _isBusy=false;
     // announce that job finished (in case another thread is waiting on this one)
     finishedCond.signal();
-    runCond.wait(runMutex);
+    runMutex.unlock();
   }
   return(0);
 }
@@ -174,7 +217,7 @@ bool ethread::isBusy()
 void ethread::wait()
 {
   runMutex.lock();
-  if (_isBusy)  // only wait if something is runnning
+  while (_isBusy)  // only wait if something is runnning
     finishedCond.wait(runMutex);
   runMutex.unlock();
 }
@@ -211,7 +254,7 @@ void ethread_test()
   t.wait();
 }
 
-etestAdd(ethread_test);
+//etestAdd(ethread_test);
 
 #endif
 
@@ -375,7 +418,7 @@ void etaskman_test()
   cout << "all tasks finished" << endl;
 }
 
-etestAdd(etaskman_test);
+//etestAdd(etaskman_test);
 
 #endif
 

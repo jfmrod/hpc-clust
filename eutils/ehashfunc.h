@@ -656,7 +656,11 @@ inline void hashlittle2(
   *pc=c; *pb=b;
 }
 
-
+inline unsigned long int hash_lookup3_64(const void *key,size_t length,uint32_t a,uint32_t b)
+{
+  hashlittle2(key,length,&a,&b);
+  return(a + (((uint64_t)b)<<32));
+}
 
 /*
  * hashbig():

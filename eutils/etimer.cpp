@@ -1,4 +1,31 @@
 #include "etimer.h"
+#include "logger.h"
+
+#ifdef __APPLE__
+#include <mach/clock.h>
+#include <mach/mach.h>
+
+clock_serv_t cclock=0x00;
+
+long egettimestamp()
+{
+  if (cclock==0x00)
+    host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+  mach_timespec_t mts;
+  clock_get_time(cclock, &mts);
+//  mach_port_deallocate(mach_task_self(), cclock);
+  return((long)mts.tv_sec*1000l + (long)mts.tv_nsec/1000000l);
+}
+#else
+#include <time.h>
+
+long egettimestamp()
+{
+  struct timespec tp;
+  lerrorif(clock_gettime(CLOCK_MONOTONIC, &tp)!=0,"getting clock time");
+  return((long)tp.tv_sec*1000l + (long)tp.tv_nsec/1000000l);
+}
+#endif
 
 
 etimer::etimer()

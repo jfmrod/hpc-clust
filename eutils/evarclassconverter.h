@@ -17,7 +17,7 @@ using namespace std;
 
 class estr;
 
-template <class T,unsigned int (*)(const estr&)>
+template <class T,size_t (*)(const estr&)>
 class estrhashof;
 
 void addConverter(const type_info& to,const type_info& from,eclassConverterBase* converter);

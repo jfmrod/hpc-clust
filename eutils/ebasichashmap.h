@@ -10,24 +10,24 @@
 
 
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 void ebasichashmap<K,T,hashfunc>::addvar(evar& evarkey,evar& var)
 {
   addref(evarkey.get<K>(),&var.get<T>());
 }
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-evar ebasichashmap<K,T,hashfunc>::getvar(int i) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+evar ebasichashmap<K,T,hashfunc>::getvar(size_t i) const
 {
 //  return(evar((T*)&values(i)));
   return(evar());
 }
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-evar ebasichashmap<K,T,hashfunc>::getvarkey(int i) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+evar ebasichashmap<K,T,hashfunc>::getvarkey(size_t i) const
 {
   return(evar());
 //  return(evar((K*)&keys(i)));
 }
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 evar ebasichashmap<K,T,hashfunc>::getvarByKey(const evar& var) const
 {
   if (var.getTypeid()==typeid(K))
@@ -38,12 +38,12 @@ evar ebasichashmap<K,T,hashfunc>::getvarByKey(const evar& var) const
 
 #include "logger.h"
 
-const unsigned int BASICHASH_INIT_MASK=0xFF;
+const size_t BASICHASH_INIT_MASK=0xFF;
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 ebasichashmap<K,T,hashfunc>::iter::iter(): hashmap(0x00), hitem(0x00), bucket(0) {}
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 typename ebasichashmap<K,T,hashfunc>::iter& ebasichashmap<K,T,hashfunc>::iter::operator++()
 {
   hitem=hitem->next;
@@ -51,54 +51,54 @@ typename ebasichashmap<K,T,hashfunc>::iter& ebasichashmap<K,T,hashfunc>::iter::o
   if (hitem) return(*this);
 
   ++bucket;
-  while (hashmap->_hashitems[bucket]==0x00 && bucket < hashmap->_hashmask+1) ++bucket;
+  while (bucket<hashmap->_hashmask+1 && hashmap->_hashitems[bucket]==0x00) ++bucket;
 
   if (bucket < hashmap->_hashmask+1)
     hitem=hashmap->_hashitems[bucket];
   return(*this); 
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 const K& ebasichashmap<K,T,hashfunc>::iter::key() const
 {
   lddieif(hitem==0x00,"trying to access end iterator");
   return(hitem->key);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ebasichashmap<K,T,hashfunc>::iter::value() const
 {
   lddieif(hitem==0x00,"trying to access end iterator");
   return(*hitem->value);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ebasichashmap<K,T,hashfunc>::iter::operator*() const
 {
   lddieif(hitem==0x00,"trying to access end iterator");
   return(*hitem->value);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T* ebasichashmap<K,T,hashfunc>::iter::operator->() const
 {
   lddieif(hitem==0x00,"trying to access end iterator");
   return(hitem->value);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 bool ebasichashmap<K,T,hashfunc>::iter::operator==(const ebasichashmap<K,T,hashfunc>::iter& i) const
 {
   return(hashmap==i.hashmap && hitem==i.hitem);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 bool ebasichashmap<K,T,hashfunc>::iter::operator!=(const ebasichashmap<K,T,hashfunc>::iter& i) const
 {
   return(hashmap!=i.hashmap || hitem!=i.hitem);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 typename ebasichashmap<K,T,hashfunc>::iter& ebasichashmap<K,T,hashfunc>::iter::operator=(const ebasichashmap<K,T,hashfunc>::iter& i)
 {
   hashmap=i.hashmap;
@@ -110,24 +110,24 @@ typename ebasichashmap<K,T,hashfunc>::iter& ebasichashmap<K,T,hashfunc>::iter::o
 
 
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 ebasichashmap<K,T,hashfunc>::ebasichashmap(): count(0)
 {
   _hashmask = BASICHASH_INIT_MASK;
   _hashitems=new ehashitem<K,T>*[_hashmask+1];
-  unsigned int i;
+  size_t i;
   for (i=0; i<_hashmask+1; ++i)
     _hashitems[i]=0x00;
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 ebasichashmap<K,T,hashfunc>::ebasichashmap(const ebasichashmap<K,T,hashfunc>& oldhm): count(oldhm.count)
 {
   _hashmask = oldhm._hashmask;
   _hashitems=new ehashitem<K,T>*[_hashmask+1];
 
   ehashitem<K,T> *oldhmitem;
-  unsigned int i;
+  size_t i;
   for (i=0; i<_hashmask+1; ++i){
     _hashitems[i]=0x00;
     for (oldhmitem=oldhm._hashitems[i]; oldhmitem!=0x00; oldhmitem=oldhmitem->next)
@@ -138,14 +138,14 @@ ebasichashmap<K,T,hashfunc>::ebasichashmap(const ebasichashmap<K,T,hashfunc>& ol
 
 
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 ebasichashmap<K,T,hashfunc>::~ebasichashmap()
 {
   clear();
   delete[] _hashitems;
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 typename ebasichashmap<K,T,hashfunc>::iter ebasichashmap<K,T,hashfunc>::get(const K& key) const
 {
   typename ebasichashmap<K,T,hashfunc>::iter it;
@@ -163,14 +163,14 @@ typename ebasichashmap<K,T,hashfunc>::iter ebasichashmap<K,T,hashfunc>::get(cons
   return(end());
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 typename ebasichashmap<K,T,hashfunc>::iter ebasichashmap<K,T,hashfunc>::begin() const
 {
   typename ebasichashmap<K,T,hashfunc>::iter i;
   i.hashmap=this;
   i.bucket=0;
   i.hitem=0x00;
-  while (_hashitems[i.bucket]==0x00 && i.bucket<_hashmask+1) ++i.bucket;
+  while (i.bucket<_hashmask+1 && _hashitems[i.bucket]==0x00) ++i.bucket;
 
   if (i.bucket==_hashmask+1)
     return(end());
@@ -179,7 +179,7 @@ typename ebasichashmap<K,T,hashfunc>::iter ebasichashmap<K,T,hashfunc>::begin() 
   return(i);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 typename ebasichashmap<K,T,hashfunc>::iter ebasichashmap<K,T,hashfunc>::end() const
 {
   typename ebasichashmap<K,T,hashfunc>::iter i;
@@ -189,11 +189,11 @@ typename ebasichashmap<K,T,hashfunc>::iter ebasichashmap<K,T,hashfunc>::end() co
   return(i);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-void ebasichashmap<K,T,hashfunc>::reserve(unsigned int i)
+template <class K,class T,size_t (*hashfunc)(const K&)>
+void ebasichashmap<K,T,hashfunc>::reserve(size_t i)
 {
-  unsigned int a;
-  unsigned int c=1;
+  size_t a;
+  size_t c=1;
   a=0x01;
   while (i>0){
     i=i>>1;
@@ -201,18 +201,18 @@ void ebasichashmap<K,T,hashfunc>::reserve(unsigned int i)
     ++c;
   }
 
-  if (c>=sizeof(unsigned int)*8){
+  if (c>=sizeof(size_t)*8){
     lwarn("reached limit of hash table index size");
-    a=0x80000000u-0x01u;
+    a=0x8000000000000000u-0x01u;
   }
   
   resizehash(a);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-void ebasichashmap<K,T,hashfunc>::resizehash(unsigned int newmask) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+void ebasichashmap<K,T,hashfunc>::resizehash(size_t newmask) const
 {
-  unsigned int thashmask;
+  size_t thashmask;
   ehashitem<K,T> **thashitems;
 
   if (newmask < _hashmask) return;
@@ -226,11 +226,11 @@ void ebasichashmap<K,T,hashfunc>::resizehash(unsigned int newmask) const
 
   thashitems=new ehashitem<K,T>*[thashmask+1u];
   ldieif(thashitems==0x00,"unable to allocate memory for hashmap");
-  unsigned int i;
+  size_t i;
   for (i=0; i<thashmask+1u; ++i)
     thashitems[i]=0x00;
 
-  unsigned int khash;
+  size_t khash;
   ehashitem<K,T>* hitem;
 
   typename ebasichashmap<K,T,hashfunc>::iter it;
@@ -258,8 +258,8 @@ void ebasichashmap<K,T,hashfunc>::resizehash(unsigned int newmask) const
   ldinfo("finished resize");
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-ehashitem<K,T>* ebasichashmap<K,T,hashfunc>::gethashitem(unsigned int khash,const K& key) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+ehashitem<K,T>* ebasichashmap<K,T,hashfunc>::gethashitem(size_t khash,const K& key) const
 {
   ehashitem<K,T>* hitem;
   hitem = _hashitems[khash];
@@ -273,10 +273,10 @@ ehashitem<K,T>* ebasichashmap<K,T,hashfunc>::gethashitem(unsigned int khash,cons
 }
 
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 void ebasichashmap<K,T,hashfunc>::clear()
 {
-  int i;
+  size_t i;
   ehashitem<K,T> *hitem;
   for (i=0; i<_hashmask+1; ++i){
     while (_hashitems[i]){
@@ -289,10 +289,10 @@ void ebasichashmap<K,T,hashfunc>::clear()
   count=0;
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 bool ebasichashmap<K,T,hashfunc>::exists(const K& key) const
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   i=hash(key);
@@ -307,7 +307,7 @@ bool ebasichashmap<K,T,hashfunc>::exists(const K& key) const
   return(false);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 void ebasichashmap<K,T,hashfunc>::erase(const typename ebasichashmap<K,T,hashfunc>::iter& it)
 {
   ldieif(it.hitem==0x00,"trying to delete empty iterator");
@@ -320,16 +320,16 @@ void ebasichashmap<K,T,hashfunc>::erase(const typename ebasichashmap<K,T,hashfun
   --count;
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 void ebasichashmap<K,T,hashfunc>::erase(const K& key)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   i=hash(key);
   hitem=_hashitems[i];
 
-  int j;
+  size_t j;
   while (hitem!=0x00){
     if (key == hitem->key){
       if (hitem->prev) hitem->prev->next=hitem->next;
@@ -346,20 +346,20 @@ void ebasichashmap<K,T,hashfunc>::erase(const K& key)
   // non existent value
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 ebasichashmap<K,T,hashfunc>& ebasichashmap<K,T,hashfunc>::operator+=(const ebasichashmap<K,T,hashfunc>& hm)
 {
-  int i;
+  size_t i;
   for (i=0; i<hm.size(); ++i)
     add(hm.keys(i),hm.values(hm.keys(i)));
   return(*this);
 }
 
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ebasichashmap<K,T,hashfunc>::addref(const K& key,T* value)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -381,10 +381,10 @@ T& ebasichashmap<K,T,hashfunc>::addref(const K& key,T* value)
   return(*_hashitems[i]->value);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ebasichashmap<K,T,hashfunc>::add(const K& key,const T& value)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -410,10 +410,10 @@ T& ebasichashmap<K,T,hashfunc>::add(const K& key,const T& value)
 */
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 const T& ebasichashmap<K,T,hashfunc>::operator[](const K& key) const
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -455,10 +455,10 @@ const T& ebasichashmap<K,T,hashfunc>::operator[](int ind) const
 }
 */
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ebasichashmap<K,T,hashfunc>::operator[](const K& key)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -482,10 +482,10 @@ T& ebasichashmap<K,T,hashfunc>::operator[](const K& key)
 }
 
 //#pragma GCC diagnostic ignored "-Wreturn-type"
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 const T& ebasichashmap<K,T,hashfunc>::values(const K& key) const
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -504,10 +504,10 @@ const T& ebasichashmap<K,T,hashfunc>::values(const K& key) const
 //  return(*(T*)0x00);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ebasichashmap<K,T,hashfunc>::values(const K& key)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (size() > (3u*(_hashmask+1))>>2u) resizehash();

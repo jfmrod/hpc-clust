@@ -20,10 +20,9 @@ class efuncType : public efuncBase
 
   const type_info& getTypeid() { return(typeid(F)); }
 
-  evar call(evararray &args);
+  evar call(const evararray &args);
   void updateInfo(efunc *f);
 };
-
 
 
 //template <class T,class M>
@@ -40,11 +39,9 @@ class efuncObjMethod : public efuncBase //,public eclassMethodBase
   const type_info& getTypeid();
 
 //  evar operator()(evarBase* obj,evararray &args);
-  evar call(evararray &args);
+  evar call(const evararray &args);
   void updateInfo(efunc *f);
 };
-
-
 
 
 
@@ -58,7 +55,7 @@ template <class F>
 efuncType<F>::efuncType(F _func): func(_func) {}
 
 template <class F>
-evar efuncType<F>::call(evararray &args)
+evar efuncType<F>::call(const evararray &args)
 {
   return(efuncall(func,args));
 }

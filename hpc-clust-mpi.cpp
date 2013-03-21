@@ -73,7 +73,10 @@ float t4time=0.0;
 int cnode=-1;
 emutex clusterMutex;
 
-
+float radixKey(eblockarray<eseqdist>& dists,long int i)
+{
+  return(dists[i].dist);
+}
 
 template <class T>
 void seq(T& arr,int n)
@@ -90,7 +93,7 @@ void randperm(T& arr)
 {
   int i,j;
   for (i=arr.size()-1; i>0; --i){
-    j=rnd.uniform()*(i+1);
+    j=(int)(rnd.uniform()*(i+1));
     if (j!=i) arr.swap(i,j);
   }
 }
@@ -388,7 +391,8 @@ long int nodeComputeDistances(eintarray _uniqind,int node,int tnodes,float thres
   cerr << cnode << " finished computing distances" << endl;
 
   mutexDists.lock();
-  nodeDists.sort();
+  fradix256sort<eblockarray<eseqdist>,radixKey>(nodeDists);
+//  nodeDists.sort();
   nodePos=nodeDists.size()-1l;
   cerr << cnode << " partsFinished: " << partsFinished << " partsTotal: " << partsTotal<< endl;
   cerr << cnode << " nodePos: " << nodePos<< endl;
@@ -490,15 +494,15 @@ void help()
 int emain()
 {
   dfunc.choice=0;
-  dfunc.add("gap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
-  dfunc.add("gap2",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed2>);
-  dfunc.add("nogap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
-  dfunc.add("nogap2",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>);
+  dfunc.add("gap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed2>);
+  dfunc.add("nogap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>);
+  dfunc.add("gap2",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
+  dfunc.add("nogap2",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
   dfunc.add("nogapsingle",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
   dfunc.add("tamura",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
 
   epregisterClass(eoption<efunc>);
-  epregisterClassMethod2(eoption<efunc>,operator=,int,(const estr& val));
+  epregisterClassMethod4(eoption<efunc>,operator=,int,(const estr& val),"=");
 
   epregisterFunc(help);
   epregister(dfunc);
@@ -531,7 +535,7 @@ int emain()
   cout << "# " << date() << endl;
   cout << "# " << args2str(argvc,argv) << endl;
 
-  initLookupTable();
+//  initLookupTable();
 
   if (ofile.len()==0)
     ofile=argv[1];

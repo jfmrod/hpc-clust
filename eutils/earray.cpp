@@ -6,11 +6,11 @@ void earray<evar>::serial(estr& data) const
   serialint(size(),data);
   if (size()==0) return;
 
-  int ilen=data.len();
+  size_t ilen=data.len();
 
   if (data.len()-ilen>0){ data.reserve(data.len()*size()); }
 
-  int i;
+  size_t i;
   for (i=0; i<size(); ++i)
     at(i).serial(data);
 //    ::serial(at(i),data);
@@ -24,7 +24,7 @@ void earray<evar>::serial(estr& data) const
 
 
 template <>
-int earray<evar>::unserial(const estr& data,int i)
+size_t earray<evar>::unserial(const estr& data,size_t i)
 {
   clear();
   unsigned int count;
@@ -53,7 +53,7 @@ void earray<evar>::addvar(evar& var)
 }
 
 template <>
-evar earray<evar>::getvar(int i) const
+evar earray<evar>::getvar(size_t i) const
 {
   return(at(i));
 }

@@ -49,13 +49,14 @@ void eblockarray<T>::add(const T& sdist)
 template <class T>
 const T& eblockarray<T>::operator[](long int i) const
 {
-//  ldieif(i/blocksize>=blocks.size(),"out of range: blocks.size: "+estr(blocks.size())+" i/blocksize: "+estr(i/blocksize));
+  ldieif(i/blocksize>=blocks.size() || i>=size() || i<0,"out of range: blocks.size: "+estr(blocks.size())+" i/blocksize: "+estr(i/blocksize)+" i: "+estr(i)+" size: "+size());
   return(blocks[i/blocksize][i%blocksize]);
 }
 
 template <class T>
 T& eblockarray<T>::operator[](long int i)
 {
+  ldieif(i/blocksize>=blocks.size() || i>=size() || i<0,"out of range: blocks.size: "+estr(blocks.size())+" i/blocksize: "+estr(i/blocksize)+" i: "+estr(i)+" size: "+size());
 //  ldieif(i/blocksize>=blocks.size(),"out of range: blocks.size: "+estr(blocks.size())+" i/blocksize: "+estr(i/blocksize));
   return(blocks[i/blocksize][i%blocksize]);
 }
@@ -125,6 +126,10 @@ void eblockarray<T>::clear()
 template <class T>
 void eblockarray<T>::swap(long int i,long int j)
 {
+  ldieif(i/blocksize>=blocks.size() || i>=size() || i<0,"out of range: blocks.size: "+estr(blocks.size())+" i/blocksize: "+estr(i/blocksize)+" i: "+estr(i)+" size: "+size());
+  ldieif(j/blocksize>=blocks.size() || j>=size() || j<0,"out of range: blocks.size: "+estr(blocks.size())+" i/blocksize: "+estr(j/blocksize)+" j: "+estr(j)+" size: "+size());
+  ldieif(i==j,"swaping same item: "+estr(i)+" == "+estr(j));
+
   T tmp;
   tmp=operator[](i);
   operator[](i)=operator[](j);

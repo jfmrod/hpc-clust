@@ -35,7 +35,7 @@ class egzfile
   bool opened;
  public:
   estr name;
-  estr mode;
+  mutable estr mode;
   bool blocking;
 
   egzfile();
@@ -72,16 +72,24 @@ class efile
   efile();
   ~efile();
 
+  efile(const efile& file);
   efile(const estr& filename);
+  efile(const char* filename);
+  efile(char* filename);
   efile(const estr& filename,const estr& mode);
   efile(FILE *file);
+  efile(int fd,const estr& mode);
 
   bool open(FILE *file);
+  bool open(int fd,const estr& mode);
   bool open() const;
   bool open(const estr& filename,const estr& mode);
 //  bool open(const estr& mode);
   void close() const;
   void flush() const;
+
+  void disableBuffer() const;
+  void setNonBlocking() const;
 
   bool create() const;
 
@@ -89,18 +97,24 @@ class efile
   estr basename() const;
   estr dirname() const;
 
-  void write(const estr& str) const;
-  inline void write(const char *str) const { write(estr(str)); }
-  inline void write(char *str) const { write(estr(str)); }
-  void write(const evar& var) const;
+  int fileno() const;
+  bool eof() const;
 
-  bool read(estr& str,long int len=-1) const;
+  int write(const estr& str) const;
+  inline int write(const char *str) const { return(write(estr(str))); }
+  inline int write(char *str) const { return(write(estr(str))); }
+  inline int write(char chr) const { return(write(estr(chr))); }
+  int write(const evar& var) const;
+
+  evar read() const;
+  int read(estr& str,long int len=-1) const;
   bool readln(estr& str) const;
 
   long int size() const;
 
   bool exists() const;
   friend void pclose(efile& pfile);
+  friend ostream& operator<<(ostream& stream,const efile& file);
 };
 
 ostream& operator<<(ostream& stream,const efile& file);
@@ -109,7 +123,7 @@ ostream& operator<<(ostream& stream,const efile& file);
 efile popen(const estr& cmd);
 void pclose(efile& pfile);
 
-void system(const estr& cmd);
+int system(const estr& cmd);
 
 
 /*

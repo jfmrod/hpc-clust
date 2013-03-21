@@ -98,6 +98,7 @@ estrhashof<eclassBase*>& getClassNames();
 #define epregisterClassMethod2(c,m,r,a)          epregisterClassMethod3<c>((r(c::*)a)&c::m,#m)
 #define epregisterClassMethod2A(c,m,rm,r,a)          epregisterClassMethod3<c>((r(c::*)a)&c::m,rm)
 #define epregisterClassMethod2D(c,m,r,a,defargs) epregisterClassMethod3<c>((r(c::*)a)&c::m,#m,defargs)
+#define epregisterClassMethod4(c,m,r,a,n)          epregisterClassMethod3<c>((r(c::*)a)&c::m,n)
 
 #define epregisterClassProperty(c,p)       epregisterClassProperty2<c>(&c::p,#p)
 #define epregisterClassPropertyI(c,p,i)    epregisterClassProperty2<c>(&c::p,#p,i)

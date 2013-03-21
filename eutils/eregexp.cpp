@@ -2,9 +2,62 @@
 
 #include "logger.h"
 #include "evar.h"
+#include "estr.h"
+#include "estrarray.h"
+
 
 eregexp refloat("^-?[0-9]*\\.?[0-9]+([eE]-?[0-9]+)?([ 	]+|$)");
 eregexp reint("^-?[0-9]+([ 	]+|$)");
+
+estr grep(estr& str,const eregexp& re,int pos)
+{
+  int b,e;
+  re.match(str,pos,b,e);
+  if (b==-1) return("");
+  estr ret(str.substr(b,e-b));
+  str.del(b,e-b);
+  return(ret); 
+}
+
+bool grepdouble(estr& str,double& ret,int pos)
+{
+  int b;
+  b=refloat.match(str);
+  if (b==-1) return(false);
+  
+  sscanf(&str[b],"%lg",&ret);
+  return(true);
+}
+
+bool grepfloat(estr &str,float& ret,int pos)
+{
+  estr sret;
+  if (grep(str,refloat,sret,pos)){
+    ret=sret.f(); return(true);
+  }
+  return(false);
+}
+
+bool grepint(estr &str,int& ret,int pos)
+{
+  estr sret;
+  if (grep(str,reint,sret,pos)){
+    ret=sret.i(); return(true);
+  }
+  return(false);
+}
+
+bool grep(estr& str,const eregexp& re,estr& ret,int pos)
+{
+  int b,e;
+  re.match(str,pos,b,e);
+  if (b==-1) return(false);
+  str.del(b,e-b);
+  return(true); 
+}
+
+
+
 
 
 eregexp::eregexp(): nmatch(1),pmatch(0x00),compiled(false)
@@ -58,22 +111,22 @@ void eregexp::compile(const estr &matchstr, int cflags)
 
 #define dcheck(a,b) dieif(a,b)
 
-int eregexp::match(const estr &text, int pos, int eflags)
+int eregexp::match(const estr &text, int pos, int eflags) const
 {
-  if (pos==text.len()) { b=-1; e=-1; return(-1); }
+  if (pos==text.len()) { /* b=-1; e=-1; */ return(-1); }
 
   lderrorif(pos>=text.len(),"eregexp: pos is bigger than string size");
 
   int res;
   res = regexec(&reg,&text._str[pos],nmatch,pmatch,eflags);
-  if (res==REG_NOMATCH){ b=-1; e=-1; return(-1); }
+  if (res==REG_NOMATCH){ /* b=-1; e=-1; */ return(-1); }
   
   if (res==0){
-    b=pos+pmatch[0].rm_so;
-    e=pos+pmatch[0].rm_eo;
+//    b=pos+pmatch[0].rm_so;
+//    e=pos+pmatch[0].rm_eo;
     return(pos+pmatch[0].rm_so);
   } else{
-    b=-1; e=-1;
+//    b=-1; e=-1;
     lerror("eregexp: error matching pattern");
     return(-1);
   }

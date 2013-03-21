@@ -5,14 +5,14 @@
 void ebasearrayof::serial(estr& data) const
 {
   serialint(size(),data);
-  int i;
+  size_t i;
   for (i=0; i<size(); ++i){
     getvarkey(i).serial(data);
     getvar(i).serial(data);
   }
 }
 
-int ebasearrayof::unserial(const estr& data,int i)
+size_t ebasearrayof::unserial(const estr& data,size_t i)
 {
   unsigned int count;
   evar keyvar,var;
@@ -33,12 +33,13 @@ int ebasearrayof::unserial(const estr& data,int i)
 
 ostream& operator<<(ostream& stream,const ebasearrayof& arr)
 {
-  int i;
+  size_t i;
   stream << "[";
-  for (i=0; i<(int)arr.size()-1; ++i)
+  if (arr.size()==0){ stream << "]"; return(stream); }
+
+  for (i=0; i<arr.size()-1; ++i)
     stream << arr.getvarkey(i) << "=" << arr.getvar(i) << ",";
-  if (i<arr.size())
-    stream << arr.getvarkey(i) << "=" << arr.getvar(i);
+  stream << arr.getvarkey(i) << "=" << arr.getvar(i);
   stream << "]";
   return(stream);
 }

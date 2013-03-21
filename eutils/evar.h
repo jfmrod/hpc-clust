@@ -28,10 +28,106 @@
 
 //#include "estrarray.h"
 
+template <class T1>
+evar::evar(void (*f)(T1))
+{
+  var=new evarType<void (*)(T1)>(f);
+  ++var->pcount;
+}
+
+template <class T1,class T2>
+evar::evar(void (*f)(T1,T2))
+{
+  var=new evarType<void (*)(T1,T2)>(f);
+  ++var->pcount;
+}
+
+template <class T1,class T2,class T3>
+evar::evar(void (*f)(T1,T2,T3))
+{
+  var=new evarType<void (*)(T1,T2,T3)>(f);
+  ++var->pcount;
+}
+
+template <class T1,class T2,class T3,class T4>
+evar::evar(void (*f)(T1,T2,T3,T4))
+{
+  var=new evarType<void (*)(T1,T2,T3,T4)>(f);
+  ++var->pcount;
+}
+
+template <class T1,class T2,class T3,class T4,class T5>
+evar::evar(void (*f)(T1,T2,T3,T4,T5))
+{
+  var=new evarType<void (*)(T1,T2,T3,T4,T5)>(f);
+  ++var->pcount;
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6>
+evar::evar(void (*f)(T1,T2,T3,T4,T5,T6))
+{
+  var=new evarType<void (*)(T1,T2,T3,T4,T5,T6)>(f);
+  ++var->pcount;
+}
+
+
+template <class R>
+evar::evar(R (*f)())
+{
+  var=new evarType<R (*)()>(f);
+  ++var->pcount;
+}
+
+template <class R,class T1>
+evar::evar(R (*f)(T1))
+{
+  var=new evarType<R (*)(T1)>(f);
+  ++var->pcount;
+}
+
+template <class R,class T1,class T2>
+evar::evar(R (*f)(T1,T2))
+{
+  var=new evarType<R (*)(T1,T2)>(f);
+  ++var->pcount;
+}
+
+template <class R,class T1,class T2,class T3>
+evar::evar(R (*f)(T1,T2,T3))
+{
+  var=new evarType<R (*)(T1,T2,T3)>(f);
+  ++var->pcount;
+}
+
+template <class R,class T1,class T2,class T3,class T4>
+evar::evar(R (*f)(T1,T2,T3,T4))
+{
+  var=new evarType<R (*)(T1,T2,T3,T4)>(f);
+  ++var->pcount;
+}
+
+template <class R,class T1,class T2,class T3,class T4,class T5>
+evar::evar(R (*f)(T1,T2,T3,T4,T5))
+{
+  var=new evarType<R (*)(T1,T2,T3,T4,T5)>(f);
+  ++var->pcount;
+}
+
+template <class R,class T1,class T2,class T3,class T4,class T5,class T6>
+evar::evar(R (*f)(T1,T2,T3,T4,T5,T6))
+{
+  var=new evarType<R (*)(T1,T2,T3,T4,T5,T6)>(f);
+  ++var->pcount;
+}
+
+
+
+
+
 template <class T>
 evar::evar(T* value)
 {
-  var=new evarType<T>(value);
+  var=new evarTypeClean<T>(value);
   ++var->pcount;
 }
 template <class T>
@@ -116,7 +212,7 @@ void serial(const T& value,estr& data)
 }
 
 template <class T>
-int unserial(T& value,const estr& data,int i)
+size_t unserial(T& value,const estr& data,size_t i)
 {
   evar var(value);
 //  var.var->cleanup=false;

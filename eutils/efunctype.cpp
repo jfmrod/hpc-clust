@@ -18,7 +18,7 @@ evar efuncObjMethod<T,M>::operator()(evarBase* obj,evararray &args)
 }
 */
 
-evar efuncObjMethod::call(evararray &args)
+evar efuncObjMethod::call(const evararray &args)
 {
   return(method->operator()(object.var,args));
 }

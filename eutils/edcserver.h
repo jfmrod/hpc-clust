@@ -19,6 +19,7 @@ class edcBaseServerNode
   edcBaseServer& server;
   bool isBusy;
   bool isChoked;
+  evar result;
 
   edcBaseServerNode(edcBaseServer& server);
   virtual bool sendMsg(int code,const estr& msg)=0;
@@ -33,6 +34,8 @@ class edcBaseServer
 {
  public:
   earray<efunc> callbacks;
+
+  efunc onAllReady;
 
   virtual void init();
   virtual void final();
@@ -68,7 +71,6 @@ class edcserverClient : public esocket,public edcBaseServerNode
 //  edcserver& server;
   estr recvbuffer;
   estr sendbuffer;
-  evar result;
 
 //  bool isChoked;
 //  bool isBusy;
@@ -97,7 +99,6 @@ class edcserver : public esocket, public edcBaseServer
 
   earray<edcserverClient> sockets;
 
-  efunc onAllReady;
   void doIncoming();
 
   void doAllReady();
@@ -146,7 +147,6 @@ class edcmpi: public edcBaseServer, public edcBaseClient
   earray<edcmpiServerNode> nodes;
 //  earray<efunc> callbacks;
 
-  efunc onAllReady;
   void doIncoming();
 
   void doAllReady();
@@ -183,7 +183,6 @@ class edcmpiServerNode: public edcBaseServerNode
 //  edcmpi& server;
   estr recvbuffer;
   estr sendbuffer;
-  evar result;
 
   int rank;
 

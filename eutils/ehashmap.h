@@ -9,26 +9,26 @@
 
 
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 void ehashmap<K,T,hashfunc>::addvar(evar& evarkey,evar& var)
 {
   var.retain();
   addref(evarkey.get<K>(),&var.get<T>());
 }
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-evar ehashmap<K,T,hashfunc>::getvar(int i) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+evar ehashmap<K,T,hashfunc>::getvar(size_t i) const
 {
   return(evar((T&)values(i)));
 }
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 evar ehashmap<K,T,hashfunc>::getvarByKey(const evar& var) const
 {
   if (var.getTypeid()==typeid(K))
     return(evar((T&)values(var.get<K>())));
   return(evar());
 }
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-evar ehashmap<K,T,hashfunc>::getvarkey(int i) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+evar ehashmap<K,T,hashfunc>::getvarkey(size_t i) const
 {
   return(evar((K&)keys(i)));
 }
@@ -54,19 +54,19 @@ ehashitem<K,T>::~ehashitem()
 */
 }
 
-const unsigned int HASH_INIT_MASK=0xFF;
+const size_t HASH_INIT_MASK=0xFF;
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 ehashmap<K,T,hashfunc>::ehashmap()
 {
   _hashmask = HASH_INIT_MASK;
   _hashitems=new ehashitem<K,T>*[_hashmask+1];
-  unsigned int i;
+  size_t i;
   for (i=0; i<_hashmask+1; ++i)
     _hashitems[i]=0x00;
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 ehashmap<K,T,hashfunc>::ehashmap(const ehashmap<K,T,hashfunc>& oldhm)
 {
   _hashmask = oldhm._hashmask;
@@ -74,7 +74,7 @@ ehashmap<K,T,hashfunc>::ehashmap(const ehashmap<K,T,hashfunc>& oldhm)
   _hashitems=new ehashitem<K,T>*[_hashmask+1];
 
   ehashitem<K,T> *oldhmitem;
-  unsigned int i;
+  size_t i;
   for (i=0; i<_hashmask+1; ++i){
     _hashitems[i]=0x00;
     for (oldhmitem=oldhm._hashitems[i]; oldhmitem!=0x00; oldhmitem=oldhmitem->next)
@@ -82,19 +82,19 @@ ehashmap<K,T,hashfunc>::ehashmap(const ehashmap<K,T,hashfunc>& oldhm)
   }
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 ehashmap<K,T,hashfunc>::~ehashmap()
 {
   clear();
   delete[] _hashitems;
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-void ehashmap<K,T,hashfunc>::reserve(unsigned int i)
+template <class K,class T,size_t (*hashfunc)(const K&)>
+void ehashmap<K,T,hashfunc>::reserve(size_t i)
 {
   _keys.reserve(i);
   
-  unsigned int a;
+  size_t a;
   a=0x01;
   while (i>0){
     i=i>>1;a=(a<<1)|0x01;
@@ -103,10 +103,10 @@ void ehashmap<K,T,hashfunc>::reserve(unsigned int i)
   resizehash(a);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-void ehashmap<K,T,hashfunc>::resizehash(unsigned int newmask) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+void ehashmap<K,T,hashfunc>::resizehash(size_t newmask) const
 {
-  unsigned int thashmask;
+  size_t thashmask;
   ehashitem<K,T> **thashitems;
 
   ldinfo("resizing hash table");
@@ -117,11 +117,11 @@ void ehashmap<K,T,hashfunc>::resizehash(unsigned int newmask) const
     thashmask = newmask;
 
   thashitems=new ehashitem<K,T>*[thashmask+1];
-  unsigned int i;
+  size_t i;
   for (i=0; i<thashmask+1; ++i)
     thashitems[i]=0x00;
 
-  unsigned int khash;
+  size_t khash;
   ehashitem<K,T>* hitem;
 
   for (i=0; i<_keys.size(); ++i){
@@ -148,8 +148,8 @@ void ehashmap<K,T,hashfunc>::resizehash(unsigned int newmask) const
   ldinfo("finished resize");
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-ehashitem<K,T>* ehashmap<K,T,hashfunc>::gethashitem(unsigned int khash,const K& key) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+ehashitem<K,T>* ehashmap<K,T,hashfunc>::gethashitem(size_t khash,const K& key) const
 {
   ehashitem<K,T>* hitem;
   hitem = _hashitems[khash];
@@ -163,10 +163,10 @@ ehashitem<K,T>* ehashmap<K,T,hashfunc>::gethashitem(unsigned int khash,const K& 
 }
 
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 void ehashmap<K,T,hashfunc>::clear()
 {
-  int i;
+  size_t i;
   ehashitem<K,T> *hitem;
   for (i=0; i<_hashmask+1; ++i){
     while (_hashitems[i]){
@@ -192,10 +192,10 @@ void ehashmap<K,T,hashfunc>::clear()
 */
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 bool ehashmap<K,T,hashfunc>::exists(const K& key) const
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   i=hash(key);
@@ -210,16 +210,16 @@ bool ehashmap<K,T,hashfunc>::exists(const K& key) const
   return(false);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 void ehashmap<K,T,hashfunc>::erase(const K& key)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   i=hash(key);
   hitem=_hashitems[i];
 
-  int j;
+  long j;
   while (hitem!=0x00){
     if (key == hitem->key){
       j=_keys.find(key);
@@ -237,32 +237,32 @@ void ehashmap<K,T,hashfunc>::erase(const K& key)
   // non existent value
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-void ehashmap<K,T,hashfunc>::erase(int i)
+template <class K,class T,size_t (*hashfunc)(const K&)>
+void ehashmap<K,T,hashfunc>::erase(size_t i)
 {
   erase(_keys.at(i));
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-int ehashmap<K,T,hashfunc>::findkey(const K& key,int pos) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+long ehashmap<K,T,hashfunc>::findkey(const K& key,size_t pos) const
 {
   return(_keys.find(key,pos));
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 ehashmap<K,T,hashfunc>& ehashmap<K,T,hashfunc>::operator+=(const ehashmap<K,T,hashfunc>& hm)
 {
-  int i;
+  size_t i;
   for (i=0; i<hm.size(); ++i)
     add(hm.keys(i),hm.values(hm.keys(i)));
   return(*this);
 }
 
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ehashmap<K,T,hashfunc>::addref(const K& key,T* value)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (_keys.size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -284,10 +284,10 @@ T& ehashmap<K,T,hashfunc>::addref(const K& key,T* value)
   return(*_hashitems[i]->value);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ehashmap<K,T,hashfunc>::add(const K& key,const T& value)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (_keys.size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -313,10 +313,10 @@ T& ehashmap<K,T,hashfunc>::add(const K& key,const T& value)
 */
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 const T& ehashmap<K,T,hashfunc>::operator[](const K& key) const
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (_keys.size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -336,10 +336,10 @@ const T& ehashmap<K,T,hashfunc>::operator[](const K& key) const
   return(*_hashitems[i]->value);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-const T& ehashmap<K,T,hashfunc>::operator[](int ind) const
+template <class K,class T,size_t (*hashfunc)(const K&)>
+const T& ehashmap<K,T,hashfunc>::operator[](size_t ind) const
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   lddieif(ind > _keys.size(),"ehashmap: index out of bounds");
@@ -356,10 +356,10 @@ const T& ehashmap<K,T,hashfunc>::operator[](int ind) const
 //  return(*(T*)0x00);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ehashmap<K,T,hashfunc>::operator[](const K& key)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (_keys.size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -383,10 +383,10 @@ T& ehashmap<K,T,hashfunc>::operator[](const K& key)
 }
 
 //#pragma GCC diagnostic ignored "-Wreturn-type"
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 const T& ehashmap<K,T,hashfunc>::values(const K& key) const
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (_keys.size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -405,10 +405,10 @@ const T& ehashmap<K,T,hashfunc>::values(const K& key) const
 //  return(*(T*)0x00);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
+template <class K,class T,size_t (*hashfunc)(const K&)>
 T& ehashmap<K,T,hashfunc>::values(const K& key)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   if (_keys.size() > (3u*(_hashmask+1))>>2u) resizehash();
@@ -427,10 +427,10 @@ T& ehashmap<K,T,hashfunc>::values(const K& key)
 //  return(*(T*)0x00);
 }
 
-template <class K,class T,unsigned int (*hashfunc)(const K&)>
-T& ehashmap<K,T,hashfunc>::operator[](int ind)
+template <class K,class T,size_t (*hashfunc)(const K&)>
+T& ehashmap<K,T,hashfunc>::operator[](size_t ind)
 {
-  int i;
+  size_t i;
   ehashitem<K,T>* hitem;
 
   i=hash(_keys.at(ind));

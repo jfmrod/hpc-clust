@@ -1,35 +1,50 @@
 #include "eparserinterpreter.h"
 
 #include "eparser.h"
+#include "evarcommon.h"
 #include "logger.h"
 #include "evar.h"
 #include "eiostream.h"
 
+#ifdef EUTILS_HAVE_READLINE_H
+ #include <readline/readline.h>
+ #include <readline/history.h>
+#endif
 
 class eatom_base;
 
 bool isOp(const estr& str);
 bool split_atoms2(const estr& str,estrarray& sa);
 
-evar assign(estrhashof<evar>&,ebasicarray<eatom_base*>&);
-evar objprop(estrhashof<evar>&,ebasicarray<eatom_base*>& args);
-evar objop(estrhashof<evar>&,const estr& name,ebasicarray<eatom_base*>& args);
-evar objcall(estrhashof<evar>&,const estr& name,ebasicarray<eatom_base*>& args);
+typedef void (*epop_f)(evar&,estrhashof<evar>&,const estr& name,ebasicarray<eatom_base*>&,evararray&);
+
+void assign(evar&,estrhashof<evar>&,const estr& name,ebasicarray<eatom_base*>&,evararray&);
+void assignref(evar&,estrhashof<evar>&,const estr& name,ebasicarray<eatom_base*>&,evararray&);
+void objprop(evar&,estrhashof<evar>&,const estr& name,ebasicarray<eatom_base*>& args,evararray&);
+void objop(evar&,estrhashof<evar>&,const estr& name,ebasicarray<eatom_base*>& args,evararray&);
+void objcall(evar&,estrhashof<evar>&,const estr& name,ebasicarray<eatom_base*>& args,evararray&);
 
 class eatom_base
 {
  public:
   int type;
+  bool evald;
+  estr exechost;
+  int remote;
+
 //  bool internal;
   evar rvalue;
   ebasicarray<eatom_base*> args;
   eatom_base(int type);
   virtual ~eatom_base();
   virtual evar& make(estrhashof<evar>& env)=0;
+  virtual void clear()=0;
   virtual void print(estr& s)=0;
+  virtual void serial(estr& data) const=0;
+  virtual int unserial(const estr& data,int pi)=0;
 };
 
-eatom_base::eatom_base(int _type): type(_type) {}
+eatom_base::eatom_base(int _type): type(_type), evald(false), remote(0) {}
 eatom_base::~eatom_base()
 {
   int i;
@@ -44,40 +59,77 @@ class eatom_value : public eatom_base
   estr value;
   evar& make(estrhashof<evar>& env);
   void print(estr& s);
+  void clear();
 
+  eatom_value(): eatom_base(2) {}
   eatom_value(const estr& str);
-//  virtual ~eatom_value() {}
+
+  void serial(estr& data) const;
+  int unserial(const estr& data,int ip);
 };
 
-eatom_value::eatom_value(const estr& str): eatom_base(2),value(str) {}
 
-evar& eatom_value::make(estrhashof<evar>& env)
+void eatom_value::serial(estr& data) const
 {
+  value.serial(data);
+  rvalue.serial(data);
+}
+
+int eatom_value::unserial(const estr& data,int ip)
+{
+  ip=value.unserial(data,ip);
+  ip=rvalue.unserial(data,ip);
+  return(ip);
+}
+
+
+
+void eatom_value::clear()
+{
+  rvalue.clear();
+  evald=false;
+}
+
+eatom_value::eatom_value(const estr& str): eatom_base(2),value(str)
+{
+/*
   ldinfo("eatom_value::make()");
-  if (!rvalue.isNull()) return(rvalue);
+  if (evald && rvalue.isNull() && env.exists(value)) // environment variables are not stored in rvalue
+    return(env[value]);
+  if (!rvalue.isNull() || evald) return(rvalue);
+
+  evald=true;
 
   if (!value.len()){
     lderror("empty atom value");
-//    rvalue=new evar();
-//    internal=true;
     return(rvalue);
   }
 
   if (value.is_int()){
     rvalue.set(value.i());
-//    internal=true;
     return(rvalue);
   }
 
   if (value.is_float()){
     rvalue.set(value.f());
-//    internal=true;
     return(rvalue);
   }
 
   if (value.is_hex()){
     rvalue.set(value.h());
-//    internal=true;
+    return(rvalue);
+  }
+  if (value[0]=='@'){
+    int i;
+    i=value.find(":");
+    if (i==-1){
+      lderror("remote variable missing :");
+      return(rvalue);
+    }
+    estr tmphost(value.substr(1,i-1));
+    estr tmpvar(value.substr(i+1));
+    exechost=tmphost;
+    rvalue.set(getDistComp().var(tmphost,tmpvar));
     return(rvalue);
   }
 
@@ -90,32 +142,84 @@ evar& eatom_value::make(estrhashof<evar>& env)
     tmps.replace("\\t","\t");
     tmps.replace("\\\\","\\");
     rvalue.set(new estr(tmps));
-//    internal=true;
     return(rvalue);
   }
 
   if (getClassNames().exists(value)){
     rvalue.set(getClassNames()[value]->create.at(0));
-//    internal=true;
     return(rvalue);
   }
 
-  if (env.exists(value)){
-//    rvalue.set(env[value]);
-//    internal=false;
+  if (env.exists(value))
     return(env[value]);
-  }
 
   if (parser->funcs.exists(value)){
     rvalue.set(parser->funcs[value].at(0));
-//    internal=true;
     return(rvalue);
   }
 
   if (&env==&getParser()->objects) lwarn("creating variable \""+value+"\"");
   env.add(value,evar());
-//  rvalue.set(env[value]);
-//  internal=false;
+  return(env[value]);
+*/
+}
+
+evar& eatom_value::make(estrhashof<evar>& env)
+{
+  ldinfo("eatom_value::make()");
+  if (evald && rvalue.isNull() && env.exists(value)) // environment variables are not stored in rvalue
+    return(env[value]);
+  if (!rvalue.isNull() || evald) return(rvalue);
+
+  evald=true;
+
+  if (!value.len()){
+    lderror("empty atom value");
+    return(rvalue);
+  }
+
+  if (value.is_int()){
+    rvalue.set(value.i());
+    return(rvalue);
+  }
+
+  if (value.is_float()){
+    rvalue.set(value.f());
+    return(rvalue);
+  }
+
+  if (value.is_hex()){
+    rvalue.set(value.h());
+    return(rvalue);
+  }
+
+  if (value[0]=='"' && value[value.len()-1]=='"'){
+    estr tmps;
+    tmps=value.substr(1,value.len()-2);
+    tmps.replace("\\\"","\"");
+    tmps.replace("\\n","\n");
+    tmps.replace("\\r","\r");
+    tmps.replace("\\t","\t");
+    tmps.replace("\\\\","\\");
+    rvalue.set(new estr(tmps));
+    return(rvalue);
+  }
+
+  if (getClassNames().exists(value)){
+    rvalue.set(getClassNames()[value]->create.at(0));
+    return(rvalue);
+  }
+
+  if (env.exists(value))
+    return(env[value]);
+
+  if (parser->funcs.exists(value)){
+    rvalue.set(parser->funcs[value].at(0));
+    return(rvalue);
+  }
+
+  if (&env==&getParser()->objects) lwarn("creating variable \""+value+"\"");
+  env.add(value,evar());
   return(env[value]);
 }
 
@@ -162,11 +266,54 @@ class eatom : public eatom_base
 {
  public:
   estr name;
+  evararray vargs;
+  epop_f fcall;
+  efunc *efcall;
   evar& make(estrhashof<evar>& env);
   void print(estr& s);
+  void clear();
 
+  eatom(): eatom_base(1) {}
   eatom(const estrarray& strarr);
+
+  void serial(estr& data) const;
+  int unserial(const estr& data,int i);
 };
+
+void eatom::serial(estr& data) const
+{
+  name.serial(data);
+  serialint(args.size(),data);
+  int i;
+  for (i=0; i<args.size(); ++i){
+    serialint(args[i]->type,data);
+    args[i]->serial(data);
+  }
+}
+
+int eatom::unserial(const estr& data,int ip)
+{
+  ip=name.unserial(data,ip);
+  unsigned int count,type;
+  int i;
+  ip=unserialint(count,data,ip);
+  if (ip==-1) return(ip);
+  for (i=0; i<count; ++i){
+    ip=unserialint(type,data,ip);
+    if (ip==-1) return(ip);
+    if (type==1){
+      eatom *tmpatom=new eatom;
+      ip=tmpatom->unserial(data,ip);
+      args.add(tmpatom);
+    } else if (type==2){
+      eatom_value *tmpatom=new eatom_value;
+      ip=tmpatom->unserial(data,ip);
+      args.add(tmpatom);
+    }
+    if (ip==-1) return(ip);
+  }
+  return(ip);
+}
 
 efunc* findFunc(earray<efunc>& farr,const evararray& arr)
 {
@@ -203,75 +350,103 @@ efunc* findFunc(earray<efunc>& farr,const evararray& arr)
   return(&farr[0]);
 }
 
+
+void eatom::clear()
+{
+  int i;
+  for (i=0; i<args.size(); ++i)
+    args[i]->clear();
+  rvalue.clear();
+//  vargs.clear();
+  evald=false;
+}
+
 evar& eatom::make(estrhashof<evar>& env)
 {
   ldinfo("eatom::make, name: "+name);
-  if (!rvalue.isNull())
+  if (!rvalue.isNull() || evald)
     return(rvalue);
+
+  evald=true;
+
+/*
+  // optimize calls in reused code such as loop conditionals and loop code
+  if (fcall){
+    fcall(rvalue,env,name,args,vargs);
+    return(rvalue);
+  }else if (efcall){
+    int i;
+    for (i=1; i<args.size(); ++i)
+      vargs[i-1].set(args[i]->make(env));
+    rvalue.set(efcall->call(vargs));
+    return(rvalue);
+  }
+*/
 
   if (name.len()==0 && args.size()==1){
     rvalue.set(args[0]->make(env));
-//    internal=false;
     return(rvalue);
   }
   lderrorif(name.len()==0,"no name in eatom, args.size="+estr(args.size()));
 
   if (name=="="){
-    rvalue.set(assign(env,args));
-//    internal=true;
+    fcall=&assign;
+    assign(rvalue,env,name,args,vargs);
+    return(rvalue);
+  }else if (name=="=&"){
+    fcall=&assignref;
+    assignref(rvalue,env,name,args,vargs);
     return(rvalue);
   }else if (name=="."){
-    rvalue.set(objprop(env,args));
-//    internal=true;
-    return(rvalue);
-  }else if (isOp(name) || name=="[]" || name=="++prefix" || name=="--prefix"){
-    rvalue.set(objop(env,name,args));
-//    internal=true;
+    fcall=&objprop;
+    objprop(rvalue,env,name,args,vargs);
     return(rvalue);
   }else if (name=="()"){
     estr fname;
     if (args[0]->type==2){
       fname=static_cast<eatom_value*>(args[0])->value;
       if (getClassNames().exists(fname)){
-        evararray arr;
         int i;
         for (i=1; i<args.size(); ++i)
-        arr.add(args[i]->make(env));
-        rvalue.set(findFunc(getClassNames()[fname]->create,arr)->call(arr));
-//        internal=true;
+          vargs[i-1].set(args[i]->make(env));
+//          vargs.add(args[i]->make(env));
+        efcall=findFunc(getClassNames()[fname]->create,vargs);
+        efcall->call(rvalue,vargs);
         return(rvalue);
       }else if (parser->funcs.exists(fname)){
-        evararray arr;
         int i;
         for (i=1; i<args.size(); ++i)
-          arr.add(args[i]->make(env));
-        rvalue.set(findFunc(parser->funcs[fname],arr)->call(arr));
-//        internal=true;
+          vargs[i-1].set(args[i]->make(env));
+//          vargs.add(args[i]->make(env));
+        efcall=findFunc(parser->funcs[fname],vargs);
+        efcall->call(rvalue,vargs);
         return(rvalue);
       }else if (env.exists(fname)){
-        rvalue.set(objop(env,name,args));
-//        internal=true;
+        fcall=objop;
+        objop(rvalue,env,name,args,vargs);
         return(rvalue);
       }else
         lerror("unknown function or object: "+fname);
     } else if (args[0]->type==1){
       if (static_cast<eatom*>(args[0])->name=="."){
-        rvalue.set(objcall(env,name,args));
-//        internal=true;
+        fcall=objcall;
+        objcall(rvalue,env,name,args,vargs);
         return(rvalue);
       }else if (!args[0]->make(env).isNull()) {
-        rvalue.set(objop(env,name,args));
-//        internal=true;
+        fcall=objop;
+        objop(rvalue,env,name,args,vargs);
         return(rvalue);
       } else
         lerror("left side of operator() does not resolve to an object");
     }
     return(rvalue);
+  }else{  //if (isOp(name) || name=="[]" || name=="++prefix" || name=="--prefix"){
+    fcall=&objop;
+    objop(rvalue,env,name,args,vargs);
+    return(rvalue);
   }
 
   lwarn("unknown operator: "+name);
-//  rvalue=new evar();
-//  internal=true;
   return(rvalue);
 }
 
@@ -312,7 +487,13 @@ eatom_base* newAtom(const estrarray& sa)
     split_atoms2(sa[0].substr(1,-2).trim(),tmpsa);
   else
     split_atoms2(sa[0],tmpsa);
-  if (tmpsa.size()==1)
+  if (tmpsa.size()==1 && tmpsa[0].len() && tmpsa[0][0]=='['){
+    tmpsa[0]=tmpsa[0].substr(1,-2);
+    tmpsa.insert(0,"evararray");
+    tmpsa.insert(1,"(");
+    tmpsa.add(")");
+    return(new eatom(tmpsa));
+  }else if (tmpsa.size()==1)
     return(new eatom_value(tmpsa[0]));
 
   return(new eatom(tmpsa));
@@ -320,9 +501,21 @@ eatom_base* newAtom(const estrarray& sa)
 
 int find_min_assoc_op(const estrarray& sa);
 
-eatom::eatom(const estrarray& sa): eatom_base(1)
+eatom::eatom(const estrarray& sa): eatom_base(1),fcall(0x00),efcall(0x00)
 {
   if (!sa.size()){ ldinfo("eatom(): empty array"); return; }
+
+  int i;
+  if (sa[0][0]=='$'){
+    // external executable call
+    name="()";
+    args.add(newAtom("exec"));
+    args.add(newAtom("\""+sa[0].substr(1)+"\""));
+    for (i=1; i<sa.size(); ++i)
+      args.add(newAtom("\""+sa[i]+"\""));
+    vargs.init(args.size()-1);
+    return;
+  }
 
   if (sa.size()==1){
     if (!sa[0].len())
@@ -332,47 +525,6 @@ eatom::eatom(const estrarray& sa): eatom_base(1)
     return;
   }
 
-/*
-  if (sa.size()==2){
-    ldinfo("eatom(): 2 elements: "+estr(sa));
-    estrarray tmpsa;
-    if (sa[1][0]=='('){
-      name="()";
-      args.addref(newAtom(sa[0]));
-      split_atoms2(sa[1].substr(1,-2).trim(),tmpsa);
-
-      int i,e;
-      e=tmpsa.find(",");
-      if (e!=-1){
-        i=0;
-        while (e!=-1) {
-          args.addref(newAtom(tmpsa.subset(i,e-i)));
-          i=e+1;
-          e=tmpsa.find(",",i);
-        }
-        args.addref(newAtom(tmpsa.subset(i)));
-      }else if (tmpsa.size() && tmpsa[0].len())
-        args.addref(newAtom(tmpsa));
-    } else if (sa[1][0]=='['){
-      split_atoms2(sa[1].substr(1,-2).trim(),tmpsa);
-      name="[]";
-      args.addref(newAtom(sa[0]));
-      args.addref(newAtom(tmpsa));
-    } else if (sa[1]=="++" || sa[1]=="--"){
-      name=sa[1];
-      args.addref(newAtom(sa[0]));
-    } else if (sa[0]=="++" || sa[1]=="--"){
-      name=sa[0]+"prefix";
-      args.addref(newAtom(sa[1]));
-    } else {
-      ldwarn("eatom(): unexpected 2nd argument in line: " +sa[0]+sa[1]);
-    }
-    return;
-  }
-*/
-
-
-  int i;
   i=find_min_assoc_op(sa);
   if (i==-1){
     lerror("eatom(): unprocessed event: "+estr(sa));
@@ -385,7 +537,14 @@ eatom::eatom(const estrarray& sa): eatom_base(1)
     args.add(newAtom(sa.subset(0,i)));
     estrarray tmpsa;
     split_atoms2(sa[i].substr(1,-2).trim(),tmpsa);
+
     int i,e;
+    for (i=0,e=tmpsa.find(","); e!=-1; i=e+1,e=tmpsa.find(",",i)){
+      args.add(newAtom(tmpsa.subset(i,e-i)));
+    }
+    if (tmpsa.size() && tmpsa[i].len())
+      args.add(newAtom(tmpsa.subset(i)));
+/*
     e=tmpsa.find(",");
     if (e!=-1){
       i=0;
@@ -397,15 +556,15 @@ eatom::eatom(const estrarray& sa): eatom_base(1)
       args.add(newAtom(tmpsa.subset(i)));
     }else if (tmpsa.size() && tmpsa[0].len())
       args.add(newAtom(tmpsa));
-    return;
+*/
   } else if (sa[i][0]=='['){
     ldinfo("eatom(): operator found: "+sa[i]+" in: "+estr(sa));
     name="[]";
     args.add(newAtom(sa.subset(0,i)));
+
     estrarray tmpsa;
     split_atoms2(sa[i].substr(1,-2).trim(),tmpsa);
     args.add(newAtom(tmpsa));
-    return;
   }else{
     ldinfo("eatom(): operator found: "+sa[i]+" in: "+estr(sa));
     name=sa[i];
@@ -421,24 +580,35 @@ eatom::eatom(const estrarray& sa): eatom_base(1)
         args.add(newAtom(sa.subset(i+1)));
       } else
         args.add(newAtom(sa.subset(0,i)));
+    }else if (i==0 && (name=="/" || name==".")){
+      if (sa.size()>1){
+        estrarray tmpsa(sa);
+        tmpsa[1]=tmpsa[0]+tmpsa[1];
+        args.add(newAtom(tmpsa.subset(1)));
+      }else{
+        args.add(newAtom(sa));
+      }
+    }else if (name=="&" && i>0 && sa[i-1]=="="){
+      name="=&";
+      args.add(newAtom(sa.subset(0,i-1)));
+      args.add(newAtom(sa.subset(i+1)));
     }else{
       args.add(newAtom(sa.subset(0,i)));
       args.add(newAtom(sa.subset(i+1)));
     }
   }
-
-//  lerror("eatom(): unprocessed event: "+estr(sa));
+  vargs.init(args.size()-1);
 }
 
-estrarray ops=estr(".:++:--:*:%:/:-:+:>>:<<:,:=:+=:-=:==:!=:>=:<=:>:<:&:^:|:&&:||").explode(":");
+estrarray ops=estr(".:++:--:*:%:/:-:+:>>:<<:,:=:+=:-=:==:!=:>=:<=:>:<:&:^:|:&&:||: ").explode(":");
 //estrarray ops=estr(".:++:--:*:%:/:-:+:>>:<<:,:=:+=:-=:==:!=:>=:<=:>:<:&:^:|:&&:||").explode(":");
 //estrarray ops=estr("-=:+=:=:.:,:*:%:/:-:+:<<:>>:<:>:<=:>=:!=:==").explode(":");
 //==:!=:>=:<=:>:<:>>:<<:+:-:/:%:*:,:.").explode(":");
 
 int find_min_assoc_op(const estrarray& sa)
 {
-  int i,j;
-  int imin,ipos;
+  long i,j;
+  long imin,ipos;
   imin=-1;
   ipos=-1;
   for (i=0; i<sa.size(); ++i){
@@ -456,9 +626,9 @@ int find_min_assoc_op(const estrarray& sa)
 }
 
 
-int find_ops(const estr& str,const estr& op,int i=0)
+long find_ops(const estr& str,const estr& op,long i=0)
 {
-  int j;
+  long j;
   bool start;
   start=true;
   for (; i<str.len(); ++i){
@@ -482,17 +652,17 @@ int find_ops(const estr& str,const estr& op,int i=0)
   return(-1);
 }
 
-void skip_blank(const estr& str,int& i){ for (;i<str.len() && str[i]==' '; ++i); }
+void skip_blank(const estr& str,long& i){ for (;i<str.len() && str[i]==' '; ++i); }
 
 void split_ops(const estr& str, estrarray& strarr, const estrarray& ops)
 {
-  int i2;
-  int io;
-  int iopos;
-  int i;
+  long i2;
+  long io;
+  long iopos;
+  long i;
 //  int e;
 
-  int j;
+  long j;
 
   i=0;
   while(i<str.len()){
@@ -508,7 +678,8 @@ void split_ops(const estr& str, estrarray& strarr, const estrarray& ops)
 
     if (iopos-i)
       strarr += str.substr(i,iopos-i).trim();
-    strarr += ops[io];
+    if (ops[io]!=" ") // spaces should only split arguments not be added as operators
+      strarr += ops[io];
     i = iopos + ops[io].len();
   }
 
@@ -536,10 +707,10 @@ inline bool streq(const estr& str,const estr& m,int i)
   return(true);
 }
 
-bool find_blocks(const estr& str,const estr& blockleft,const estr& blockright,int& i,int& e)
+bool find_blocks(const estr& str,const estr& blockleft,const estr& blockright,long& i,long& e)
 {
-  int j;
-  int entry;
+  long j;
+  long entry;
   for (;i<str.len(); ++i){
     if (str[i]=='"'){
       ++i;
@@ -578,7 +749,7 @@ bool split_atoms2(const estr& str, estrarray& strarr)
   estr left="([{";
   estr right=")]}";
   
-  int i,i2,e;
+  long i,i2,e;
 
   e=0;
   i=0;
@@ -607,46 +778,69 @@ bool split_atoms2(const estr& str, estrarray& strarr)
 }
 
 
-evar objcall(estrhashof<evar>& env,const estr& name,ebasicarray<eatom_base*>& args)
+void objcall(evar& rvalue,estrhashof<evar>& env,const estr& name,ebasicarray<eatom_base*>& args,evararray& vargs)
 {
-  evar arg;
-  evararray arr;
   int i;
   for (i=1; i<args.size(); ++i){
-    arg.set(args[i]->make(env));
-    if (arg.isNull()) { lwarn("one argument is null"); return(evar()); }
-    arr.add(arg);
+    vargs[i-1].set(args[i]->make(env));
+    if (vargs[i-1].isNull()) { lwarn("argument is null: "+estr(i-1)); return; }
   }
-  return(args[0]->args[0]->make(env).call( static_cast<eatom_value*>(args[0]->args[1])->value , arr));
+  args[0]->args[0]->make(env).call(rvalue, static_cast<eatom_value*>(args[0]->args[1])->value , vargs);
 }
 
-evar objop(estrhashof<evar>& env,const estr& name,ebasicarray<eatom_base*>& args)
+void objop2(evar& rvalue,estrhashof<evar>& env,const estr& name,ebasicarray<eatom_base*>& args,evararray& vargs)
 {
-  evararray arr;
-  evar arg;
   int i;
   for (i=1; i<args.size(); ++i){
-    arg.set(args[i]->make(env));
-    if (arg.isNull()) { lwarn("one argument is null"); return(evar()); }
-    arr.add(arg);
+    vargs[i-1].set(args[i]->make(env));
+    if (vargs[i-1].isNull()) { lwarn("argument is null: "+estr(i-1)); return; }
   }
   ldinfo("objop: "+estr(args.size()));
-  return(args[0]->make(env).call( "operator"+name , arr));
+  args[0]->make(env).call( rvalue, name, vargs);
 }
 
-evar objprop(estrhashof<evar>& env,ebasicarray<eatom_base*>& args)
+bool isPrimitive(const type_info& tinfo)
 {
-  evar tmp;
+  if (tinfo==typeid(int) || tinfo==typeid(unsigned int) || tinfo==typeid(char) || tinfo==typeid(unsigned char) || tinfo==typeid(short) || tinfo==typeid(unsigned short) || tinfo==typeid(float) || tinfo==typeid(double) || tinfo==typeid(long) || tinfo==typeid(unsigned long))
+    return(true);
+  return(false);
+}
+
+void objop(evar& rvalue,estrhashof<evar>& env,const estr& name,ebasicarray<eatom_base*>& args,evararray& vargs)
+{
+  int i;
+  if (!isPrimitive(args[0]->make(env).getTypeid())){
+    for (i=1; i<args.size(); ++i){
+      vargs[i-1].set(args[i]->make(env));
+      if (vargs[i-1].isNull()) { lwarn("argument is null: "+estr(i-1)); return; }
+    }
+    ldinfo("objop: "+estr(args.size()));
+    args[0]->make(env).call( rvalue, name, vargs);
+    return;
+  }
+
+  // primitive operators need to be passed the object as the first argument
+  if (vargs.size()<args.size()) vargs.add(evar());
+  for (i=0; i<args.size(); ++i){
+    vargs[i].set(args[i]->make(env));
+    if (vargs[i].isNull()) { lwarn("argument is null: "+estr(i)); return; }
+  }
+  ldinfo("objop: "+estr(args.size()));
+  args[0]->make(env).call( rvalue, name, vargs);
+}
+
+void objprop(evar& rvalue,estrhashof<evar>& env,const estr& name,ebasicarray<eatom_base*>& args,evararray& vargs)
+{
   evar obj;
   if (args.size()==2){
-    if (args[1]->type!=2) { lerror("property next to . is not a string?"); return(evar()); }
+    if (args[1]->type!=2) { lerror("property next to . is not a string?"); return; }
     obj.set(args[0]->make(env));
     estr prop(static_cast<eatom_value*>(args[1])->value);
    
     if (obj.hasProperty(prop))
-      tmp.set(obj.property(prop));
+      rvalue.set(obj.property(prop));
     else if (obj.hasMethod(prop))
-      tmp.set(obj.property(prop));
+      rvalue.set(obj.property(prop));
 //      tmp= args[0].make(env).property( ((eatom_value*)&args[1])->value ).var;
 /*
     if (args[1].type==2)
@@ -661,18 +855,23 @@ evar objprop(estrhashof<evar>& env,ebasicarray<eatom_base*>& args)
 */
   }else
     lerror("objprop argument size mismatch: "+estr(args.size()));
-  return(tmp);
 }
 
-evar assign(estrhashof<evar>& env,ebasicarray<eatom_base*>& args)
+void assign(evar& rvalue,estrhashof<evar>& env,const estr& name,ebasicarray<eatom_base*>& args,evararray& vargs)
 {
   ldinfo("assigning value");
   if (args[0]->make(env).isNull())
     args[0]->make(env).copy(args[1]->make(env));
   else
     args[0]->make(env)=args[1]->make(env);
-// args[0].make(env).set(args[1].make(env));
-  return(args[0]->make(env));
+  rvalue.set(args[0]->make(env));
+}
+
+void assignref(evar& rvalue,estrhashof<evar>& env,const estr& name,ebasicarray<eatom_base*>& args,evararray& vargs)
+{
+  ldinfo("assigning value");
+  args[0]->make(env).set(args[1]->make(env));
+  rvalue.set(args[0]->make(env));
 }
 
 
@@ -779,15 +978,33 @@ evar ecodeAtomArg::interpret(estrhashof<evar>& env)
 class ecodeAtomSingle : public ecodeAtom
 {
  public:
-//  eatom root;
-  estr exec;
+  eatom *root;
+//  estr exec;
   bool showReturn;
+  bool parse(const estr& code);
   virtual evar interpret(estrhashof<evar>& env);
+
+  ecodeAtomSingle(): root(0x00) {}
+  ~ecodeAtomSingle() { if (root) delete root; }
 };
+
+bool ecodeAtomSingle::parse(const estr& code)
+{
+  estrarray sa;
+  if (!split_atoms2(code,sa)) return(false);
+
+  root=new eatom(sa);
+  estr s;
+  root->print(s);
+  ldinfo("interpret_line: command tree: "+s);
+  return(true);
+}
+
 evar ecodeAtomSingle::interpret(estrhashof<evar>& env)
 {
   ldinfo("ecodeAtomSingle::interpret");
 
+/*
   if (!exec.len()) return(evar());
 
   estrarray sa;
@@ -802,13 +1019,15 @@ evar ecodeAtomSingle::interpret(estrhashof<evar>& env)
     return(res);
   }
   return(evar());
-
-/*
-  evar ret(interpret_line(env,exec));
-  if (!ret.isNull() && showReturn)
-    cout << ret << endl;
-  return(ret);
 */
+
+  if (root==0x00) return(evar());
+
+  root->clear();
+  evar res(root->make(env));
+  if (!res.isNull() && showReturn)
+    cout << res << endl;
+  return(res);
 }
 
 class ecodeAtomIf : public ecodeAtom
@@ -941,10 +1160,10 @@ class efuncCode : public efuncBase
   ~efuncCode() { if (exec) delete exec; }
 
   inline const type_info& getTypeid(){ return(typeid(estr)); }
-  evar call(evararray &args);
+  evar call(const evararray &args);
   void updateInfo(efunc *f);
 };
-evar efuncCode::call(evararray &argsarr)
+evar efuncCode::call(const evararray &argsarr)
 {
   estrhashof<evar> env;
   env += getParser()->objects;
@@ -1134,13 +1353,15 @@ ecodeAtom *getsingleatom(const estr& str,int& ind)
   if (i>0 && str[i-1]==';') trimleft=1;
   while (i-1-trimleft>ind && str[i-1-trimleft]==' ') ++trimleft;
 
-  satom->exec=str.substr(ind,i-ind-trimleft);
+  estr tmpstr(str.substr(ind,i-ind-trimleft));
+  satom->parse(tmpstr);
+//  satom->exec=tmpstr;
   satom->type=CA_CODE;
   satom->showReturn=false;
   if (i>=str.len()) satom->showReturn=true;
 
   ind=i+1;
-  ldinfo("single atom: "+satom->exec);
+  ldinfo("single atom: "+tmpstr);
   return(satom);
 }
 
@@ -1270,7 +1491,6 @@ evar code_interpret(estrhashof<evar>& env,const estr& str)
   if (!str.len()) return(evar());
 
   ecodeAtomBlock code;
-
   ldinfo("code_interpret");
   code.parse(str);
   return(code.interpret(env));
@@ -1292,17 +1512,29 @@ evar interpret_line(estrhashof<evar>& env,const estr& str)
   return(evar());
 }
 
+#ifdef EUTILS_HAVE_READLINE_H
+void my_rlhandler(char* line);
+#endif
+
+
+estr exechost;
+
 evar epinterpret(const estr& str)
 {
-  return(code_interpret(getParser()->objects,str));
+  estr tmpstr(str);
+  estr tmpexechost;
+  int i;
+
+  tmpstr.trim();
+  if (!tmpstr.len()) return(evar());
+
+  return(code_interpret(getParser()->objects,tmpstr));
 }
 
 #include "efile.h"
 #include "esystem.h"
 
 #ifdef EUTILS_HAVE_READLINE_H
- #include <readline/readline.h>
- #include <readline/history.h>
  #include "edir.h"
  
 
@@ -1327,6 +1559,54 @@ void my_rlhandler(char* line)
     free(line);
   }
 }
+
+char *dupstr(char *s)
+{
+  char *r;
+  r = new char[strlen(s)+1];
+  strcpy(r,s);
+  return(r);
+}
+
+char *eparser_command_generator(const char *text,int state)
+{
+  static int list_index, len;
+  char *name;
+
+  /* If this is a new word to complete, initialize now.  This includes
+     saving the length of TEXT for efficiency, and initializing the index
+     variable to 0. */
+  if (!state) {
+    list_index=0;
+    len=strlen(text);
+  }
+
+  /* Return the next name which partially matches from the command list. */
+  for (; list_index<getParser()->funcs.size(); ++list_index){
+    name = getParser()->funcs.keys(list_index)._str;
+    if (strncmp(name,text,len) == 0){
+      ++list_index;
+      return(dupstr(name));
+    }
+  }
+  for (; list_index-getParser()->funcs.size()<getParser()->objects.size(); ++list_index){
+    name = getParser()->objects.keys(list_index-getParser()->funcs.size())._str;
+    if (strncmp(name,text,len) == 0){
+      ++list_index;
+      return(dupstr(name));
+    }
+  }
+  return((char*)NULL);
+}
+
+char **eparser_completion(const char *text,int start,int end)
+{
+  char **matches;
+  matches = (char **)NULL;
+  if (start == 0)
+    matches = rl_completion_matches(text, eparser_command_generator);
+  return (matches);
+}
 #endif
 
 void interpretGotInput()
@@ -1336,7 +1616,10 @@ void interpretGotInput()
 #else
   estr cmd;
   efile input(stdin);
-  cout << "easyc++> ";
+  if (exechost.len())
+    cout << "easyc++@"<< exechost << "> ";
+  else
+    cout << "easyc++> ";
   flush(cout);
   input.readln(cmd);
   if (cmd[0]==0x00) exit(0);
@@ -1348,6 +1631,8 @@ void interpretGotInput()
 
 void epruninterpret(int argvc,char **argv)
 {
+  epregisterFunctions();
+
 #ifdef EUTILS_HAVE_READLINE_H
   using_history();
 
@@ -1355,6 +1640,7 @@ void epruninterpret(int argvc,char **argv)
   lerrorif(read_history(histfile._str)!=0,"unable to read history from "+histfile);
 
   rl_callback_handler_install("easyc++> ", (rl_vcpfunc_t*) &my_rlhandler);
+  rl_attempted_completion_function = (char**(*)(const char*,int,int))eparser_completion;  
 #endif
 
   getSystem()->addReadCallback(0,interpretGotInput,evararray());
@@ -1377,8 +1663,8 @@ void epinterpretfile(const estr& file)
   estr line;
   while (f.readln(line)){
     if (line.len()==0 || line[0]=='#') continue;
-    if (re_comment.match(line)>=0)
-      line.del(re_comment.b);
+    if (re_comment.match(line,0,b,e)>=0)
+      line.del(b);
     epinterpret(line);
   }
 }

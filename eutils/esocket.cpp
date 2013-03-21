@@ -314,10 +314,6 @@ int eudpsocket::recvfrom(estr& buffer,estr& address,int& port)
 #endif
   buffer._strlen=rlen;
   buffer._str[rlen]=0x00;
-  if (rlen==0){
-    _doClose();
-    close();
-  }
   return(rlen);
 }
 

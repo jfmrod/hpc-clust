@@ -13,7 +13,7 @@ void earrayof<T,K>::addvar(evar& evarkey,evar& var)
   addref(evarkey.get<K>(),&var.get<T>());
 }
 template <class T,class K>
-evar earrayof<T,K>::getvar(int i) const
+evar earrayof<T,K>::getvar(size_t i) const
 {
   return(evar((T&)values(i)));
 //  return(evar(values(i)));
@@ -26,7 +26,7 @@ evar earrayof<T,K>::getvarByKey(const evar& var) const
   return(evar());
 }
 template <class T,class K>
-evar earrayof<T,K>::getvarkey(int i) const
+evar earrayof<T,K>::getvarkey(size_t i) const
 {
   return(evar((K&)keys(i)));
 }
@@ -34,29 +34,29 @@ evar earrayof<T,K>::getvarkey(int i) const
 template <>
 void earrayof<evar,evar>::addvar(evar& key,evar& var);
 template <>
-evar earrayof<evar,evar>::getvar(int i) const;
+evar earrayof<evar,evar>::getvar(size_t i) const;
 template <>
 evar earrayof<evar,evar>::getvarByKey(const evar& key) const;
 template <>
-evar earrayof<evar,evar>::getvarkey(int i) const;
+evar earrayof<evar,evar>::getvarkey(size_t i) const;
 
 
 #include "eintarray.h"
 
 template <class T,class K>
-eintarray earrayof<T,K>::findall(const T& value,int i,bool (*match)(const T* const &a,const T* const &b)) const
+eintarray earrayof<T,K>::findall(const T& value,size_t i,bool (*match)(const T* const &a,const T* const &b)) const
     { return( _values.findall(&value,i,match) ); }
 
 template <class T,class K>
-eintarray earrayof<T,K>::findall(const earrayof<T,K>& value,int i,bool (*match)(const T* const &a,const T* const &b)) const
+eintarray earrayof<T,K>::findall(const earrayof<T,K>& value,size_t i,bool (*match)(const T* const &a,const T* const &b)) const
     { return( _values.findall(value._values,i,match) ); }
 
 template <class T,class K>
-eintarray earrayof<T,K>::findkeyall(const K& key,int i,bool (*match)(const K* const &a,const K* const &b)) const
+eintarray earrayof<T,K>::findkeyall(const K& key,size_t i,bool (*match)(const K* const &a,const K* const &b)) const
     { return( _keys.findall(key,i,match) ); }
 
 template <class T,class K>
-eintarray earrayof<T,K>::findkeyall(const earrayof<T,K>& keys,int i,bool (*match)(const K* const &a,const K* const &b)) const
+eintarray earrayof<T,K>::findkeyall(const earrayof<T,K>& keys,size_t i,bool (*match)(const K* const &a,const K* const &b)) const
     { return( _keys.findall(keys._keys,i,match) ); }
 
 
@@ -74,7 +74,7 @@ template <class T,class K>
 ostream& operator<<(ostream& stream,const earrayof<T,K>& var)
 {
   stream<<"{ "<<endl;
-  int i;
+  size_t i;
 
   if (var.size()){
     for (i=0; i<var.size()-1; ++i){
@@ -124,7 +124,7 @@ earrayof<T,K>::~earrayof()
 template <class T,class K>
 T& earrayof<T,K>::add_keysorted(const K& key,const T& value)
 {
-  int i;
+  size_t i;
 
   for (i=0; i<size() && *_keys[i]<key; ++i);
 
@@ -146,6 +146,22 @@ T& earrayof<T,K>::add(const K& key,const T& value)
 {
   _keys.add(new K(key));
   _values.add(new T(value));
+  return(*_values.back());
+}
+
+template <class T,class K>
+T& earrayof<T,K>::insert(size_t i,const T& value)
+{
+  _keys.insert(i,new K());
+  _values.insert(i,new T(value));
+  return(*_values.back());
+}
+
+template <class T,class K>
+T& earrayof<T,K>::insert(size_t i,const K& key,const T& value)
+{
+  _keys.insert(i,new K(key));
+  _values.insert(i,new T(value));
   return(*_values.back());
 }
 
@@ -192,14 +208,28 @@ earrayof<T,K> earrayof<T,K>::operator[](const eintarray& arr) const
 }
 */
 
+
 template <class T,class K>
-const T& earrayof<T,K>::operator[](int i) const
+earrayof<T,K> earrayof<T,K>::operator[](const eintarray& iarr) const
+{
+  earrayof<T,K> tmparr;
+  size_t i;
+  for (i=0; i<iarr.size(); ++i){
+//    if (iarr[i]<0 || iarr[i]>=size()) { lerror("index out of founds: "+estr(iarr[i])); return(tmparr); }
+    tmparr.add(keys(iarr[i]),values(iarr[i]));
+  }
+  return(tmparr);
+}
+
+
+template <class T,class K>
+const T& earrayof<T,K>::operator[](size_t i) const
 {
   return(*_values[i]);
 }
 
 template <class T,class K>
-T& earrayof<T,K>::operator[](int i)
+T& earrayof<T,K>::operator[](size_t i)
 {
   return(*_values[i]);
 }
@@ -207,7 +237,7 @@ T& earrayof<T,K>::operator[](int i)
 template <class T,class K>
 const T& earrayof<T,K>::operator[](const K& key) const
 {
-  int i;
+  size_t i;
   for (i=0; i<size(); ++i){
     if (_keys[i] && *_keys[i] == key)
       return(*_values[i]);
@@ -220,7 +250,7 @@ const T& earrayof<T,K>::operator[](const K& key) const
 template <class T,class K>
 T& earrayof<T,K>::operator[](const K& key)
 {
-  int i;
+  size_t i;
   for (i=0; i<size(); ++i){
     if (_keys[i] && *_keys[i] == key)
       return(*_values[i]);
@@ -233,7 +263,7 @@ T& earrayof<T,K>::operator[](const K& key)
 template <class T,class K>
 const T& earrayof<T,K>::at(const K& key) const
 {
-  int i;
+  size_t i;
   for (i=0; i<size(); ++i){
     if (_keys[i] && *_keys[i] == key)
       return(*_values[i]);
@@ -246,7 +276,7 @@ const T& earrayof<T,K>::at(const K& key) const
 template <class T,class K>
 T& earrayof<T,K>::at(const K& key)
 {
-  int i;
+  size_t i;
   for (i=0; i<size(); ++i){
     if (_keys[i] && *_keys[i] == key)
       return(*_values[i]);
@@ -263,7 +293,7 @@ T& earrayof<T,K>::at(const K& key)
 template <class T,class K>
 earrayof<T,K>& earrayof<T,K>::operator-=(const earrayof<T,K>& a)
 {
-  int i,j;
+  size_t i,j;
   for (i=0; i<size(); ++i){
     for (j=0; j<a.size(); ++j){
       if ((!_keys[i] && !a._keys[j] || _keys[i] && a._keys[j] && *_keys[i] == *a._keys[j]) &&
@@ -277,7 +307,7 @@ earrayof<T,K>& earrayof<T,K>::operator-=(const earrayof<T,K>& a)
 template <class T,class K>
 earrayof<T,K>& earrayof<T,K>::operator+=(const earrayof<T,K>& a)
 {
-  int i;
+  size_t i;
   for (i=0; i<a.size(); ++i){
     if (a._keys[i])
       _keys.add(new K(*a._keys[i]));
@@ -289,7 +319,7 @@ earrayof<T,K>& earrayof<T,K>::operator+=(const earrayof<T,K>& a)
 }
 
 template <class T,class K>
-earrayof<T,K> earrayof<T,K>::subset(int i,int l) const
+earrayof<T,K> earrayof<T,K>::subset(long i,long l) const
 {
   earrayof<T,K> tmpa;
  
@@ -341,7 +371,7 @@ earrayof<T,K> &earrayof<T,K>::operator=(const earrayof<T,K>& a)
 
 
 template <class T,class K>
-void earrayof<T,K>::remove(int i)
+void earrayof<T,K>::remove(size_t i)
 {
   if (_keys[i]) delete _keys[i];
   delete _values[i];
@@ -352,7 +382,7 @@ void earrayof<T,K>::remove(int i)
 template <class T,class K>
 void earrayof<T,K>::clear()
 {
-  int i;
+  size_t i;
   for (i=0; i<_keys.size(); ++i)
     if(_keys[i]) delete _keys[i];
   for (i=0; i<_values.size(); ++i)

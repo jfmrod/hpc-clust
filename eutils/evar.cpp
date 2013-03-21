@@ -20,8 +20,7 @@ evar unserial(const estr& data)
   return(var);
 }
 
-
-estr evar::getClass() const
+const char *evar::getClass() const
 {
   if (!var) return("empty");
   return(var->getClass());
@@ -40,7 +39,7 @@ bool evar::isNull() const
 
 #include <inttypes.h>
 
-int unserialint(unsigned int& v,const estr& data,int i)
+size_t unserialint(unsigned int& v,const estr& data,size_t i)
 {
   if (data.len()<i+sizeof(uint32_t)) return(-1);
   v=*((uint32_t*)&data._str[i]);
@@ -63,10 +62,10 @@ void addpstr(estr &data,const estr& str)
   data._strlen+=str.len()+sizeof(uint32_t);
 }
 
-int readpstr(estr &value, const estr& data,int i)
+size_t readpstr(estr &value, const estr& data,size_t i)
 {
   if (data.len()<i+sizeof(uint32_t)) { lerror("truncated serial string?"); return(-1); }
-  unsigned long len;
+  size_t len;
   len=*((uint32_t*)&data._str[i]);
   if (data.len()<i+sizeof(uint32_t)+len){ lerror("truncated serial string?"); return(-1); }
 
@@ -84,7 +83,7 @@ void evar::create(const estr& type)
   set(getClasses().values(type).create[0]());
 }
 
-int evar::unserial(const estr& data,int i)
+size_t evar::unserial(const estr& data,size_t i)
 {
   estr type;
   ldinfo("unserial: data.len: "+estr(data.len())+" i: "+estr(i));
@@ -92,7 +91,7 @@ int evar::unserial(const estr& data,int i)
   if (i==-1) return(-1);
   if (!getClasses().exists(type)) return(i);
 
-  if (getClass()!=type)
+  if (type!=getClass())
     create(type);
 
   if(var==0x00){ lwarn("unable to create object of type: "+type); return(i); }
@@ -187,9 +186,14 @@ evar evar::call(const estr& method,const estr& args)
 
 evar::evar(): var(0x00) {}
 
-evar::evar(evarBase* value): var(0x00)
+evar::evar(void (*f)())
 {
-  var=value;
+  var=new evarType<void (*)()>(f);
+  ++var->pcount;
+}
+
+evar::evar(evarBase* value): var(value)
+{
   retain();
 }
 
@@ -219,7 +223,7 @@ evar::evar(evar& value): var(0x00)
 
 evar::evar(const char* value)
 {
-  var = new evarType<estr>(new estr(value));
+  var = new evarTypeClean<estr>(new estr(value));
   retain();
 }
 
@@ -274,49 +278,49 @@ evar::evar(char& value)
 
 evar::evar(const double& value)
 {
-  var = new evarType<double>(new double(value));
+  var = new evarTypeClean<double>(new double(value));
   retain();
 }
 
 evar::evar(const float& value)
 {
-  var = new evarType<float>(new float(value));
+  var = new evarTypeClean<float>(new float(value));
   retain();
 }
 
 evar::evar(const unsigned long int& value)
 {
-  var = new evarType<unsigned long int>(new unsigned long int(value));
+  var = new evarTypeClean<unsigned long int>(new unsigned long int(value));
   retain();
 }
 
 evar::evar(const unsigned int& value)
 {
-  var = new evarType<unsigned int>(new unsigned int(value));
+  var = new evarTypeClean<unsigned int>(new unsigned int(value));
   retain();
 }
 
 evar::evar(const unsigned char& value)
 {
-  var = new evarType<unsigned char>(new unsigned char(value));
+  var = new evarTypeClean<unsigned char>(new unsigned char(value));
   retain();
 }
 
 evar::evar(const long int& value)
 {
-  var = new evarType<long int>(new long int(value));
+  var = new evarTypeClean<long int>(new long int(value));
   retain();
 }
 
 evar::evar(const int& value)
 {
-  var = new evarType<int>(new int(value));
+  var = new evarTypeClean<int>(new int(value));
   retain();
 }
 
 evar::evar(const char& value)
 {
-  var = new evarType<char>(new char(value));
+  var = new evarTypeClean<char>(new char(value));
   retain();
 }
 
@@ -427,7 +431,7 @@ eclassMethodBase* findMethod(ebasicarray<eclassMethodBase*>& methods,const evara
 
     ldinfo("evaluating methods: "+estr(i)+"/"+estr((int)methods.size())+" args: "+estr((int)args.size())+" m->fArgs: "+estr((int)m->fArgs.size())+" score: "+estr(score));
     // if function args matches number and exact classes then use this function
-    if (max(args.size()*2,(unsigned int)m->fArgs.size()) == score)
+    if (max(args.size()*2,m->fArgs.size()) == score)
       return(methods.operator[](i));
 
     if (score>bestscore){ bestscore=score; bestmatch=i; }
@@ -459,24 +463,24 @@ evar& evar::operator=(const evar& value)
   evararray args(value);
   // look for defined "operator=" methods
 
-  if (getClasses().values(getClass()).methods.exists("operator=")){
-    eclassMethodBase *bestmatch=findMethod(getClasses().values(getClass()).methods.values("operator="),args);
+  if (getClasses().values(getClass()).methods.exists("=")){
+    eclassMethodBase *bestmatch=findMethod(getClasses().values(getClass()).methods.values("="),args);
     (*bestmatch)(var,args);
     return(*this);
   }
 
   int i;
   for (i=0; i<getClasses().values(var->getClass()).parents.size(); ++i){
-    if (getClasses().values(var->getClass()).parents[i]->methods.exists("operator=")){
+    if (getClasses().values(var->getClass()).parents[i]->methods.exists("=")){
       evar tmpvar;
       tmpvar=convert(getClasses().values(var->getClass()).parents[i]->getTypeid()).var;
       ldieif(tmpvar.var==0x00,"class is parent but conversion failed?");
-      eclassMethodBase *bestmatch=findMethod(getClasses().values(var->getClass()).parents[i]->methods.values("operator="),args);
+      eclassMethodBase *bestmatch=findMethod(getClasses().values(var->getClass()).parents[i]->methods.values("="),args);
       (*bestmatch)(tmpvar.var,args);
       return(*this);
     }
   }
-  lwarn("operator= does not exist in object of class: "+getClass());
+  lwarn("operator= does not exist in object of class: "+estr(getClass()));
   return(*this);
 }
 
@@ -507,7 +511,7 @@ bool evar::hasProperty(const estr& pname)
 {
   if (var==0x00) { lwarn("evar is null"); return(false); }
 
-  if (!getClasses().exists(var->getClass())) { lwarn("class: "+var->getClass()+" not registered"); return(false); }
+  if (!getClasses().exists(var->getClass())) { lwarn("class: "+estr(var->getClass())+" not registered"); return(false); }
 
   if (getClasses().values(var->getClass()).properties.exists(pname))
     return(true);
@@ -525,7 +529,7 @@ bool evar::hasMethod(const estr& mname)
 {
   if (var==0x00) { lwarn("evar is null"); return(false); }
 
-  if (!getClasses().exists(getClass())) { lwarn("class: "+getClass()+" not registered"); return(false); }
+  if (!getClasses().exists(getClass())) { lwarn("class: "+estr(getClass())+" not registered"); return(false); }
 
   if (getClasses().values(getClass()).methods.exists(mname))
     return(true);
@@ -540,11 +544,11 @@ bool evar::hasMethod(const estr& mname)
 }
 
 
-evar evar::call(const estr& mname,evararray& args) const
+evar evar::call(const estr& mname,const evararray& args) const
 {
   if (var==0x00) { lwarn("evar is null"); return(evar()); }
 
-  if (!getClasses().exists(getClass())) { lwarn("class: "+getClass()+" not registered"); return(evar()); }
+  if (!getClasses().exists(getClass())) { lwarn("class: "+estr(getClass())+" not registered"); return(evar()); }
 
   if (getClasses().values(getClass()).methods.exists(mname)){
     eclassMethodBase *bestmatch=findMethod(getClasses().values(getClass()).methods.values(mname),args);
@@ -565,11 +569,41 @@ evar evar::call(const estr& mname,evararray& args) const
   return(evar());
 }
 
+void evar::call(evar& rvar,const estr& mname,const evararray& args) const
+{
+  rvar.clear();
+  if (var==0x00) { lwarn("evar is null"); return; }
+
+  estr strClass(getClass());
+  estrhashof<eclassBase>& classes(getClasses());
+
+  if (!classes.exists(strClass)) { lwarn("class: "+strClass+" not registered"); return; }
+
+  if (classes.values(strClass).methods.exists(mname)){
+    eclassMethodBase *bestmatch=findMethod(classes.values(strClass).methods.values(mname),args);
+    rvar.set((*bestmatch)(var,args));
+    return;
+  }
+
+  int i;
+  for (i=0; i<classes.values(strClass).parents.size(); ++i){
+    if (classes.values(strClass).parents[i]->methods.exists(mname)){
+      evar tmpvar;
+      tmpvar=convert(classes.values(strClass).parents[i]->getTypeid()).var;
+      ldieif(tmpvar.var==0x00,"class is parent but conversion failed?");
+      eclassMethodBase *bestmatch=findMethod(classes.values(strClass).parents[i]->methods.values(mname),args);
+      rvar.set((*bestmatch)(tmpvar.var,args));
+      return;
+    }
+  }
+  lwarn("method: \""+mname+"\" does not exist in object of class: "+strClass);
+}
+
 evar evar::property(const estr& pname) const
 {
   if (var==0x00) { lwarn("evar is null"); return(evar()); }
 
-  if (!getClasses().exists(var->getClass())) { lwarn("class: "+var->getClass()+" not registered"); return(evar()); }
+  if (!getClasses().exists(var->getClass())) { lwarn("class: "+estr(var->getClass())+" not registered"); return(evar()); }
 
   if (getClasses().values(var->getClass()).properties.exists(pname))
     return(getClasses().values(var->getClass()).properties.values(pname)(var));
@@ -605,108 +639,81 @@ evar evar::property(const estr& pname) const
 
 
 
-evar evar::operator()(const evararray& _args)
+evar evar::operator()(const evararray& args)
 {
-  evararray args(_args);
-  return(call("operator()",args));
+  return(call("()",args));
 }
 
 evar& evar::operator-=(const evar& value)
 {
-  evararray arr;
-  arr.add(value);
-  call("operator-=",arr);
+  call("-=",value);
   return(*this);
 }
 
 evar& evar::operator+=(const evar& value)
 {
-  evararray arr;
-  arr.add(value);
-  call("operator+=",arr);
+  call("+=",value);
   return(*this);
 }
 
 evar evar::operator+(const evar& value)
 {
-  evararray arr;
-  arr.add(value);
-  return(call("operator+",arr));
+  return(call("+",value));
 }
 
 evar evar::operator-(const evar& value)
 {
-  evararray arr;
-  arr.add(value);
-  return(call("operator-",arr));
+  return(call("-",value));
 }
 
 evar evar::operator*(const evar& value)
 {
-  evararray arr;
-  arr.add(value);
-  return(call("operator*",arr));
+  return(call("*",value));
 }
 
 evar evar::operator/(const evar& value)
 {
-  evararray arr;
-  arr.add(value);
-  return(call("operator/",arr));
+  return(call("/",value));
 }
 
 evar evar::operator%(const evar& value)
 {
-  evararray arr;
-  arr.add(value);
-  return(call("operator%",arr));
+  return(call("%",value));
 }
 
 evar& evar::operator++()
 {
-  evararray arr;
-  call("operator++",arr); 
+  call("++",evararray()); 
   return(*this);
 }
 
 evar& evar::operator--()
 {
-  evararray arr;
-  call("operator--",arr);
+  call("--",evararray());
   return(*this);
 }
 
 bool evar::operator==(const evar& value) const
 {
-  evararray arr;
-  arr.add(value);
-  return(((evar*)this)->call("operator==",arr).get<bool>());
+  return(((evar*)this)->call("==",value).get<bool>());
 }
 
 bool evar::operator<(const evar& value) const
 {
-  evararray arr;
-  arr.add(value);
-  return(((evar*)this)->call("operator<",arr).get<bool>());
+  return(((evar*)this)->call("<",value).get<bool>());
 }
 bool evar::operator<=(const evar& value) const
 {
-  evararray arr;
-  arr.add(value);
-  return(((evar*)this)->call("operator<=",arr).get<bool>());
+  return(((evar*)this)->call("<=",value).get<bool>());
 }
 
 bool evar::operator>(const evar& value) const
 {
-  evararray arr;
-  arr.add(value);
-  return(((evar*)this)->call("operator>",arr).get<bool>());
+  return(((evar*)this)->call(">",value).get<bool>());
 }
 bool evar::operator>=(const evar& value) const
 {
-  evararray arr;
-  arr.add(value);
-  return(((evar*)this)->call("operator>=",arr).get<bool>());
+  return(((evar*)this)->call(">=",value).get<bool>());
 }
 
 
@@ -715,9 +722,7 @@ bool evar::operator>=(const evar& value) const
 
 evar evar::operator[](const evar& value)
 {
-  evararray arr;
-  arr.add(value);
-  return(call("operator[]",arr));
+  return(call("[]",value));
 }
 
 ostream& operator<<(ostream& stream,const evar& val)

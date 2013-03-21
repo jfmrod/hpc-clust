@@ -131,10 +131,11 @@ edir ls(const estr& dirname)
 void cd(const estr& dirname)
 {
 #ifndef __MINGW32CE__
-  if (dirname=="~")
-    chdir(env()["HOME"]._str);
-  else
-    chdir(dirname._str);
+  if (dirname=="~"){
+    lerrorif(chdir(env()["HOME"]._str)!=0,"changing directory");
+  }else{
+    lerrorif(chdir(dirname._str)!=0,"changing directory");
+  }
 #endif
 }
 
@@ -142,7 +143,7 @@ estr pwd()
 {
 #ifndef __MINGW32CE__
   char tmpsz[1024];
-  getcwd(tmpsz,1024);
+  if (getcwd(tmpsz,1024)==0x00) return(estr());
   return(estr(tmpsz));
 #else
   return(estr(""));

@@ -212,12 +212,14 @@ ebasicarray<T> mergesorted(const ebasicarray<T>& arr1,const ebasicarray<T>& arr2
 template <class T,unsigned int (*F)(T&,long int)>
 void radix256sort(T& array)
 {
-  int ksize=4;
+  if (array.size()==0) return;
+  ldieif(sizeof(int)!=sizeof(F(array,0)),"size type mismatch");
+
+  int ksize=sizeof(int);
   long int bincount[256*ksize];
   long int binipos[257*ksize];
   long int binpos[256*ksize];
   long int i;
-  int mask;
 
   long int *pBinCount;
   long int *pBinPos;
@@ -234,7 +236,6 @@ void radix256sort(T& array)
 
   while (1){
     shift=(ksize-1-l)*8;
-    mask=0x00FF<<shift;
 //    printf("level: %i mask: %x  shift: %i\n",l,mask,shift);
     pBinCount=&bincount[256*l];
     pBinPos=&binpos[256*l];
@@ -244,7 +245,7 @@ void radix256sort(T& array)
       pBinCount[i]=0;
 
     for (i=start; i<end; ++i)
-      ++pBinCount[ (F(array,i)&mask)>>shift ];
+      ++pBinCount[ (F(array,i)>>shift)&0x00FFu ];
 
     long int tmpcount=0;
     for (i=0; i<256; ++i)
@@ -256,7 +257,7 @@ void radix256sort(T& array)
 //      while (b<255 && pBinPos[b]==pBinIPos[b+1]) ++b;
       for (i=pBinPos[b]; i<pBinIPos[b+1]; ++i){
         do {
-          k=(F(array,i)&mask)>>shift;
+          k=(F(array,i)>>shift)&0x00FFu;
           if (k!=b)
             array.swap(i,pBinPos[k]);
           ++pBinPos[k];
@@ -290,14 +291,423 @@ void radix256sort(T& array)
 }
 
 template <class T>
+void lfradix256sort(T& array)
+{
+  if (array.size()==0) return;
+  ldieif(sizeof(double)!=sizeof(array.keys(0)),"size type mismatch");
+
+  int ksize=sizeof(double);
+
+  long int bincount[256*ksize];
+  long int binepos[256*ksize];
+  long int binipos[256*ksize];
+  long int binpos[256*ksize];
+  long int i;
+
+  long int *pBinCount;
+  long int *pBinPos;
+  long int *pBinIPos;
+  long int *pBinEPos;
+
+  long int start,end;
+  int binlevel[ksize];
+  int l;
+  int shift;
+
+  l=0;
+  binlevel[0]=0;
+  start=0; end=array.size();
+
+  long int tmpcount;
+  bool negative;
+
+  while (1){
+    shift=(ksize-1-l)*8;
+//    printf("level: %i mask: %x  shift: %i\n",l,mask,shift);
+    pBinCount=&bincount[256*l];
+    pBinPos=&binpos[256*l];
+    pBinIPos=&binipos[256*l];
+    pBinEPos=&binepos[256*l];
+
+    for (i=0; i<256; ++i)
+      pBinCount[i]=0;
+
+    for (i=start; i<end; ++i)
+      ++pBinCount[ ((*reinterpret_cast<unsigned long*>(&array.keys(i)))>>shift)&0x00FFul ];
+
+    tmpcount=0;
+
+    if (l==0) {  // if this is the most significant byte, then we need to handle the sign bit
+      for (i=255; i>=128; --i)
+        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount; }
+      for (i=0; i<128; ++i)
+        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;  }
+    }else{
+      if (binlevel[0]<128){
+        for (i=0; i<256; ++i)
+          { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;  }
+      }else{
+        for (i=255; i>=0; --i)
+          { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount; }
+      }
+    }
+
+    int k,b;
+    for (b=0; b<255; ++b){
+//      while (b<255 && pBinPos[b]==pBinIPos[b+1]) ++b;
+//      if (pBinIPos[b+1]==pBinIPos[256]) break;
+      for (i=pBinPos[b]; i<pBinEPos[b]; ++i){
+        do {
+          k=((*reinterpret_cast<unsigned long*>(&array.keys(i)))>>shift)&0x00FFul;
+          if (k!=b)
+            array.swap(i,pBinPos[k]);
+          ++pBinPos[k];
+        } while (k!=b);
+      }
+    }
+
+    if (l==ksize-1)
+      --l;
+
+    do {
+      while (binlevel[l]<256 && bincount[ binlevel[l] + 256*l ]<=1)
+        ++binlevel[l];
+
+      while (l>=0 && binlevel[l]==256)
+        --l;
+    } while (l>=0 && bincount[ binlevel[l] + 256*l ]<=1);
+
+    if (l==-1) break;
+
+    start=binipos[ binlevel[l]  + 256*l ];
+    end  =binepos[ binlevel[l]  + 256*l ];
+//    cout << "l: " << l << "start: " << start << " end: " << end << endl;
+
+    if (l<ksize-1) {
+      ++binlevel[l];
+      ++l;
+      binlevel[l]=0;
+    }
+  } 
+}
+template <class T,double (*F)(T&,long int)>
+void lfradix256sort(T& array)
+{
+  if (array.size()==0) return;
+  ldieif(sizeof(double)!=sizeof(F(array,0)),"size type mismatch");
+
+  int ksize=sizeof(double);
+
+  long int bincount[256*ksize];
+  long int binepos[256*ksize];
+  long int binipos[256*ksize];
+  long int binpos[256*ksize];
+  long int i;
+
+  long int *pBinCount;
+  long int *pBinPos;
+  long int *pBinIPos;
+  long int *pBinEPos;
+
+  long int start,end;
+  int binlevel[ksize];
+  int l;
+  int shift;
+
+  l=0;
+  binlevel[0]=0;
+  start=0; end=array.size();
+
+  long int tmpcount;
+  bool negative;
+
+  while (1){
+    shift=(ksize-1-l)*8;
+//    printf("level: %i mask: %x  shift: %i\n",l,mask,shift);
+    pBinCount=&bincount[256*l];
+    pBinPos=&binpos[256*l];
+    pBinIPos=&binipos[256*l];
+    pBinEPos=&binepos[256*l];
+
+    for (i=0; i<256; ++i)
+      pBinCount[i]=0;
+
+    for (i=start; i<end; ++i){
+      double tmp=F(array,i);
+      ++pBinCount[ ((*reinterpret_cast<unsigned long*>(&tmp))>>shift)&0x00FFul ];
+    }
+
+    tmpcount=0;
+
+    if (l==0) {  // if this is the most significant byte, then we need to handle the sign bit
+      for (i=255; i>=128; --i)
+        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount; }
+      for (i=0; i<128; ++i)
+        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;  }
+    }else{
+      if (binlevel[0]<128){
+        for (i=0; i<256; ++i)
+          { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;  }
+      }else{
+        for (i=255; i>=0; --i)
+          { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount; }
+      }
+    }
+
+    int k,b;
+    for (b=0; b<255; ++b){
+//      while (b<255 && pBinPos[b]==pBinIPos[b+1]) ++b;
+//      if (pBinIPos[b+1]==pBinIPos[256]) break;
+      for (i=pBinPos[b]; i<pBinEPos[b]; ++i){
+        do {
+          double tmp=F(array,i);
+          k=((*reinterpret_cast<unsigned long*>(&tmp))>>shift)&0x00FFul;
+          if (k!=b)
+            array.swap(i,pBinPos[k]);
+          ++pBinPos[k];
+        } while (k!=b);
+      }
+    }
+
+    if (l==ksize-1)
+      --l;
+
+    do {
+      while (binlevel[l]<256 && bincount[ binlevel[l] + 256*l ]<=1)
+        ++binlevel[l];
+
+      while (l>=0 && binlevel[l]==256)
+        --l;
+    } while (l>=0 && bincount[ binlevel[l] + 256*l ]<=1);
+
+    if (l==-1) break;
+
+    start=binipos[ binlevel[l]  + 256*l ];
+    end  =binepos[ binlevel[l]  + 256*l ];
+//    cout << "l: " << l << "start: " << start << " end: " << end << endl;
+
+    if (l<ksize-1) {
+      ++binlevel[l];
+      ++l;
+      binlevel[l]=0;
+    }
+  } 
+}
+template <class T>
+void fradix256sort(T& array)
+{
+  if (array.size()==0) return;
+  ldieif(sizeof(float)!=sizeof(array.keys(0)),"size type mismatch");
+
+  int ksize=sizeof(float);
+
+  long int bincount[256*ksize];
+  long int binepos[256*ksize];
+  long int binipos[256*ksize];
+  long int binpos[256*ksize];
+  long int i;
+
+  long int *pBinCount;
+  long int *pBinPos;
+  long int *pBinIPos;
+  long int *pBinEPos;
+
+  long int start,end;
+  int binlevel[ksize];
+  int l;
+  int shift;
+
+  l=0;
+  binlevel[0]=0;
+  start=0; end=array.size();
+
+  long int tmpcount;
+  bool negative;
+
+  while (1){
+    shift=(ksize-1-l)*8;
+//    printf("level: %i mask: %x  shift: %i\n",l,mask,shift);
+    pBinCount=&bincount[256*l];
+    pBinPos=&binpos[256*l];
+    pBinIPos=&binipos[256*l];
+    pBinEPos=&binepos[256*l];
+
+    for (i=0; i<256; ++i)
+      pBinCount[i]=0;
+
+    for (i=start; i<end; ++i)
+      ++pBinCount[ ((*reinterpret_cast<unsigned int*>(&array.keys(i)))>>shift)&0x00FFu ];
+
+    tmpcount=0;
+
+    if (l==0) {  // if this is the most significant byte, then we need to handle the sign bit
+      for (i=255; i>=128; --i)
+        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount; }
+      for (i=0; i<128; ++i)
+        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;  }
+    }else{
+      if (binlevel[0]<128){
+        for (i=0; i<256; ++i)
+          { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;  }
+      }else{
+        for (i=255; i>=0; --i)
+          { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount; }
+      }
+    }
+
+    int k,b;
+    for (b=0; b<255; ++b){
+//      while (b<255 && pBinPos[b]==pBinIPos[b+1]) ++b;
+//      if (pBinIPos[b+1]==pBinIPos[256]) break;
+      for (i=pBinPos[b]; i<pBinEPos[b]; ++i){
+        do {
+          k=((*reinterpret_cast<unsigned int*>(&array.keys(i)))>>shift)&0x00FFu;
+          if (k!=b)
+            array.swap(i,pBinPos[k]);
+          ++pBinPos[k];
+        } while (k!=b);
+      }
+    }
+
+    if (l==ksize-1)
+      --l;
+
+    do {
+      while (binlevel[l]<256 && bincount[ binlevel[l] + 256*l ]<=1)
+        ++binlevel[l];
+
+      while (l>=0 && binlevel[l]==256)
+        --l;
+    } while (l>=0 && bincount[ binlevel[l] + 256*l ]<=1);
+
+    if (l==-1) break;
+
+    start=binipos[ binlevel[l]  + 256*l ];
+    end  =binepos[ binlevel[l]  + 256*l ];
+//    cout << "l: " << l << "start: " << start << " end: " << end << endl;
+
+    if (l<ksize-1) {
+      ++binlevel[l];
+      ++l;
+      binlevel[l]=0;
+    }
+  } 
+}
+template <class T,float (*F)(T&,long int)>
+void fradix256sort(T& array)
+{
+  if (array.size()==0) return;
+  ldieif(sizeof(float)!=sizeof(F(array,0)),"size type mismatch");
+
+  int ksize=sizeof(float);
+
+  long int bincount[256*ksize];
+  long int binepos[256*ksize];
+  long int binipos[256*ksize];
+  long int binpos[256*ksize];
+  long int i;
+
+  long int *pBinCount;
+  long int *pBinPos;
+  long int *pBinIPos;
+  long int *pBinEPos;
+
+  long int start,end;
+  int binlevel[ksize];
+  int l;
+  int shift;
+
+  l=0;
+  binlevel[0]=0;
+  start=0; end=array.size();
+
+  long int tmpcount;
+  bool negative;
+
+  while (1){
+    shift=(ksize-1-l)*8;
+//    printf("level: %i mask: %x  shift: %i\n",l,mask,shift);
+    pBinCount=&bincount[256*l];
+    pBinPos=&binpos[256*l];
+    pBinIPos=&binipos[256*l];
+    pBinEPos=&binepos[256*l];
+
+    for (i=0; i<256; ++i)
+      pBinCount[i]=0;
+
+    for (i=start; i<end; ++i){
+      float tmp=F(array,i);
+      ++pBinCount[ ((*(unsigned int*)&tmp)>>shift)&0x00FFu ];
+    }
+
+    tmpcount=0;
+
+    if (l==0) {  // if this is the most significant byte, then we need to handle the sign bit
+      for (i=255; i>=128; --i)
+        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount; }
+      for (i=0; i<128; ++i)
+        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;  }
+    }else{
+      if (binlevel[0]<128){
+        for (i=0; i<256; ++i)
+          { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;  }
+      }else{
+        for (i=255; i>=0; --i)
+          { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount; }
+      }
+    }
+
+    int k,b;
+    for (b=0; b<255; ++b){
+//      while (b<255 && pBinPos[b]==pBinIPos[b+1]) ++b;
+//      if (pBinIPos[b+1]==pBinIPos[256]) break;
+      for (i=pBinPos[b]; i<pBinEPos[b]; ++i){
+        do {
+          float tmp=F(array,i);
+          k=((*(unsigned int*)&tmp)>>shift)&0x00FFu;
+          if (k!=b)
+            array.swap(i,pBinPos[k]);
+          ++pBinPos[k];
+        } while (k!=b);
+      }
+    }
+
+    if (l==ksize-1)
+      --l;
+
+    do {
+      while (binlevel[l]<256 && bincount[ binlevel[l] + 256*l ]<=1)
+        ++binlevel[l];
+
+      while (l>=0 && binlevel[l]==256)
+        --l;
+    } while (l>=0 && bincount[ binlevel[l] + 256*l ]<=1);
+
+    if (l==-1) break;
+
+    start=binipos[ binlevel[l]  + 256*l ];
+    end  =binepos[ binlevel[l]  + 256*l ];
+//    cout << "l: " << l << "start: " << start << " end: " << end << endl;
+
+//    if (l<ksize-1) {
+      ++binlevel[l];
+      ++l;
+      binlevel[l]=0;
+//    }
+  } 
+}
+
+template <class T>
 void radix256sort(T& array)
 {
-  int ksize=4;
+  if (array.size()==0) return;
+  ldieif(sizeof(int)!=sizeof(array.keys(0)),"size type mismatch");
+
+  int ksize=sizeof(int);
   long int bincount[256*ksize];
   long int binipos[257*ksize];
   long int binpos[256*ksize];
   long int i;
-  int mask;
 
   long int *pBinCount;
   long int *pBinPos;
@@ -314,7 +724,6 @@ void radix256sort(T& array)
 
   while (1){
     shift=(ksize-1-l)*8;
-    mask=0x00FF<<shift;
 //    printf("level: %i mask: %x  shift: %i\n",l,mask,shift);
     pBinCount=&bincount[256*l];
     pBinPos=&binpos[256*l];
@@ -324,7 +733,7 @@ void radix256sort(T& array)
       pBinCount[i]=0;
 
     for (i=start; i<end; ++i)
-      ++pBinCount[ (array.keys(i)&mask)>>shift ];
+      ++pBinCount[ (array.keys(i)>>shift)&0x00FFu ];
 
     long int tmpcount=0;
     for (i=0; i<256; ++i)
@@ -334,9 +743,10 @@ void radix256sort(T& array)
     int k,b;
     for (b=0; b<255; ++b){
 //      while (b<255 && pBinPos[b]==pBinIPos[b+1]) ++b;
+//      if (pBinIPos[b+1]==pBinIPos[256]) break;
       for (i=pBinPos[b]; i<pBinIPos[b+1]; ++i){
         do {
-          k=(array.keys(i)&mask)>>shift;
+          k=(array.keys(i)>>shift)&0x00FFu;
           if (k!=b)
             array.swap(i,pBinPos[k]);
           ++pBinPos[k];
@@ -381,7 +791,7 @@ eintarray iheapsort(T& array)
   int root,child;
   int tmpsize;
 
-  // heapify
+  // heapifuy
   tmpsize=array.size();
   for (i=array.size()/2; i>=0; --i){
     root=i;

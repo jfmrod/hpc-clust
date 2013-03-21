@@ -32,13 +32,13 @@
 
 
 template <class T,class T2>
-evar eclassMethodCall(T* obj,void (T2::*method)(),evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(),const evararray& args)
 {
   (obj->*method)();
   return(evar());
 }
 template <class T,class T2,class A1>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1),evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1),const evararray& args)
 {
   if (args.size()>=1){
     checkArg2(1);
@@ -49,7 +49,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1),evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2),evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2),const evararray& args)
 {
   if (args.size()>=2){
     checkArg2(1);
@@ -61,7 +61,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2),evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2,class A3>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3),evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3),const evararray& args)
 {
   if (args.size()>=3){
     checkArg2(1);
@@ -74,7 +74,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3),evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2,class A3,class A4>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4),evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4),const evararray& args)
 {
   if (args.size()>=4){
     checkArg2(1);
@@ -88,7 +88,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4),evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2,class A3,class A4,class A5>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5),evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5),const evararray& args)
 {
   if (args.size()>=5){
     checkArg2(1);
@@ -104,7 +104,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5),evararray& args)
 }
 
 template <class T,class T2,class A1,class A2,class A3,class A4,class A5,class A6,class A7>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5,A6,A7),evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5,A6,A7),const evararray& args)
 {
   if (args.size()>=7){
     checkArg2(1);
@@ -122,13 +122,13 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5,A6,A7),evararray&
 }
 
 template <class T,class T2>
-evar eclassMethodCall(T* obj,void (T2::*method)() const,evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)() const,const evararray& args)
 {
   (obj->*method)();
   return(evar());
 }
 template <class T,class T2,class A1>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1) const,evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1) const,const evararray& args)
 {
   if (args.size()>=1){
     checkArg2(1);
@@ -139,7 +139,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2) const,evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2) const,const evararray& args)
 {
   if (args.size()>=2){
     checkArg2(1);
@@ -151,7 +151,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2,class A3>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3) const,evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3) const,const evararray& args)
 {
   if (args.size()>=3){
     checkArg2(1);
@@ -164,7 +164,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2,class A3,class A4>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4) const,evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4) const,const evararray& args)
 {
   if (args.size()>=4){
     checkArg2(1);
@@ -178,7 +178,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4) const,evararray& ar
   return(evar());
 }
 template <class T,class T2,class A1,class A2,class A3,class A4,class A5>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5) const,evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5) const,const evararray& args)
 {
   if (args.size()>=5){
     checkArg2(1);
@@ -194,7 +194,7 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5) const,evararray&
 }
 
 template <class T,class T2,class A1,class A2,class A3,class A4,class A5,class A6,class A7>
-evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5,A6,A7) const,evararray& args)
+evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5,A6,A7) const,const evararray& args)
 {
   if (args.size()>=7){
     checkArg2(1);
@@ -213,12 +213,12 @@ evar eclassMethodCall(T* obj,void (T2::*method)(A1,A2,A3,A4,A5,A6,A7) const,evar
 
 
 template <class T,class T2,class R>
-evar eclassMethodCall(T* obj,R (T2::*method)(),evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(),const evararray& args)
 {
   return( (obj->*method)() );
 }
 template <class T,class T2,class R,class A1>
-evar eclassMethodCall(T* obj,R (T2::*method)(A1),evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(A1),const evararray& args)
 {
   if (args.size()>=1){
     checkArg2(1);
@@ -228,7 +228,7 @@ evar eclassMethodCall(T* obj,R (T2::*method)(A1),evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2>
-evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2),evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2),const evararray& args)
 {
   if (args.size()>=2){
     checkArg2(1);
@@ -239,7 +239,7 @@ evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2),evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2,class A3>
-evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3),evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3),const evararray& args)
 {
   if (args.size()>=3){
     checkArg2(1);
@@ -251,7 +251,7 @@ evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3),evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2,class A3,class A4>
-evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4),evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4),const evararray& args)
 {
   if (args.size()>=4){
     checkArg2(1);
@@ -264,7 +264,7 @@ evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4),evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2,class A3,class A4,class A5>
-evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4,A5),evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4,A5),const evararray& args)
 {
   if (args.size()>=5){
     checkArg2(1);
@@ -283,12 +283,12 @@ evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4,A5),evararray& args)
 
 
 template <class T,class T2,class R>
-evar eclassMethodCall(T* obj,R& (T2::*method)(),evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)(),const evararray& args)
 {
   return( (obj->*method)() );
 }
 template <class T,class T2,class R,class A1>
-evar eclassMethodCall(T* obj,R& (T2::*method)(A1),evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)(A1),const evararray& args)
 {
   if (args.size()>=1){
     checkArg2(1);
@@ -298,7 +298,7 @@ evar eclassMethodCall(T* obj,R& (T2::*method)(A1),evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2>
-evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2),evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2),const evararray& args)
 {
   if (args.size()>=2){
     checkArg2(1);
@@ -309,7 +309,7 @@ evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2),evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2,class A3>
-evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3),evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3),const evararray& args)
 {
   if (args.size()>=3){
     checkArg2(1);
@@ -321,7 +321,7 @@ evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3),evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2,class A3,class A4>
-evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3,A4),evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3,A4),const evararray& args)
 {
   if (args.size()>=4){
     checkArg2(1);
@@ -335,12 +335,12 @@ evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3,A4),evararray& args)
 }
 
 template <class T,class T2>
-evar eclassMethodCall(T* obj,evar (T2::*method)() const,evararray& args)
+evar eclassMethodCall(T* obj,evar (T2::*method)() const,const evararray& args)
 {
   return((obj->*method)());
 }
 template <class T,class T2,class A1>
-evar eclassMethodCall(T* obj,evar (T2::*method)(A1) const,evararray& args)
+evar eclassMethodCall(T* obj,evar (T2::*method)(A1) const,const evararray& args)
 {
   if (args.size()>=1){
     checkArg2(1);
@@ -350,7 +350,7 @@ evar eclassMethodCall(T* obj,evar (T2::*method)(A1) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2>
-evar eclassMethodCall(T* obj,evar (T2::*method)(A1,A2) const,evararray& args)
+evar eclassMethodCall(T* obj,evar (T2::*method)(A1,A2) const,const evararray& args)
 {
   if (args.size()>=2){
     checkArg2(1);
@@ -361,7 +361,7 @@ evar eclassMethodCall(T* obj,evar (T2::*method)(A1,A2) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2,class A3>
-evar eclassMethodCall(T* obj,evar (T2::*method)(A1,A2,A3) const,evararray& args)
+evar eclassMethodCall(T* obj,evar (T2::*method)(A1,A2,A3) const,const evararray& args)
 {
   if (args.size()>=3){
     checkArg2(1);
@@ -373,7 +373,7 @@ evar eclassMethodCall(T* obj,evar (T2::*method)(A1,A2,A3) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class A1,class A2,class A3,class A4>
-evar eclassMethodCall(T* obj,evar (T2::*method)(A1,A2,A3,A4) const,evararray& args)
+evar eclassMethodCall(T* obj,evar (T2::*method)(A1,A2,A3,A4) const,const evararray& args)
 {
   if (args.size()>=4){
     checkArg2(1);
@@ -388,12 +388,12 @@ evar eclassMethodCall(T* obj,evar (T2::*method)(A1,A2,A3,A4) const,evararray& ar
 
 
 template <class T,class T2,class R>
-evar eclassMethodCall(T* obj,R (T2::*method)() const,evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)() const,const evararray& args)
 {
   return( new R((obj->*method)()) );
 }
 template <class T,class T2,class R,class A1>
-evar eclassMethodCall(T* obj,R (T2::*method)(A1) const,evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(A1) const,const evararray& args)
 {
   if (args.size()>=1){
     checkArg2(1);
@@ -403,7 +403,7 @@ evar eclassMethodCall(T* obj,R (T2::*method)(A1) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2>
-evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2) const,evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2) const,const evararray& args)
 {
   if (args.size()>=2){
     checkArg2(1);
@@ -414,7 +414,7 @@ evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2,class A3>
-evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3) const,evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3) const,const evararray& args)
 {
   if (args.size()>=3){
     checkArg2(1);
@@ -426,7 +426,7 @@ evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2,class A3,class A4>
-evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4) const,evararray& args)
+evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4) const,const evararray& args)
 {
   if (args.size()>=4){
     checkArg2(1);
@@ -438,17 +438,32 @@ evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4) const,evararray& args)
   lwarn("not enough arguments to call function");
   return(evar());
 }
+template <class T,class T2,class R,class A1,class A2,class A3,class A4,class A5>
+evar eclassMethodCall(T* obj,R (T2::*method)(A1,A2,A3,A4,A5) const,const evararray& args)
+{
+  if (args.size()>=5){
+    checkArg2(1);
+    checkArg2(2);
+    checkArg2(3);
+    checkArg2(4);
+    checkArg2(5);
+    return( new R((obj->*method)( MGET(a1,A1) , MGET(a2,A2) , MGET(a3,A3) , MGET(a4,A4) , MGET(a5,A5))));
+  }
+  lwarn("not enough arguments to call function");
+  return(evar());
+}
+
 
 
 
 
 template <class T,class T2,class R>
-evar eclassMethodCall(T* obj,R& (T2::*method)() const,evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)() const,const evararray& args)
 {
   return( (obj->*method)() );
 }
 template <class T,class T2,class R,class A1>
-evar eclassMethodCall(T* obj,R& (T2::*method)(A1) const,evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)(A1) const,const evararray& args)
 {
   if (args.size()>=1){
     checkArg2(1);
@@ -458,7 +473,7 @@ evar eclassMethodCall(T* obj,R& (T2::*method)(A1) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2>
-evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2) const,evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2) const,const evararray& args)
 {
   if (args.size()>=2){
     checkArg2(1);
@@ -469,7 +484,7 @@ evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2,class A3>
-evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3) const,evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3) const,const evararray& args)
 {
   if (args.size()>=3){
     checkArg2(1);
@@ -481,7 +496,7 @@ evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3) const,evararray& args)
   return(evar());
 }
 template <class T,class T2,class R,class A1,class A2,class A3,class A4>
-evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3,A4) const,evararray& args)
+evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3,A4) const,const evararray& args)
 {
   if (args.size()>=4){
     checkArg2(1);
@@ -493,6 +508,21 @@ evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3,A4) const,evararray& args
   lwarn("not enough arguments to call function");
   return(evar());
 }
+template <class T,class T2,class R,class A1,class A2,class A3,class A4,class A5>
+evar eclassMethodCall(T* obj,R& (T2::*method)(A1,A2,A3,A4,A5) const,const evararray& args)
+{
+  if (args.size()>=5){
+    checkArg2(1);
+    checkArg2(2);
+    checkArg2(3);
+    checkArg2(4);
+    checkArg2(5);
+    return( (obj->*method)( MGET(a1,A1) , MGET(a2,A2) , MGET(a3,A3) , MGET(a4,A4)) , MGET(a5,A5));
+  }
+  lwarn("not enough arguments to call function");
+  return(evar());
+}
+
 
 
 

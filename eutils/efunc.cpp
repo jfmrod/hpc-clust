@@ -17,7 +17,7 @@ efunc::efunc(const evar& obj,eclassMethodBase *pmethod,const evararray& args): f
   updateInfo();
 }
 
-void efunc::setDefaultArgs(evararray& args)
+void efunc::setDefaultArgs(evararray& args) const
 {
   int i;
   if (!defargs.size() || args.size()+defargs.size()<fArgs.size()) return;
@@ -26,14 +26,22 @@ void efunc::setDefaultArgs(evararray& args)
     args.add(defargs[i]);
 }
 
-evar efunc::call(evararray& args)
+evar efunc::call(evararray& args) const
 {
   if (!func) { ldinfo("efunc: attempting to call unassigned function"); return(evar()); }
   setDefaultArgs(args);
   return(func->call(args));
 }
 
-evar efunc::call(const evararray& args)
+evar efunc::call() const
+{
+  if (!func) { ldinfo("efunc: attempting to call unassigned function"); return(evar()); }
+  evararray tmpargs;
+  setDefaultArgs(tmpargs);
+  return(func->call(tmpargs));
+}
+
+evar efunc::call(const evararray& args) const
 {
   if (!func) { ldinfo("efunc: attempting to call unassigned function"); return(evar()); }
   evararray tmpargs(args);
@@ -41,7 +49,23 @@ evar efunc::call(const evararray& args)
   return(func->call(tmpargs));
 }
 
-evar efunc::call(const estr& args)
+evar efunc::call2(const evararray& args) const
+{
+  if (!func) { ldinfo("efunc: attempting to call unassigned function"); return(evar()); }
+  return(func->call(args));
+}
+
+void efunc::call(evar& rval,const evararray& args) const
+{
+  rval.clear();
+  if (!func) { ldinfo("efunc: attempting to call unassigned function"); return; }
+//  evararray tmpargs(args);
+//  setDefaultArgs(tmpargs);
+  rval.set(func->call(args));
+}
+
+/*
+evar efunc::call(const estr& args) const
 {
   if (!func) { ldinfo("efunc: attempting to call unassigned function"); return(evar()); }
 
@@ -50,18 +74,19 @@ evar efunc::call(const estr& args)
   setDefaultArgs(arr);
   return(call(arr));
 }
+*/
 
-evar efunc::operator()()
+evar efunc::operator()() const
 {
   return(call(evararray()));
 }
 
-evar efunc::operator()(const evararray& _args)
+evar efunc::operator()(const evararray& _args) const
 {
   return(call(_args));
 }
 
-evar efunc::operator()(evararray& _args)
+evar efunc::operator()(evararray& _args) const
 {
   return(call(_args));
 }

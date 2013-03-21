@@ -24,7 +24,7 @@ class eclassMethodBase
   void setDefaultArgs(evararray& args);
 
   virtual const type_info& getTypeid()=0;
-  virtual evar operator()(evarBase* obj,evararray& args)=0;
+  virtual evar operator()(evarBase* obj,const evararray& args)=0;
 
   eclassMethodBase();
   eclassMethodBase(const evararray& args);
@@ -38,7 +38,7 @@ class eclassMethod : public eclassMethodBase
  public:
   F method;
   eclassMethod(F method,const estr& methodname,const evararray& args,const estr& info="");
-  evar operator()(evarBase* obj,evararray& args);
+  evar operator()(evarBase* obj,const evararray& args);
 
   virtual const type_info& getTypeid() { return(typeid(F)); }
 
@@ -53,7 +53,7 @@ class eclassMethodFunc : public eclassMethodBase
  public:
   efunc func;
   eclassMethodFunc(F func,const estr& methodname,const evararray& args,const estr& info="");
-  evar operator()(evarBase* obj,evararray& args);
+  evar operator()(evarBase* obj,const evararray& args);
 
   virtual const type_info& getTypeid() {return(typeid(F));}
 
@@ -77,10 +77,11 @@ void eclassMethod<T,F>::updateInfo()
 }
 
 template <class T,class F>
-evar eclassMethod<T,F>::operator()(evarBase* obj,evararray& args)
+evar eclassMethod<T,F>::operator()(evarBase* obj,const evararray& args)
 {
-  eclassMethodBase::setDefaultArgs(args);
-  return(eclassMethodCall(dynamic_cast<evarType<T>*>(obj)->object,method,args));
+  evararray _args(args);
+  eclassMethodBase::setDefaultArgs(_args);
+  return(eclassMethodCall(dynamic_cast<evarType<T>*>(obj)->object,method,_args));
 }
 
 
@@ -101,10 +102,14 @@ void eclassMethodFunc<T,F>::updateInfo()
 }
 
 template <class T,class F>
-evar eclassMethodFunc<T,F>::operator()(evarBase* obj,evararray& args)
+evar eclassMethodFunc<T,F>::operator()(evarBase* obj,const evararray& args)
 {
-  args.insert(0,obj);
-  return(func.call(args));
+/*  evararray _args;
+  _args.add(obj);
+  _args+=args;
+  return(func.call(_args));
+*/
+  return(func.call2(args));  // eparserinterpreter::objop should put the object as the first element immediately
 }
 
 #endif

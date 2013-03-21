@@ -21,7 +21,7 @@ class efuncBase
   int pcount;
 
   virtual const type_info& getTypeid()=0; 
-  virtual evar call(evararray& args)=0;
+  virtual evar call(const evararray& args)=0;
   virtual void updateInfo(efunc *f)=0;
 };
 

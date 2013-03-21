@@ -22,7 +22,7 @@ class estr;
 template <>
 void earray<evar>::serial(estr& data) const;
 template <>
-int earray<evar>::unserial(const estr& data,int i);
+size_t earray<evar>::unserial(const estr& data,size_t i);
 
 
 
@@ -34,7 +34,7 @@ void earray<T>::serial(estr& data) const
 
   if (!getClasses().exists(typeid(T).name())) { lerror(estr("class not registered: ")+typeid(T).name()); return; }
 
-  int ilen=data.len();
+  size_t ilen=data.len();
 
   eclassBase *pClass=&getClasses().values(typeid(T).name());
   evarType<T> *pType=new evarType<T>((T&)at(0));
@@ -43,7 +43,7 @@ void earray<T>::serial(estr& data) const
 
   if (data.len()-ilen>0){ data.reserve(ilen + (data.len()-ilen)*size()); }
 
-  int i;
+  size_t i;
   for (i=1; i<size(); ++i){
     pType->object=(T*)&at(i);
     pClass->fserial(pType,data);
@@ -60,7 +60,7 @@ void earray<T>::serial(estr& data) const
 
 
 template <class T>
-int earray<T>::unserial(const estr& data,int i)
+size_t earray<T>::unserial(const estr& data,size_t i)
 {
   clear();
   unsigned int count;
@@ -130,7 +130,7 @@ void earray<T>::addvar(evar& var)
   add(var.get<T>());
 }
 template <class T>
-evar earray<T>::getvar(int i) const
+evar earray<T>::getvar(size_t i) const
 {
   return(evar((T&)at(i)));
 }
@@ -138,13 +138,13 @@ evar earray<T>::getvar(int i) const
 template <>
 void earray<evar>::addvar(evar& var);
 template <>
-evar earray<evar>::getvar(int i) const;
+evar earray<evar>::getvar(size_t i) const;
 
 
 template <class T>
-void earray<T>::init(int count)
+void earray<T>::init(size_t count)
 {
-  int i;
+  size_t i;
   clear();
   reserve(count);
   for (i=0; i<count; ++i)
@@ -152,9 +152,9 @@ void earray<T>::init(int count)
 }
 
 template <class T>
-void earray<T>::init(int count,const T& initval)
+void earray<T>::init(size_t count,const T& initval)
 {
-  int i;
+  size_t i;
   clear();
   reserve(count);
   for (i=0; i<count; ++i)
@@ -162,13 +162,13 @@ void earray<T>::init(int count,const T& initval)
 }
 
 template <class T>
-inline void earray<T>::erase(int i) { delete ebasicarray<T*>::at(i); ebasicarray<T*>::erase(i); }
+inline void earray<T>::erase(size_t i) { delete ebasicarray<T*>::at(i); ebasicarray<T*>::erase(i); }
 
 template <class T>
 ostream &operator<<(ostream &stream,const earray<T> &var)
 {
   stream<<"{ "<<endl;
-  int i;
+  size_t i;
 
   if (var.size()){
     for (i=0; i<var.size()-1; ++i){
@@ -301,7 +301,7 @@ earray<T>::~earray()
 template <class T>
 void earray<T>::clear()
 {
-  int i;
+  size_t i;
   for (i=0; i<size(); ++i)
     delete ebasicarray<T*>::at(i);
 
@@ -312,7 +312,7 @@ template <class T>
 earray<T> earray<T>::operator[](const eintarray& arr) const
 {
   earray<T> res;
-  int i;
+  size_t i;
   for (i=0; i<arr.size(); ++i){
     if (arr[i]<0 || arr[i]>=size()) { ldwarn("element in array list out of bounds: "+estr(arr[i])); continue; }
     res.add(operator[](arr[i]));
@@ -332,7 +332,7 @@ earray<T> &earray<T>::operator=(const earray<T> &arr)
 template <class T>
 earray<T> &earray<T>::operator+=(const earray<T> &arr)
 {
-  unsigned int i;
+  size_t i;
   for (i=0; i<arr.size(); ++i)
     add(arr[i]);
   return(*this);
@@ -341,9 +341,9 @@ earray<T> &earray<T>::operator+=(const earray<T> &arr)
 template <class T>
 earray<T> &earray<T>::operator-=(const earray<T> &arr)
 {
-  int ind,j;
-  for (j=0; j<arr.size(); ++j){
-    if (-1 != ind = find(arr[j]))
+  size_t ind,j;
+  for (j=0l; j<arr.size(); ++j){
+    if (-1l != ind = find(arr[j]))
       ebasicarray<T*>::erase(ebasicarray<T*>::begin()+ind);
   }
   return(*this);
@@ -384,7 +384,7 @@ earray<T> earray<T>::operator[](const earray<int> &iarr)
 */
 
 template <class T>
-earray<T> earray<T>::subset(int i,int l) const
+earray<T> earray<T>::subset(long i,long l) const
 {
   earray<T> tmpa;
  
@@ -401,7 +401,7 @@ earray<T> earray<T>::subset(int i,int l) const
 }
 
 template <class T>
-int earray<T>::find(const T &value,int i) const
+long earray<T>::find(const T &value,size_t i) const
 {
   if (i<0) i+=size();
 
@@ -415,7 +415,7 @@ int earray<T>::find(const T &value,int i) const
 }
 
 template <class T>
-int earray<T>::find(const T &value,int i,bool (*match)(const T &a, const T &b)) const
+long earray<T>::find(const T &value,size_t i,bool (*match)(const T &a, const T &b)) const
 {
   if (i<0) i+=size();
 
@@ -447,7 +447,7 @@ earray<T> earray<T>::afindall(const T &value,int i,bool (*match)(const T &a, con
 */
 
 template <class T>
-earray<T> earray<T>::afindall(const earray<T> &arr,int i,bool (*match)(const T &a, const T &b)) const
+earray<T> earray<T>::afindall(const earray<T> &arr,size_t i,bool (*match)(const T &a, const T &b)) const
 {
   earray<T> tmpai;
 
@@ -462,7 +462,7 @@ earray<T> earray<T>::afindall(const earray<T> &arr,int i,bool (*match)(const T &
 }
 
 template <class T>
-eintarray earray<T>::findall(const T &value,int i,bool (*match)(const T &a, const T &b)) const
+eintarray earray<T>::findall(const T &value,size_t i,bool (*match)(const T &a, const T &b)) const
 {
   eintarray tmpai;
 
@@ -478,7 +478,7 @@ eintarray earray<T>::findall(const T &value,int i,bool (*match)(const T &a, cons
 }
 
 template <class T>
-eintarray earray<T>::findall(const earray<T> &arr,int i,bool (*match)(const T &a, const T &b)) const
+eintarray earray<T>::findall(const earray<T> &arr,size_t i,bool (*match)(const T &a, const T &b)) const
 {
   eintarray tmpai;
 

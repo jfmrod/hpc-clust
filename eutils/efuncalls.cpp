@@ -1,12 +1,12 @@
 #include "efuncalls.h"
 
-evar efuncall(void (*pfunc)(),evararray& arr)
+evar efuncall(void (*pfunc)(),const evararray& arr)
 {
   (*pfunc)();
   return(evar());
 }
 
-evar efuncall(evar (*pfunc)(),evararray& arr)
+evar efuncall(evar (*pfunc)(),const evararray& arr)
 {
   return(evar((*pfunc)()));
 }

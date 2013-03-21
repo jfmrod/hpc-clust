@@ -3,8 +3,8 @@
 
 #include "eutils.h"
 
-void epregisterCommon();
-
+void epregisterFunctions();
+//void epregisterCommon();
 
 #endif
 

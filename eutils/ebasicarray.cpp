@@ -7,7 +7,7 @@ void ebasicarray<evar>::addvar(evar& var)
 }
 
 template <>
-evar ebasicarray<evar>::getvar(int i) const
+evar ebasicarray<evar>::getvar(size_t i) const
 {
   return(at(i));
 }

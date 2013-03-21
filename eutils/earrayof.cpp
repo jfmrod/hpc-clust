@@ -8,7 +8,7 @@ void earrayof<evar,evar>::addvar(evar& key,evar& var)
 }
 
 template <>
-evar earrayof<evar,evar>::getvar(int i) const
+evar earrayof<evar,evar>::getvar(size_t i) const
 {
   return(values(i));
 }
@@ -20,7 +20,7 @@ evar earrayof<evar,evar>::getvarByKey(const evar& var) const
 }
 
 template <>
-evar earrayof<evar,evar>::getvarkey(int i) const
+evar earrayof<evar,evar>::getvarkey(size_t i) const
 {
   return(keys(i));
 }

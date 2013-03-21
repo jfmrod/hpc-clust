@@ -1,3 +1,4 @@
+
 #include "evar.h"
 #include "estrarray.h"
 #include "efile.h"
@@ -5,7 +6,7 @@
 
 const estr emptystr;
 
-estrarray estrarray::subset(int i,int l) const
+estrarray estrarray::subset(long i,long l) const
 {
   estrarray tmpa;
  
@@ -29,7 +30,7 @@ estr estrarray::join(const estr& fseparator,const estr& vseparator) const
   estr str;
 
   if (size()){  
-    int i;
+    size_t i;
     for (i=0; i<size()-1; ++i){
       if (keys(i).len()){
          str += keys(i);
@@ -51,7 +52,7 @@ estr estrarray::join(const estr& fseparator,const estr& vseparator) const
 void estrarray::split(const estr& str,const estr& fseparator,const estr& vseparator)
 {
   estrarray items,pairs;
-  int i;
+  size_t i;
 
   items = str.explode(fseparator);
   for (i=0; i<items.size(); ++i){
@@ -101,14 +102,14 @@ estrarray::estrarray(const estr& str): earrayof<estr,estr>()
   split(str,",","=");
 }
 
-estrarray::estrarray(char **str,int n): earrayof<estr,estr>()
+estrarray::estrarray(char **str,size_t n): earrayof<estr,estr>()
 {
-  int i;
+  size_t i;
   for (i=0; i<n; ++i)
     add(str[i]);
 }
 
-estr estrarray::implode(const estr &seperator,int i,int l) const
+estr estrarray::implode(const estr &seperator,size_t i,size_t l) const
 {
   estr res;
 
@@ -128,10 +129,10 @@ estr estrarray::implode(const estr &seperator,int i,int l) const
 }
 
 
-estrarray estrarray::ffind(const estrarray &needle,int i) const
+estrarray estrarray::ffind(const estrarray &needle,size_t i) const
 {
   estrarray res;
-  int j;
+  size_t j;
 
   if (i<0) i+=size();
 
@@ -146,9 +147,18 @@ estrarray estrarray::ffind(const estrarray &needle,int i) const
   return(res);
 }
 
+estrarray estrarray::operator[](const eintarray& iarr) const
+{
+  estrarray tmparr;
+  size_t i;
+  for (i=0; i<iarr.size(); ++i)
+    tmparr.add(keys(iarr[i]),values(iarr[i]));
+  return(tmparr);
+}
+
 const estr& estrarray::operator[](const estr &key) const
 {
-  int i;
+  size_t i;
   for (i=0; i<size(); ++i){
     if (_keys[i] && *_keys[i] == key)
       return(*_values[i]);
@@ -159,7 +169,7 @@ const estr& estrarray::operator[](const estr &key) const
 
 estr &estrarray::operator[](const estr &key)
 {
-  int i;
+  size_t i;
   for (i=0; i<size(); ++i){
     if (_keys[i] && *_keys[i] == key)
       return(*_values[i]);
@@ -169,13 +179,83 @@ estr &estrarray::operator[](const estr &key)
 }
 
 
-const estr& estrarray::operator[](int i) const
+const estr& estrarray::operator[](size_t i) const
 {
   return(*_values[i]);
 }
 
-estr &estrarray::operator[](int i)
+estr &estrarray::operator[](size_t i)
 {
   return(*_values[i]);
 }
+
+size_t estrarray::ifind(const estr& value,size_t i)
+{
+  for (; i<size(); ++i)
+    if (values(i).icmp(value)) return(i);
+  return(-1);
+}
+
+size_t estrarray::ifindkey(const estr& key,size_t i)
+{
+  for (; i<size(); ++i)
+    if (keys(i).icmp(key)) return(i);
+  return(-1);
+}
+  
+size_t estrarray::refind(const eregexp& re,size_t i)
+{
+  for (; i<size(); ++i)
+    if (re.match(values(i))!=-1) return(i);
+  return(-1);
+}
+
+size_t estrarray::refindkey(const eregexp& re,size_t i)
+{
+  for (; i<size(); ++i)
+    if (re.match(keys(i))!=-1) return(i);
+  return(-1);
+}
+
+
+eintarray estrarray::ifindall(const estr& value)
+{
+  eintarray tmparr;
+  size_t i;
+  for (i=ifind(value,0); i!=-1; i=ifind(value,i+1))
+    tmparr.add(i);
+  return(tmparr);
+}
+
+eintarray estrarray::ifindallkey(const estr& key)
+{
+  eintarray tmparr;
+  size_t i;
+  for (i=ifindkey(key,0); i!=-1; i=ifindkey(key,i+1))
+    tmparr.add(i);
+  return(tmparr);
+}
+
+eintarray estrarray::refindall(const estr& value)
+{
+  eintarray tmparr;
+  size_t i;
+  for (i=refind(value,0); i!=-1; i=refind(value,i+1))
+    tmparr.add(i);
+  return(tmparr);
+}
+
+eintarray estrarray::refindallkey(const estr& key)
+{
+  eintarray tmparr;
+  size_t i;
+  for (i=refindkey(key,0); i!=-1; i=refindkey(key,i+1))
+    tmparr.add(i);
+  return(tmparr);
+}
+
+
+
+
+
 

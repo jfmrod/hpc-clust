@@ -20,11 +20,21 @@ class evarType : public evarBase
   T* object;
   evarType(): object(0x00) {cleanup=false;}
   evarType(T& val): object(&val) {cleanup=false;}
-  evarType(T* val): object(val) {cleanup=true;}
-  ~evarType() { if (object && cleanup) delete object; }
+  evarType(T* val): object(val) {cleanup=false;}
+  virtual ~evarType() {}
   
   inline const type_info& getTypeid() {return(typeid(T));}
-  inline estr getClass() {return(typeid(T).name());}
+  inline const char *getClass() {return(typeid(T).name());}
+};
+
+template <class T>
+class evarTypeClean : public evarType<T>
+{
+ public:
+  evarTypeClean() {}
+  evarTypeClean(T& val): evarType<T>(val) {}
+  evarTypeClean(T* val): evarType<T>(val) { this->cleanup=true; }
+  virtual ~evarTypeClean() { if (this->object && this->cleanup) delete this->object; }
 };
 
 #endif

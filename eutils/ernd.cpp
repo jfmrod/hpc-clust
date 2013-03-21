@@ -57,11 +57,17 @@ ernd::ernd()
 //  gettimeofday(&tmptv,0x00);
 //  gsl_rng_set(grng,tmptv.tv_usec);
 
+  timeval tmptv;
+  gettimeofday(&tmptv,0);
+  seed=tmptv.tv_usec;
+  srand(seed);
+
+/*
   int fd=open("/dev/random",O_RDONLY);
   ldieif(fd==-1,"Error opening /dev/random");
-//  unsigned long seed;
   ldieif(read(fd,&seed,sizeof(unsigned long))==-1,"Error reading from /dev/random");
   close(fd);
+*/
   gsl_rng_set(grng,seed);
 #endif
 }
@@ -100,17 +106,17 @@ ernd::ernd()
   seed=tptime.LowPart;
   srand(seed);
 #else
-//  timeval tmptv;
-//  gettimeofday(&tmptv,0);
-//  iseed=tmptv.tv_usec;
-//  srand(iseed);
-
+  timeval tmptv;
+  gettimeofday(&tmptv,0);
+  seed=tmptv.tv_usec;
+  srand(seed);
+/* this stops programs from starting quickly when too little entropy exists on /dev/random
   int fd=open("/dev/random",O_RDONLY);
   ldieif(fd==-1,"Error opening /dev/random");
-//  unsigned long seed;
   ldieif(read(fd,&seed,sizeof(unsigned long))==-1,"Error reading from /dev/random");
   close(fd);
   srand(seed);
+*/
 #endif
 }
 

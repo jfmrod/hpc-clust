@@ -20,7 +20,7 @@ class evarBase
   virtual ~evarBase() {}
 
   virtual const type_info& getTypeid()=0; 
-  virtual estr getClass()=0;
+  virtual const char* getClass()=0;
 };
 
 #endif
