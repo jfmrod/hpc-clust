@@ -30,12 +30,15 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-#include <zlib.h>
-
 #include <libgen.h>
 
 #undef basename
 #undef dirname
+
+
+#ifdef EUTILS_HAVE_ZLIB
+
+#include <zlib.h>
 
 egzfile::egzfile(): f(0x00),opened(false){}
 egzfile::egzfile(const estr& _name,const estr& _mode): name(_name),mode(_mode) {}
@@ -170,6 +173,7 @@ bool egzfile::readln(estr& str)
   return(false);
 }
 
+#endif
 
 
 ostream& operator<<(ostream& stream,const efile& file)

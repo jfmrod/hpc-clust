@@ -2,14 +2,11 @@ EUTILS light library - Copyright (c) 2005-2013 Joao F. Matias Rodrigues <jfmrod@
 All rights reserved.
 
 The EUTILS light library may be modified for personal or non-comercial use only.
-The EUTILS light library may be included and used as part of any program for personal or non-comercial use only. Comercial use is allowed only the EUTILS light library is included as part of an original version of the HPC-CLUST program downloaded from http://www.konceptfx.com/.
-Derivatives and modified versions of the EUTILS light library may not be distributed in any form, for comercial or non-comercial purposes.
+Derivative and modified versions of the EUTILS light library may NOT be distributed in any form.
+The EUTILS light library may be included and used as part of any program (including HPC-CLUST) for personal or non-comercial use only.
+Comercial use of this library is allowed only when the EUTILS light library is included as part of an original version of the HPC-CLUST program downloaded from http://www.konceptfx.com/.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-
-
 
 ================================================================
 CODE INCLUDED FROM OTHER AUTHORS

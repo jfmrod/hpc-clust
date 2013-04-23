@@ -44,19 +44,19 @@ evar earrayof<evar,evar>::getvarkey(size_t i) const;
 #include "eintarray.h"
 
 template <class T,class K>
-eintarray earrayof<T,K>::findall(const T& value,size_t i,bool (*match)(const T* const &a,const T* const &b)) const
-    { return( _values.findall(&value,i,match) ); }
+eintarray earrayof<T,K>::findall(const T& value,size_t i,bool (*match)(T* const &a,T* const &b)) const
+    { return( _values.findall((T*)&value,i,match) ); }
 
 template <class T,class K>
-eintarray earrayof<T,K>::findall(const earrayof<T,K>& value,size_t i,bool (*match)(const T* const &a,const T* const &b)) const
+eintarray earrayof<T,K>::findall(const earrayof<T,K>& value,size_t i,bool (*match)(T* const &a,T* const &b)) const
     { return( _values.findall(value._values,i,match) ); }
 
 template <class T,class K>
-eintarray earrayof<T,K>::findkeyall(const K& key,size_t i,bool (*match)(const K* const &a,const K* const &b)) const
-    { return( _keys.findall(key,i,match) ); }
+eintarray earrayof<T,K>::findkeyall(const K& key,size_t i,bool (*match)(K* const &a,K* const &b)) const
+    { return( _keys.findall((K*)&key,i,match) ); }
 
 template <class T,class K>
-eintarray earrayof<T,K>::findkeyall(const earrayof<T,K>& keys,size_t i,bool (*match)(const K* const &a,const K* const &b)) const
+eintarray earrayof<T,K>::findkeyall(const earrayof<T,K>& keys,size_t i,bool (*match)(K* const &a,K* const &b)) const
     { return( _keys.findall(keys._keys,i,match) ); }
 
 
@@ -128,8 +128,8 @@ T& earrayof<T,K>::add_keysorted(const K& key,const T& value)
 
   for (i=0; i<size() && *_keys[i]<key; ++i);
 
-  _keys.insert(_keys.begin()+i,new K(key));
-  _values.insert(_values.begin()+i,new T(value));
+  _keys.insert(i,new K(key));
+  _values.insert(i,new T(value));
   return(*_values[i]);
 }
 
@@ -243,8 +243,8 @@ const T& earrayof<T,K>::operator[](const K& key) const
       return(*_values[i]);
   }
 
-  return(add(key,T()));
-//  throw "key not found"; 
+//  return(add(key,T()));
+  throw "key not found"; 
 }
 
 template <class T,class K>

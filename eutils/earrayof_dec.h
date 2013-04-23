@@ -100,15 +100,15 @@ class earrayof : public ebasearrayof
   long find(const T& value,size_t i=0,bool (*match)(T* const &a,T* const &b)=equal) const
     { return( _values.find((T*)&value,i,match) ); }
 
-  eintarray findkeyall(const K& key,size_t i=0,bool (*match)(const K* const &a,const K* const &b)=equalkey) const;
-  eintarray findkeyall(const earrayof<T,K>& keys,size_t i=0,bool (*match)(const K* const &a,const K* const &b)=equalkey) const;
+  eintarray findkeyall(const K& key,size_t i=0,bool (*match)(K* const &a,K* const &b)=equalkey) const;
+  eintarray findkeyall(const earrayof<T,K>& keys,size_t i=0,bool (*match)(K* const &a,K* const &b)=equalkey) const;
 
-  eintarray findall(const T& value,size_t i=0,bool (*match)(const T* const &a,const T* const &b)=equal) const;
-  eintarray findall(const earrayof<T,K>& value,size_t i=0,bool (*match)(const T* const &a,const T* const &b)=equal) const;
+  eintarray findall(const T& value,size_t i=0,bool (*match)(T* const &a,T* const &b)=equal) const;
+  eintarray findall(const earrayof<T,K>& value,size_t i=0,bool (*match)(T* const &a,T* const &b)=equal) const;
 
-  earrayof<T,K> afindall(const earrayof<T,K>& values,size_t i=0,bool (*match)(const T* const& a,const T* const& b)=equal) const
+  earrayof<T,K> afindall(const earrayof<T,K>& values,size_t i=0,bool (*match)(T* const& a,T* const& b)=equal) const
     { return( operator[](findall(values,i,match))); }
-  earrayof<T,K> afindkeyall(const earrayof<T,K>& keys,size_t i=0,bool (*match)(const K* const& a,const K* const& b)=equalkey) const
+  earrayof<T,K> afindkeyall(const earrayof<T,K>& keys,size_t i=0,bool (*match)(K* const& a,K* const& b)=equalkey) const
     { return( operator[](findkeyall(keys,i,match)) ); }
 
   void remove(size_t i);

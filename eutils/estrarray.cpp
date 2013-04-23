@@ -4,6 +4,8 @@
 #include "efile.h"
 
 
+template class earrayof<estr,estr>;
+
 const estr emptystr;
 
 estrarray estrarray::subset(long i,long l) const

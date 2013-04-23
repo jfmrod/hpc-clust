@@ -27,6 +27,8 @@ void efile_gets(FILE *f,estr& buffer);
 class evar;
 
 
+#ifdef EUTILS_HAVE_ZLIB
+
 #include <zlib.h>
 
 class egzfile
@@ -53,6 +55,8 @@ class egzfile
   bool read(estr& str,long int len=-1);
   bool readln(estr& str);
 };
+
+#endif
 
 class ehttpfile
 {
