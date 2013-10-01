@@ -1,15 +1,16 @@
-AC_INIT(hpc-clust,1.0.0,jfmrod@konceptfx.com)
+AC_INIT(hpc-clust,1.1.0,jfmrod@konceptfx.com)
 
 : ${CXXFLAGS=-O3}
 
 AC_LANG([C++])
 AC_PROG_CXX
-AC_PROG_CC
-AC_PROG_RANLIB
+#AC_PROG_CC
 AC_PROG_INSTALL
+LT_INIT
 
+AC_CONFIG_MACRO_DIR([m4])
+  
 AX_PTHREAD()
-
 LIBS="$PTHREAD_LIBS $LIBS"
 CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 
@@ -21,9 +22,7 @@ case "${target_os}" in
     echo Setting up build environment for ${target_cpu}${target_os}
     echo ===========================================================
     target_os=osx
-    CXXFLAGS="${CXXFLAGS} -DOS_MACOSX"
     LDLIBS="${LDLIBS} -framework Carbon"
-    AC_SUBST(EXTRA_PROGS)
     ;;
   *linux*)
     echo ===========================================================
@@ -40,16 +39,14 @@ case "${target_os}" in
   esac
 
 
-AM_INIT_AUTOMAKE("hpc-clust","1.0.0")
+AM_INIT_AUTOMAKE
 
 AC_CHECK_LIB(z,main)
 
-AC_CHECK_LIB(pthread,main)
-
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 AX_PREFIX_CONFIG_H
 
-AC_CONFIG_SUBDIRS([eutils])
+#AC_CONFIG_SUBDIRS([eutils])
 
 AC_ARG_WITH(mpi,[AS_HELP_STRING([--with-mpi@<:@=path@:>@],[Specify path to MPI library installation.])],,with_mpi=yes)
 if test "x$with_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
@@ -98,10 +95,6 @@ if test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
   AC_CHECK_LIB(mpi++,main)
 fi
 AM_CONDITIONAL(HAVE_MPILIB, test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno")
-
-#AC_SUBST(HPC_CLUST_CXXFLAGS)
-#AC_SUBST(HPC_CLUST_LDFLAGS)
-#AC_SUBST(HPC_CLUST_LIBS)
 
 AC_CONFIG_FILES(Makefile)
 

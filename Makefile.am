@@ -1,7 +1,7 @@
-#lib_LIBRARIES=libenet.a
+ACLOCAL_AMFLAGS=-I m4
 
-
-#libenet_a_SOURCES=enet.cpp enet.h
+lib_LTLIBRARIES=libhpc-clust.la
+libhpc_clust_la_SOURCES=eseqcluster.h eseqcluster.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp eseqclusterstep.h eseqclusterstep.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp cluster-common.h cluster-common.cpp eseqclustercount.h eseqclustercount.cpp
 
 SUBDIRS=$(subdirs)
 DIST_SUBDIRS=$(subdirs)
@@ -19,36 +19,51 @@ LIBS=`eutils/eutils-config --libs`
 #EXTRA_PROGRAMS=
 EXTRA_DIST=make-otus.sh examples/aligned-archaea-seqs.sto
 
-hpc_clust_SOURCES=hpc-clust.cpp cluster-common.h cluster-common.cpp eseqcluster.h eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp eseqclustercount.h eseqclustercount.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp eseqclusterstep.h eseqclusterstep.cpp
-#cluster_LDADD= libhpc-clust.a
+hpc_clust_SOURCES=hpc-clust.cpp cluster-common.h eseqcluster.h eseqclusterdata.h eseq.h eseqclustercount.h eseqclustersingle.h eseqclusteravg.h eseqclusterstep.h
+hpc_clust_LDADD=libhpc-clust.la
 
-cluster_short_SOURCES=cluster-short.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp eseqclustersingle.cpp eseqclusteravg.cpp eseqclusterstep.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp
-cluster_matchshort_SOURCES=cluster-matchshort.cpp cluster-common.cpp eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp
+cluster_short_SOURCES=cluster-short.cpp eseqclusterdata.h eseq.h
+cluster_short_LDADD=libhpc-clust.la
+
+cluster_matchshort_SOURCES=cluster-matchshort.cpp eseqclusterdata.h eseq.h
+cluster_matchshort_LDADD=libhpc-clust.la
+
 #cluster_match_SOURCES=cluster-match.cpp cluster-common.cpp eseqcluster.cpp eseqclusterdata.cpp
-cluster_chimera_SOURCES=cluster-chimera.cpp cluster-common.cpp eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp
-cluster_profile_siteevorate_SOURCES=cluster-profile-siteevorate.cpp cluster-common.cpp eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp
+cluster_chimera_SOURCES=cluster-chimera.cpp eseqclusterdata.h eseq.h
+cluster_chimera_LDADD=libhpc-clust.la
+
+cluster_profile_siteevorate_SOURCES=cluster-profile-siteevorate.cpp eseqclusterdata.h eseq.h
+cluster_profile_siteevorate_LDADD=libhpc-clust.la
 
 #cluster_dist_SOURCES=cluster-dist.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp
-hpc_clust_dist_SOURCES=hpc-clust-dist.cpp cluster-common.cpp eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp eseqclustercount.cpp eseqclustersingle.cpp eseqclusteravg.cpp
+hpc_clust_dist_SOURCES=hpc-clust-dist.cpp eseqclusterdata.h eseq.h
+hpc_clust_dist_LDADD=libhpc-clust.la
 
-cluster_partition_SOURCES=cluster-partition.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp
+cluster_partition_SOURCES=cluster-partition.cpp eseqclusterdata.h eseq.h
+cluster_partition_LDADD=libhpc-clust.la
 #cluster_partition2_SOURCES=cluster-partition2.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp
 
-cluster2_SOURCES=cluster2.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp
+cluster2_SOURCES=cluster2.cpp eseqclusterdata.h eseq.h
+cluster2_LDADD=libhpc-clust.la
 
-cluster_sorted_SOURCES=cluster-sorted.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp eseqclustersingle.cpp eseqclusteravg.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp
-cluster_uniq_SOURCES=cluster-uniq.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp
+cluster_sorted_SOURCES=cluster-sorted.cpp eseqclusterdata.h eseq.h
+cluster_sorted_LDADD=libhpc-clust.la
+
+cluster_uniq_SOURCES=cluster-uniq.cpp eseqclusterdata.h eseq.h
+cluster_uniq_LDADD=libhpc-clust.la
 
 #cluster_cmp_SOURCES=cluster-cmp.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp
 #cluster_check_SOURCES=cluster-check.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp
 #cluster_nj_SOURCES=cluster-nj.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp
 
-hpc_clust_mpi_SOURCES=hpc-clust-mpi.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp eseqclustersingle.cpp eseqclusteravg.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp
+hpc_clust_mpi_SOURCES=hpc-clust-mpi.cpp eseqclusterdata.h eseq.h
+hpc_clust_mpi_LDADD=libhpc-clust.la
 
 #cluster_cooc_SOURCES=cluster-cooc.cpp cluster-common.cpp eseqcluster.cpp eseqclustercount.cpp
 
 #cluster_profile_SOURCES=cluster-profile.cpp
 cluster_fast_SOURCES=cluster-fast.cpp
+cluster_fast_LDADD=libhpc-clust.la
 
 
 
