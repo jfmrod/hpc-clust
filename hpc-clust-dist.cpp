@@ -616,7 +616,7 @@ ebasicarray<eseqdist> nodeGetCount(int maxcount)
 }
 */
 
-etaskman taskman;
+//etaskman taskman;
 emutex mutexDists;
 int partsFinished=0;
 int partsTotal=10000;
@@ -661,17 +661,24 @@ long int nodeComputeDistances(eintarray _uniqind,int node,int tnodes,float thres
   uniqind=_uniqind;
   nthreads=_nthreads;
   cerr << "# " << cnode << ") creating " << nthreads << " threads" << endl;
-  taskman.createThread(nthreads);
+//  taskman.createThread(nthreads);
   cnode=node;
   cerr << "# " << cnode << ") computing distances. unique: " << uniqind.size() << " total: "<< nodeArr.size() << endl;
   if ((long int)partsTotal>=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes))
     partsTotal=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes);
 
-  int i;
-  for (i=0; i<partsTotal; ++i){
-    taskman.addTask(dfunc.value(),evararray(mutexDists,uniqind,nodeArr,nodeDists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres));
-  }
-  taskman.wait();
+  etaskArray task(dfunc.value(),evararray(mutexDists,uniqind,nodeArr,nodeDists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres),partsTotal);
+  etaskQueue tqueue;
+  tqueue.add(task);
+  tqueue.setThreads(nthreads);
+  task.wait();
+
+
+//  int i;
+//  for (i=0; i<partsTotal; ++i){
+//    taskman.addTask(dfunc.value(),evararray(mutexDists,uniqind,nodeArr,nodeDists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres));
+//  }
+//  taskman.wait();
 
   cerr << cnode << " finished computing distances" << endl;
 

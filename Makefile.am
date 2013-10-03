@@ -2,6 +2,8 @@ ACLOCAL_AMFLAGS=-I m4
 
 lib_LTLIBRARIES=libhpc-clust.la
 libhpc_clust_la_SOURCES=eseqcluster.h eseqcluster.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp eseqclusterstep.h eseqclusterstep.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp cluster-common.h cluster-common.cpp eseqclustercount.h eseqclustercount.cpp
+libhpc_clust_la_include_HEADERS=eseqcluster.h eseqclustersingle.h eseqclusteravg.h eseqclusterstep.h eseqclusterdata.h eseq.h cluster-common.h eseqclustercount.h
+libhpc_clust_la_includedir=$(includedir)/hpc-clust
 
 SUBDIRS=$(subdirs)
 DIST_SUBDIRS=$(subdirs)
@@ -12,10 +14,10 @@ endif
 
 dist_man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1 man/hpc-clust-dist.1
 
-bin_PROGRAMS=hpc-clust hpc-clust-dist $(MPIBIN) cluster-uniq cluster2 cluster-sorted cluster-partition cluster-fast cluster-matchshort cluster-chimera cluster-profile-siteevorate cluster-short
+bin_PROGRAMS=hpc-clust # hpc-clust-dist $(MPIBIN) cluster-uniq cluster2 cluster-sorted cluster-partition cluster-fast cluster-matchshort cluster-chimera cluster-profile-siteevorate cluster-short
 # cluster-cmp cluster-check cluster-evolve cluster-regen 
 
-LIBS=`eutils/eutils-config --libs`
+#LIBS=`eutils/eutils-config --libs`
 #EXTRA_PROGRAMS=
 EXTRA_DIST=make-otus.sh examples/aligned-archaea-seqs.sto
 

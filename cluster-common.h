@@ -951,7 +951,7 @@ int t_calc_dists(emutex& mutex,T& arr,K& dists,int node,int tnodes,float thres)
 }
 
 template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
-int t_calc_dists_u(emutex& mutex,eintarray& uniqind,T& arr,K& dists,int seqlen,int node,int tnodes,float thres)
+int t_calc_dists_u(emutex& mutex,eintarray& uniqind,T& arr,K& dists,int seqlen,float thres,int node,int tnodes)
 {
   long int i,i2,j;
   long int start,end;

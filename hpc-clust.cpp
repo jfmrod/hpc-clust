@@ -4,7 +4,8 @@
 #include <eutils/etime.h>
 #include <eutils/etimer.h>
 #include <eutils/eoption.h>
-#include <eutils/eparalgor.h>
+#include <eutils/ethread.h>
+//#include <eutils/eparalgor.h>
 #include <eutils/esystem.h>
 
 #include "cluster-common.h"
@@ -203,7 +204,7 @@ int emain()
     duphash.reserve(arr.size());
     for (i=0; i<arr.size(); ++i){
       if (i%(arr.size()/10)==0)
-        fprintf(stderr,"\r%li/%i",i,arr.size());
+        fprintf(stderr,"\r%li/%li",i,(long)arr.size());
       it=duphash.get(arr.values(i));
       if (it==duphash.end())
         { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
@@ -238,8 +239,7 @@ int emain()
   etimer t1;
   t1.reset();
 
-  etaskman taskman;
-
+//  etaskman taskman;
 //  if (ncpus==1) partsTotal=1;
 
   
@@ -247,11 +247,18 @@ int emain()
 //  if (dfile.len()==0 || !df.exists()){
     cout << "# computing distances" << endl;
     if (partsTotal>(arr.size()-1)*arr.size()/20) partsTotal=(arr.size()-1)*arr.size()/20;
-    for (i=0; i<partsTotal; ++i)
-      taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t,(const int&)winlen));
+//    for (i=0; i<partsTotal; ++i)
+//      taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t,(const int&)winlen));
+//
+//    taskman.createThread(ncpus);
+//    taskman.wait();
 
-    taskman.createThread(ncpus);
-    taskman.wait();
+    etaskArray task(dfunc.value(),evararray(mutex,uniqind,arr,dists,seqlen,t),partsTotal);
+  
+    etaskQueue tqueue;
+    tqueue.add(task);
+    tqueue.setThreads(ncpus);
+    task.wait();
 
     dtime=t1.lap()*0.001;
     cout << "# time calculating distances: " << dtime << endl;
@@ -259,11 +266,10 @@ int emain()
 
 //    heapsort(mindists);
 //    dists.sort();
-    cout << "# number of tasks: " << taskman.tasks.size() << endl;
 //    cout << "# first pending: " << taskman.firstPendingTask << endl;
 //    parRadixSort<eblockarray<eseqdist>,radixKey>(dists,taskman);
     radix256sort<eblockarray<eseqdist>,radixKey>(dists);
-    cout << "# number of tasks: " << taskman.tasks.size() << endl;
+    cout << "# number of tasks: " << partsTotal << endl;
 //    cout << "# first pending: " << taskman.firstPendingTask << endl;
     stime=t1.lap()*0.001;
 

@@ -27,7 +27,7 @@ class eseqdistCount
   int unserial(const estr& data,int i);
 };
 
-inline unsigned int hash_lookup3_eseqdistCount(const eseqdistCount& dist)
+inline size_t hash_lookup3_eseqdistCount(const eseqdistCount& dist)
 {
   int tmp[2];
   if (dist.x<dist.y)

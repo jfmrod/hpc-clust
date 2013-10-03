@@ -9,7 +9,7 @@ AC_PROG_INSTALL
 LT_INIT
 
 AC_CONFIG_MACRO_DIR([m4])
-  
+
 AX_PTHREAD()
 LIBS="$PTHREAD_LIBS $LIBS"
 CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
@@ -47,6 +47,14 @@ AC_CONFIG_HEADERS(config.h)
 AX_PREFIX_CONFIG_H
 
 #AC_CONFIG_SUBDIRS([eutils])
+
+# eutils, edlib
+AC_CHECK_LIB(eutils,main)
+AM_PATH_EUTILS
+
+LIBS="${LIBS} ${EUTILS_LIBS}"
+
+
 
 AC_ARG_WITH(mpi,[AS_HELP_STRING([--with-mpi@<:@=path@:>@],[Specify path to MPI library installation.])],,with_mpi=yes)
 if test "x$with_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
