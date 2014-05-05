@@ -414,6 +414,12 @@ void lfradix256sort(T& array)
   int l;
   int shift;
 
+  union {
+    uint64_t i;
+    double f;
+  } u;
+
+
   l=0;
   binlevel[0]=0;
   start=0; end=array.size();
@@ -433,8 +439,8 @@ void lfradix256sort(T& array)
       pBinCount[i]=0;
 
     for (i=start; i<end; ++i){
-      double tmp=F(array,i);
-      ++pBinCount[ ((*reinterpret_cast<unsigned long*>(&tmp))>>shift)&0x00FFul ];
+      u.f=F(array,i);
+      ++pBinCount[ (u.i>>shift)&0x00FFul ];
     }
 
     tmpcount=0;
@@ -460,8 +466,8 @@ void lfradix256sort(T& array)
 //      if (pBinIPos[b+1]==pBinIPos[256]) break;
       for (i=pBinPos[b]; i<pBinEPos[b]; ++i){
         do {
-          double tmp=F(array,i);
-          k=((*reinterpret_cast<unsigned long*>(&tmp))>>shift)&0x00FFul;
+          u.f=F(array,i);
+          k=(u.i>>shift)&0x00FFul;
           if (k!=b)
             array.swap(i,pBinPos[k]);
           ++pBinPos[k];
@@ -623,10 +629,16 @@ void fradix256sort(T& array)
 
   long int tmpcount;
   bool negative;
+  union {
+    uint32_t i;
+    float f;
+  } u;
 
   while (1){
     shift=(ksize-1-l)*8;
 //    printf("level: %i mask: %x  shift: %i\n",l,mask,shift);
+    cout << "l: " << l << "start: " << start << " end: " << end << endl;
+
     pBinCount=&bincount[256*l];
     pBinPos=&binpos[256*l];
     pBinIPos=&binipos[256*l];
@@ -635,18 +647,21 @@ void fradix256sort(T& array)
     for (i=0; i<256; ++i)
       pBinCount[i]=0;
 
+
     for (i=start; i<end; ++i){
-      float tmp=F(array,i);
-      ++pBinCount[ ((*(unsigned int*)&tmp)>>shift)&0x00FFu ];
+      u.f=F(array,i); // this is needed because casting does not work with -O2 optimization
+      ++pBinCount[ (u.i>>shift)&0x00FFu ];
     }
 
     tmpcount=0;
 
     if (l==0) {  // if this is the most significant byte, then we need to handle the sign bit
-      for (i=255; i>=128; --i)
-        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount; }
-      for (i=0; i<128; ++i)
-        { pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;  }
+      for (i=255; i>=128; --i) {
+        pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;
+      }
+      for (i=0; i<128; ++i) {
+        pBinPos[i]=start+tmpcount; pBinIPos[i]=pBinPos[i]; tmpcount+=pBinCount[i]; pBinEPos[i]=start+tmpcount;
+      }
     }else{
       if (binlevel[0]<128){
         for (i=0; i<256; ++i)
@@ -663,8 +678,8 @@ void fradix256sort(T& array)
 //      if (pBinIPos[b+1]==pBinIPos[256]) break;
       for (i=pBinPos[b]; i<pBinEPos[b]; ++i){
         do {
-          float tmp=F(array,i);
-          k=((*(unsigned int*)&tmp)>>shift)&0x00FFu;
+          u.f=F(array,i); // this is needed because casting does not work with -O2 optimization
+          k=(u.i>>shift)&0x00FFu;
           if (k!=b)
             array.swap(i,pBinPos[k]);
           ++pBinPos[k];
@@ -689,11 +704,11 @@ void fradix256sort(T& array)
     end  =binepos[ binlevel[l]  + 256*l ];
 //    cout << "l: " << l << "start: " << start << " end: " << end << endl;
 
-//    if (l<ksize-1) {
+    if (l<ksize-1) {
       ++binlevel[l];
       ++l;
       binlevel[l]=0;
-//    }
+    }
   } 
 }
 

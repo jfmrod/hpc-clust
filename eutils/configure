@@ -14727,7 +14727,6 @@ fi
 
 
 
-
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ar; ac_word=$2
@@ -16092,7 +16091,7 @@ fi
 
 EUTILS_CXXFLAGS="-I$includedir $CXXFLAGS"
 EUTILS_LDFLAGS="$LDFLAGS"
-EUTILS_LIBS="eutils/.libs/libeutils.so $LIBS"
+EUTILS_LIBS="eutils/libeutils.a $LIBS"
 
 
 

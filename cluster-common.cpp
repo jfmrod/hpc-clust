@@ -287,23 +287,35 @@ void load_seqs(const estr& filename,estrarray& arr,eintarray& arrgaps)
 estr seq_compress(const estr& seq)
 {
   int i;
-  int slen=((seq.len()+15)>>4)<<4; // Make string 64bit aligned. This is needed in the dist functions
+  int slen=((seq.len()+15)>>4)<<3; // Make string 64bit aligned. This is needed in the dist functions
   estr res;
   res.reserve(slen);
-  char tmp;
+  unsigned char tmp;
   for (i=0; i<seq.len()-2; i+=2){
     tmp=nuc_compress(seq[i]);
 //    tmp=tmp|(0xF0&(nuc_compress(seq[i+1])<<4));
-    tmp=tmp|(nuc_compress(seq[i+1])<<4);
+    tmp=tmp|(nuc_compress(seq[i+1])<<4u);
     res._str[i/2]=tmp;
   }
   tmp=nuc_compress(seq[i]);
   if (i+1<seq.len())
-    tmp=tmp|(nuc_compress(seq[i+1])<<4);
+    tmp=tmp|(nuc_compress(seq[i+1])<<4u);
   res._str[i/2]=tmp;
-  res._strlen=(seq.len()+1)/2;
+//  res._strlen=(seq.len()+1)/2;
+  res._strlen=slen; // needs to be set to full size including 0x00 padding otherwise the padding does not get copied
   for (i=i/2+1; i<slen; ++i)  // Set remaining bytes to 0x00. This is required for the dist functions
     res._str[i]=0x00;
+
+/*
+  cout << seq << endl;
+
+  unsigned long *ep1=(unsigned long*)(res._str)+((seq.len()+15)>>4)-1;
+  unsigned long *p1=(unsigned long*)res._str;
+  for (; p1!=ep1; ++p1){
+    printf("%.16lx",*p1);
+  }
+  printf("%.16lx\n",*p1);
+*/
   return(res);
 }
 

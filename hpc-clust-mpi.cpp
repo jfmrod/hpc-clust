@@ -198,6 +198,7 @@ void serverClusterDistance(edcBaseServer& server)
 
 void serverProcessDists(int i,const estr& msg,int& count)
 {
+  if (msg.len()==0) { count=0; return; }
   uint32_t *pstr=(uint32_t*)msg._str;
   count=*pstr;
   ++pstr;
@@ -218,12 +219,12 @@ void serverRecvDistance(edcBaseServerNode& sclient,const estr& msg)
   for (i=0; i<sclient.server.nodeCount(); ++i){
     if (&sclient.server.getClient(i)==&sclient){
       cmindistsMutexs[i].lock();
-      if (cend[i]==cpos[i])
+      if (cend[i]==cpos[i] && msg.len()>0)
         ++haveData;
       lassert(cend[i]==cpos[i] && cfinished[i]==1);
       if (cfinished[i]==-1){
         cfinished[i]=0;
-        if (haveData==cmindists.size()){
+        if (haveData==cmindists.size()-finishedCount){
           tdists=t1.lap();
           cout << "# time calculating distances: "<< tdists*0.001 <<endl;
         }
@@ -232,6 +233,11 @@ void serverRecvDistance(edcBaseServerNode& sclient,const estr& msg)
       serverProcessDists(i,msg,count);
       unstime+=t3.lap();
       t4time+=t4.lap();
+      if (msg.len()==0 && cfinished[i]!=1){
+        cout << "# finished client: "<< i <<endl;
+        cfinished[i]=1;
+        ++finishedCount;
+      }
       if (haveData==cmindists.size()-finishedCount && clusterMutex.trylock()){
         t5.reset();
         cmindistsMutexs[i].unlock();
@@ -259,7 +265,7 @@ void serverStartComputation(edcBaseServer& server)
   t1.reset();
   cout << "# starting distributed computation" << endl;
 
-  int i,j;
+  long int i,j;
   for (i=0; i<server.nodeCount(); ++i){
     cmindists.add(ebasicarray<eseqdist>());
     cmindistsMutexs.add(emutex());
@@ -270,7 +276,7 @@ void serverStartComputation(edcBaseServer& server)
   }
 
   for (i=0; i<server.nodeCount(); ++i)
-    server.getClient(i).call("nodeComputeDistances",evararray(uniqind,(const int&)i,(const int&)server.nodeCount(),(const float&)t,(const int&)nthreads));
+    server.getClient(i).call("nodeComputeDistances",evararray(uniqind,(const long int&)i,(const long int&)server.nodeCount(),(const float&)t,(const int&)nthreads));
   cout << "# master) finished calling computation function on nodes" << endl;
 }
 
@@ -335,8 +341,9 @@ long int nodePos;
 
 etaskman taskman;
 emutex mutexDists;
-int partsFinished=0;
-int partsTotal=10000;
+long int partsFinished=0l;
+//long int partsTotal=1000l;
+long int partsTotal=1l;
 
 void nodeMakeDists(int count,estr& msg)
 {
@@ -365,12 +372,9 @@ void nodeSendDistances(edcBaseClient& client)
     nodeMakeDists(transfersize,tmpdata);
   } while (client.sendMsg(2,tmpdata) && nodePos>=0l);
 
-  if (nodePos==-1l)
-    cerr << "Sending EOF: " << client.sendMsg(3,"") << endl;
-  cerr << cnode << " sending ended at nodePos: " << nodePos<< endl;
 }
 
-long int nodeComputeDistances(eintarray _uniqind,int node,int tnodes,float thres,int _nthreads)
+long int nodeComputeDistances(eintarray _uniqind,long int node,long int tnodes,float thres,int _nthreads)
 {
   load_seqs_compressed(argv[1],nodeArr,seqlen);
 
@@ -378,17 +382,17 @@ long int nodeComputeDistances(eintarray _uniqind,int node,int tnodes,float thres
   cerr << "# " << cnode << ") creating " << nthreads << " threads" << endl;
   taskman.createThread(nthreads);
   cnode=node;
-  cerr << "# " << cnode << ") computing distances. unique: " << _uniqind.size() << " total: "<< nodeArr.size() << endl;
-  if ((long int)partsTotal>=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes))
-    partsTotal=(nodeArr.size()-1l)*nodeArr.size()/(20l*tnodes);
+  cerr << "# " << cnode << "/" << tnodes << ") computing distances. unique: " << _uniqind.size() << " total: "<< nodeArr.size() << endl;
+  if ((long int)partsTotal>=((long int)nodeArr.size()-1l)*(long int)nodeArr.size()/(20l*tnodes))
+    partsTotal=((long int)nodeArr.size()-1l)*(long int)nodeArr.size()/(20l*tnodes);
 
-  int i;
+  long int i;
   for (i=0; i<partsTotal; ++i){
-    taskman.addTask(dfunc.value(),evararray(mutexDists,_uniqind,nodeArr,nodeDists,(const int&)seqlen,(const int&)(node*partsTotal+i),(const int&)(partsTotal*tnodes),(const float&)thres));
+    taskman.addTask(dfunc.value(),evararray(mutexDists,_uniqind,nodeArr,nodeDists,(const int&)seqlen,(const long int&)(node*partsTotal+i),(const long int&)(partsTotal*tnodes),(const float&)thres));
   }
   taskman.wait();
 
-  cerr << cnode << " finished computing distances" << endl;
+  cerr << cnode << " finished computing distances: "<< nodeDists.size() << endl;
 
   mutexDists.lock();
   fradix256sort<eblockarray<eseqdist>,radixKey>(nodeDists);
@@ -400,6 +404,11 @@ long int nodeComputeDistances(eintarray _uniqind,int node,int tnodes,float thres
 
   while (nodePos>=0l)
     nodeSendDistances(dcmpi);
+
+  if (nodePos==-1l)
+    cerr << "Sending EOF: " << dcmpi.sendMsg(3,"") << endl;
+  cerr << cnode << " sending ended at nodePos: " << nodePos<< endl;
+
   dcmpi.final();
   exit(0);
 
@@ -426,7 +435,7 @@ void doStartClient(edcBaseClient& client)
 
 void doStartServer(edcBaseServer& server)
 {
-  int i;
+  long int i;
   load_seqs_compressed(argv[1],arr,seqlen);
   ebasicstrhashof<int> duphash;
   ebasicstrhashof<int>::iter it;
@@ -434,7 +443,7 @@ void doStartServer(edcBaseServer& server)
   earray<eintarray> dupslist;
   for (i=0; i<arr.size(); ++i){
     if (i%(arr.size()/10)==0)
-      fprintf(stderr,"\r%i/%i",i,arr.size());
+      fprintf(stderr,"\r%li/%li",i,(long int)arr.size());
     it=duphash.get(arr.values(i));
     if (it==duphash.end())
       { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
@@ -442,7 +451,7 @@ void doStartServer(edcBaseServer& server)
       dupslist[it.value()].add(i);
   }
   randperm(uniqind);
-  fprintf(stderr,"\n");
+  fprintf(stderr,"\r%li\n",(long int)arr.size());
   cout << endl;
   cout << "# unique seqs: " << uniqind.size() << endl;
 
@@ -515,7 +524,7 @@ int emain()
 
   epregister(t);
   epregister(host);
-  epregister(ncpus);
+//  epregister(ncpus);
   epregister(nthreads);
   epregister(tbucket);
   epregister(ofile);

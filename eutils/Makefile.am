@@ -1,7 +1,7 @@
 ACLOCAL=@ACLOCAL@ -I m4
 ACLOCAL_AMFLAGS=@ACLOCAL_AMFLAGS@ -I m4
 
-lib_LTLIBRARIES=libeutils.la
+lib_LIBRARIES=libeutils.a
 
 esystem_osx.o: CXXFLAGS := $(CXXFLAGS) -ObjC++
 
@@ -35,7 +35,7 @@ headers=eutils.h earray.h earray_dec.h earrayof.h earrayof_dec.h efile.h     \
   ethread.h edcserver.h \
   $(DLHDR) $(WIN32HDR) $(LINUXHDR) $(OSXHDR) $(GMPLIBHDR) $(MPFRLIBHDR)
 
-libeutils_la_SOURCES=$(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp \
+libeutils_a_SOURCES=$(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp \
   estr.cpp estr.h \
   evar.cpp evar.h evar_dec.h evarclass.h evarclass_dec.h evartype.h evartype.cpp evarbase.h evarclassmethod.cpp evarclassmethod.h evarclassproperty.h \
   efunc.cpp efunc.h efunc_dec.h efuncbase.h efunctype.h efunctype.cpp efuncalls.h \

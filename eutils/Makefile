@@ -82,9 +82,11 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
-LTLIBRARIES = $(lib_LTLIBRARIES)
-libeutils_la_LIBADD =
-am__libeutils_la_SOURCES_DIST = eutils.h earray.h earray_dec.h \
+LIBRARIES = $(lib_LIBRARIES)
+ARFLAGS = cru
+libeutils_a_AR = $(AR) $(ARFLAGS)
+libeutils_a_LIBADD =
+am__libeutils_a_SOURCES_DIST = eutils.h earray.h earray_dec.h \
 	earrayof.h earrayof_dec.h efile.h emain.h eintarray.h \
 	auxmath.h eregexp.h ernd.h estr.h ebasearray.h ebasearrayof.h \
 	estrarray.h etimer.h etypes.h evar.h evar_dec.h evararray.h \
@@ -111,20 +113,25 @@ am__libeutils_la_SOURCES_DIST = eutils.h earray.h earray_dec.h \
 	esystem_win32.cpp esystem_linux.cpp esystem_osx.cpp
 am__objects_1 =
 am__objects_2 = $(am__objects_1) $(am__objects_1) $(am__objects_1)
-#am__objects_3 = $(am__objects_1) esystem_win32.lo
-am__objects_4 = $(am__objects_1) esystem_linux.lo
-#am__objects_5 = $(am__objects_1) esystem_osx.lo
-am_libeutils_la_OBJECTS = $(am__objects_2) eutils.lo ernd.lo logger.lo \
-	eparser.lo estr.lo evar.lo evartype.lo evarclassmethod.lo \
-	efunc.lo efunctype.lo ebasearray.lo ebasearrayof.lo \
-	earrayof.lo estrarray.lo eregexp.lo efile.lo etimer.lo \
-	eterm.lo ebasichashmap.lo ehashmap.lo evarclass.lo \
-	evarclassconverter.lo efuncalls.lo evarcommon.lo \
-	eparserinterpreter.lo estrhashof.lo efuncbase.lo efuncinfo.lo \
-	edir.lo esocket.lo estrhash.lo ethread.lo etime.lo earray.lo \
-	ebasicarray.lo edcserver.lo etest.lo $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5)
-libeutils_la_OBJECTS = $(am_libeutils_la_OBJECTS)
+#am__objects_3 = $(am__objects_1) esystem_win32.$(OBJEXT)
+am__objects_4 = $(am__objects_1) esystem_linux.$(OBJEXT)
+#am__objects_5 = $(am__objects_1) esystem_osx.$(OBJEXT)
+am_libeutils_a_OBJECTS = $(am__objects_2) eutils.$(OBJEXT) \
+	ernd.$(OBJEXT) logger.$(OBJEXT) eparser.$(OBJEXT) \
+	estr.$(OBJEXT) evar.$(OBJEXT) evartype.$(OBJEXT) \
+	evarclassmethod.$(OBJEXT) efunc.$(OBJEXT) efunctype.$(OBJEXT) \
+	ebasearray.$(OBJEXT) ebasearrayof.$(OBJEXT) earrayof.$(OBJEXT) \
+	estrarray.$(OBJEXT) eregexp.$(OBJEXT) efile.$(OBJEXT) \
+	etimer.$(OBJEXT) eterm.$(OBJEXT) ebasichashmap.$(OBJEXT) \
+	ehashmap.$(OBJEXT) evarclass.$(OBJEXT) \
+	evarclassconverter.$(OBJEXT) efuncalls.$(OBJEXT) \
+	evarcommon.$(OBJEXT) eparserinterpreter.$(OBJEXT) \
+	estrhashof.$(OBJEXT) efuncbase.$(OBJEXT) efuncinfo.$(OBJEXT) \
+	edir.$(OBJEXT) esocket.$(OBJEXT) estrhash.$(OBJEXT) \
+	ethread.$(OBJEXT) etime.$(OBJEXT) earray.$(OBJEXT) \
+	ebasicarray.$(OBJEXT) edcserver.$(OBJEXT) etest.$(OBJEXT) \
+	$(am__objects_3) $(am__objects_4) $(am__objects_5)
+libeutils_a_OBJECTS = $(am_libeutils_a_OBJECTS)
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -147,8 +154,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libeutils_la_SOURCES)
-DIST_SOURCES = $(am__libeutils_la_SOURCES_DIST)
+SOURCES = $(libeutils_a_SOURCES)
+DIST_SOURCES = $(am__libeutils_a_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -166,12 +173,12 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-modules/eutils/missing --run aclocal-1.11 -I m4
+ACLOCAL = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils/missing --run aclocal-1.11 -I m4
 AMTAR = $${TAR-tar}
 AR = ar
-AUTOCONF = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-modules/eutils/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-modules/eutils/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-modules/eutils/missing --run automake-1.11
+AUTOCONF = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils/missing --run automake-1.11
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -181,7 +188,7 @@ CPPFLAGS =
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -O3 -pthread -I/usr/local/include -pthread
+CXXFLAGS = -O2 -pthread -I/opt/openmpi/include -pthread
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -192,9 +199,9 @@ ECHO_C =
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-EUTILS_CXXFLAGS = -I${prefix}/include -O3 -pthread -I/usr/local/include -pthread
-EUTILS_LDFLAGS =  -pthread -L/usr/local/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -ldl -Wl,--export-dynamic -lnsl -lutil -lm -ldl
-EUTILS_LIBS = eutils/.libs/libeutils.so -lmpi++ -lmpi_cxx -lrt   -lmpi
+EUTILS_CXXFLAGS = -I${prefix}/include -O2 -pthread -I/opt/openmpi/include -pthread
+EUTILS_LDFLAGS =  -pthread -L/opt/openmpi/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -ldl -Wl,--export-dynamic -lnsl -lutil -lm -ldl
+EUTILS_LIBS = eutils/libeutils.a -lmpi_cxx -lrt   -lmpi
 EXEEXT = 
 FGREP = /bin/grep -F
 GREP = /bin/grep
@@ -204,14 +211,14 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /usr/bin/ld -m elf_x86_64
-LDFLAGS =  -pthread -L/usr/local/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -ldl -Wl,--export-dynamic -lnsl -lutil -lm -ldl
+LDFLAGS =  -pthread -L/opt/openmpi/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -ldl -Wl,--export-dynamic -lnsl -lutil -lm -ldl
 LIBOBJS = 
-LIBS = -lmpi++ -lmpi_cxx -lrt   -lmpi
+LIBS = -lmpi_cxx -lrt   -lmpi
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-modules/eutils/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils/missing --run makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 MPICPP = /usr/bin/mpic++
@@ -238,13 +245,13 @@ PTHREAD_LIBS =
 RANLIB = ranlib
 SED = /bin/sed
 SET_MAKE = 
-SHELL = /bin/bash
+SHELL = /bin/sh
 STRIP = strip
 VERSION = 1.0.0
-abs_builddir = /home/jfmrod/erisdb/work/hpc-clust-modules/eutils
-abs_srcdir = /home/jfmrod/erisdb/work/hpc-clust-modules/eutils
-abs_top_builddir = /home/jfmrod/erisdb/work/hpc-clust-modules/eutils
-abs_top_srcdir = /home/jfmrod/erisdb/work/hpc-clust-modules/eutils
+abs_builddir = /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils
+abs_srcdir = /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils
+abs_top_builddir = /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils
+abs_top_srcdir = /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_CXX = g++
@@ -275,7 +282,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-modules/eutils/install-sh
+install_sh = ${SHELL} /home/jfmrod/erisdb/work/hpc-clust-1.0.0/eutils/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -296,7 +303,7 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 ACLOCAL_AMFLAGS = @ACLOCAL_AMFLAGS@ -I m4
-lib_LTLIBRARIES = libeutils.la
+lib_LIBRARIES = libeutils.a
 #WIN32HDR = esystem_win32.h
 #WIN32SRC = $(WIN32HDR) esystem_win32.cpp
 LINUXHDR = esystem_linux.h
@@ -318,7 +325,7 @@ headers = eutils.h earray.h earray_dec.h earrayof.h earrayof_dec.h efile.h     \
   ethread.h edcserver.h \
   $(DLHDR) $(WIN32HDR) $(LINUXHDR) $(OSXHDR) $(GMPLIBHDR) $(MPFRLIBHDR)
 
-libeutils_la_SOURCES = $(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp \
+libeutils_a_SOURCES = $(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp \
   estr.cpp estr.h \
   evar.cpp evar.h evar_dec.h evarclass.h evarclass_dec.h evartype.h evartype.cpp evarbase.h evarclassmethod.cpp evarclassmethod.h evarclassproperty.h \
   efunc.cpp efunc.h efunc_dec.h efuncbase.h efunctype.h efunctype.cpp efuncalls.h \
@@ -396,39 +403,40 @@ eutils.pc: $(top_builddir)/config.status $(srcdir)/eutils.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 eutils-config: $(top_builddir)/config.status $(srcdir)/eutils-config.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
-install-libLTLIBRARIES: $(lib_LTLIBRARIES)
+install-libLIBRARIES: $(lib_LIBRARIES)
 	@$(NORMAL_INSTALL)
 	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
-	@list='$(lib_LTLIBRARIES)'; test -n "$(libdir)" || list=; \
+	@list='$(lib_LIBRARIES)'; test -n "$(libdir)" || list=; \
 	list2=; for p in $$list; do \
 	  if test -f $$p; then \
 	    list2="$$list2 $$p"; \
 	  else :; fi; \
 	done; \
 	test -z "$$list2" || { \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(libdir)'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(libdir)"; \
-	}
-
-uninstall-libLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(lib_LTLIBRARIES)'; test -n "$(libdir)" || list=; \
+	  echo " $(INSTALL_DATA) $$list2 '$(DESTDIR)$(libdir)'"; \
+	  $(INSTALL_DATA) $$list2 "$(DESTDIR)$(libdir)" || exit $$?; }
+	@$(POST_INSTALL)
+	@list='$(lib_LIBRARIES)'; test -n "$(libdir)" || list=; \
 	for p in $$list; do \
-	  $(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(libdir)/$$f'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$f"; \
+	  if test -f $$p; then \
+	    $(am__strip_dir) \
+	    echo " ( cd '$(DESTDIR)$(libdir)' && $(RANLIB) $$f )"; \
+	    ( cd "$(DESTDIR)$(libdir)" && $(RANLIB) $$f ) || exit $$?; \
+	  else :; fi; \
 	done
 
-clean-libLTLIBRARIES:
-	-test -z "$(lib_LTLIBRARIES)" || rm -f $(lib_LTLIBRARIES)
-	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
-	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
-	  test "$$dir" != "$$p" || dir=.; \
-	  echo "rm -f \"$${dir}/so_locations\""; \
-	  rm -f "$${dir}/so_locations"; \
-	done
-libeutils.la: $(libeutils_la_OBJECTS) $(libeutils_la_DEPENDENCIES) $(EXTRA_libeutils_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(libdir) $(libeutils_la_OBJECTS) $(libeutils_la_LIBADD) $(LIBS)
+uninstall-libLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(lib_LIBRARIES)'; test -n "$(libdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(libdir)'; $(am__uninstall_files_from_dir)
+
+clean-libLIBRARIES:
+	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
+libeutils.a: $(libeutils_a_OBJECTS) $(libeutils_a_DEPENDENCIES) $(EXTRA_libeutils_a_DEPENDENCIES) 
+	-rm -f libeutils.a
+	$(libeutils_a_AR) libeutils.a $(libeutils_a_OBJECTS) $(libeutils_a_LIBADD)
+	$(RANLIB) libeutils.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -436,46 +444,46 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-include ./$(DEPDIR)/earray.Plo
-include ./$(DEPDIR)/earrayof.Plo
-include ./$(DEPDIR)/ebasearray.Plo
-include ./$(DEPDIR)/ebasearrayof.Plo
-include ./$(DEPDIR)/ebasicarray.Plo
-include ./$(DEPDIR)/ebasichashmap.Plo
-include ./$(DEPDIR)/edcserver.Plo
-include ./$(DEPDIR)/edir.Plo
-include ./$(DEPDIR)/efile.Plo
-include ./$(DEPDIR)/efunc.Plo
-include ./$(DEPDIR)/efuncalls.Plo
-include ./$(DEPDIR)/efuncbase.Plo
-include ./$(DEPDIR)/efuncinfo.Plo
-include ./$(DEPDIR)/efunctype.Plo
-include ./$(DEPDIR)/ehashmap.Plo
-include ./$(DEPDIR)/eparser.Plo
-include ./$(DEPDIR)/eparserinterpreter.Plo
-include ./$(DEPDIR)/eregexp.Plo
-include ./$(DEPDIR)/ernd.Plo
-include ./$(DEPDIR)/esocket.Plo
-include ./$(DEPDIR)/estr.Plo
-include ./$(DEPDIR)/estrarray.Plo
-include ./$(DEPDIR)/estrhash.Plo
-include ./$(DEPDIR)/estrhashof.Plo
-include ./$(DEPDIR)/esystem_linux.Plo
-include ./$(DEPDIR)/esystem_osx.Plo
-include ./$(DEPDIR)/esystem_win32.Plo
-include ./$(DEPDIR)/eterm.Plo
-include ./$(DEPDIR)/etest.Plo
-include ./$(DEPDIR)/ethread.Plo
-include ./$(DEPDIR)/etime.Plo
-include ./$(DEPDIR)/etimer.Plo
-include ./$(DEPDIR)/eutils.Plo
-include ./$(DEPDIR)/evar.Plo
-include ./$(DEPDIR)/evarclass.Plo
-include ./$(DEPDIR)/evarclassconverter.Plo
-include ./$(DEPDIR)/evarclassmethod.Plo
-include ./$(DEPDIR)/evarcommon.Plo
-include ./$(DEPDIR)/evartype.Plo
-include ./$(DEPDIR)/logger.Plo
+include ./$(DEPDIR)/earray.Po
+include ./$(DEPDIR)/earrayof.Po
+include ./$(DEPDIR)/ebasearray.Po
+include ./$(DEPDIR)/ebasearrayof.Po
+include ./$(DEPDIR)/ebasicarray.Po
+include ./$(DEPDIR)/ebasichashmap.Po
+include ./$(DEPDIR)/edcserver.Po
+include ./$(DEPDIR)/edir.Po
+include ./$(DEPDIR)/efile.Po
+include ./$(DEPDIR)/efunc.Po
+include ./$(DEPDIR)/efuncalls.Po
+include ./$(DEPDIR)/efuncbase.Po
+include ./$(DEPDIR)/efuncinfo.Po
+include ./$(DEPDIR)/efunctype.Po
+include ./$(DEPDIR)/ehashmap.Po
+include ./$(DEPDIR)/eparser.Po
+include ./$(DEPDIR)/eparserinterpreter.Po
+include ./$(DEPDIR)/eregexp.Po
+include ./$(DEPDIR)/ernd.Po
+include ./$(DEPDIR)/esocket.Po
+include ./$(DEPDIR)/estr.Po
+include ./$(DEPDIR)/estrarray.Po
+include ./$(DEPDIR)/estrhash.Po
+include ./$(DEPDIR)/estrhashof.Po
+include ./$(DEPDIR)/esystem_linux.Po
+include ./$(DEPDIR)/esystem_osx.Po
+include ./$(DEPDIR)/esystem_win32.Po
+include ./$(DEPDIR)/eterm.Po
+include ./$(DEPDIR)/etest.Po
+include ./$(DEPDIR)/ethread.Po
+include ./$(DEPDIR)/etime.Po
+include ./$(DEPDIR)/etimer.Po
+include ./$(DEPDIR)/eutils.Po
+include ./$(DEPDIR)/evar.Po
+include ./$(DEPDIR)/evarclass.Po
+include ./$(DEPDIR)/evarclassconverter.Po
+include ./$(DEPDIR)/evarclassmethod.Po
+include ./$(DEPDIR)/evarcommon.Po
+include ./$(DEPDIR)/evartype.Po
+include ./$(DEPDIR)/logger.Po
 
 .cpp.o:
 	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -726,7 +734,7 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) config.h
+all-am: Makefile $(LIBRARIES) config.h
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -763,7 +771,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
+clean-am: clean-generic clean-libLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
@@ -791,7 +799,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-libLTLIBRARIES
+install-exec-am: install-libLIBRARIES
 
 install-html: install-html-am
 
@@ -833,12 +841,12 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libLTLIBRARIES
+uninstall-am: uninstall-libLIBRARIES
 
 .MAKE: all install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
-	clean-generic clean-libLTLIBRARIES clean-libtool ctags dist \
+	clean-generic clean-libLIBRARIES clean-libtool ctags dist \
 	dist-all dist-bzip2 dist-gzip dist-hook dist-lzip dist-lzma \
 	dist-shar dist-tarZ dist-xz dist-zip distcheck distclean \
 	distclean-compile distclean-generic distclean-hdr \
@@ -847,12 +855,12 @@ uninstall-am: uninstall-libLTLIBRARIES
 	install install-am install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am \
-	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
+	install-libLIBRARIES install-man install-pdf install-pdf-am \
 	install-ps install-ps-am install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-libLTLIBRARIES
+	tags uninstall uninstall-am uninstall-libLIBRARIES
 
 
 esystem_osx.o: CXXFLAGS := $(CXXFLAGS) -ObjC++
