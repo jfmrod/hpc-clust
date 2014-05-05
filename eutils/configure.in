@@ -49,7 +49,6 @@ AM_CONDITIONAL(LINUX, test "x$os" = "xlinux")
 AM_CONDITIONAL(OSX, test "x$os" = "xmacosx")
 
 
-
 AC_CHECK_TOOL(AR, ar)
 AC_PROG_INSTALL
 
@@ -120,7 +119,7 @@ fi
 
 EUTILS_CXXFLAGS="-I$includedir $CXXFLAGS"
 EUTILS_LDFLAGS="$LDFLAGS"
-EUTILS_LIBS="eutils/.libs/libeutils.so $LIBS"
+EUTILS_LIBS="eutils/libeutils.a $LIBS"
 
 AC_SUBST(EUTILS_CXXFLAGS)
 AC_SUBST(EUTILS_LDFLAGS)

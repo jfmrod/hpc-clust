@@ -123,7 +123,7 @@ CPPFLAGS =
 CXX = g++
 CXXCPP = 
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2 -pthread -DOS_LINUX -I/opt/openmpi/include -pthread
+CXXFLAGS = -O2 -pthread -DOS_LINUX -I/opt/openmpi/include -pthread
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps

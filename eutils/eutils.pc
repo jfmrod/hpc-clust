@@ -6,10 +6,5 @@ includedir=${prefix}/include
 Name: easycpp.eutils
 Description: The easy programming library
 Version: 1.0.0
-<<<<<<< .mine
 Libs: eutils/libeutils.a -lmpi_cxx -lrt   -lmpi -lmpi_cxx -lrt   -lmpi
-Cflags: -I${prefix}/include -g -O2 -pthread -I/opt/openmpi/include -pthread
-=======
-Libs: eutils/.libs/libeutils.so -lmpi++ -lmpi_cxx -lrt   -lmpi -lmpi++ -lmpi_cxx -lrt   -lmpi
-Cflags: -I${prefix}/include -O3 -pthread -I/usr/local/include -pthread
->>>>>>> .r962
+Cflags: -I${prefix}/include -O2 -pthread -I/opt/openmpi/include -pthread
