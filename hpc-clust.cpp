@@ -171,14 +171,14 @@ int emain()
     duphash.reserve(arr.size());
     for (i=0; i<arr.size(); ++i){
       if (i%(arr.size()/10)==0)
-        fprintf(stderr,"\r%li/%i",i,arr.size());
+        fprintf(stderr,"\r%li/%li",i,(long int)arr.size());
       it=duphash.get(arr.values(i));
       if (it==duphash.end())
         { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
       else 
         dupslist[it.value()].add(i);
     }
-    fprintf(stderr,"\n");
+    fprintf(stderr,"\r%li\n",(long int)arr.size());
   }else{
     uniqind.init(arr.size());
     for (i=0; i<uniqind.size(); ++i)
@@ -212,7 +212,7 @@ int emain()
   cout << "# computing distances" << endl;
   if (partsTotal>(arr.size()-1)*arr.size()/20) partsTotal=(arr.size()-1)*arr.size()/20;
   for (i=0; i<partsTotal; ++i)
-    taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const int&)i,(const int&)partsTotal,(const float&)t,(const int&)winlen));
+    taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
 
   taskman.createThread(ncpus);
   taskman.wait();
@@ -229,11 +229,13 @@ int emain()
   if (dfile.len()){
     cout << "# saving distances to file: "<<dfile << endl;
     for (i=0; i<dists.size(); ++i)
-      df.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+"\n");
+      df.write(estr(arr.keys(dists[i].x))+"\t"+arr.keys(dists[i].y)+"\t"+(1.0-dists[i].dist)+"\n");
+/*
     for (i=0; i<dupslist.size(); ++i){
       for (j=1; j<dupslist[i].size(); ++j)
         df.write(estr(dupslist[i][0])+" "+dupslist[i][j]+" 1.0\n");
     }
+*/
     df.close();
   }
 //  }else{

@@ -42,7 +42,7 @@ case "${target_os}" in
 
 AM_INIT_AUTOMAKE("hpc-clust","1.0.0")
 
-AC_CHECK_LIB(z,main)
+#AC_CHECK_LIB(z,main)
 
 AC_CHECK_LIB(pthread,main)
 
@@ -56,24 +56,26 @@ if test "x$with_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
   CXXFLAGS="${CXXFLAGS} -I${with_mpi}/include"
   LDFLAGS="${LDFLAGS} -L${with_mpi}/lib"
 fi
-AC_CHECK_PROG([MPICPP],[mpic++],[/usr/bin/mpic++],[no])
-if test "x$MPICPP" != "xno"; then
-  LDFLAGS="${LDFLAGS} `mpic++ --showme:links`"
-  CXXFLAGS="${CXXFLAGS} `mpic++ --showme:compile`"
-else
-  if test "x$no_mpi" = "xyes"; then
-    PKG_CHECK_MODULES(MPI,"openmpi-1.4-gcc",no_mpi="")
-    LIBS="${LIBS} $MPI_LIBS"
-    CXXFLAGS="${CXXFLAGS} $MPI_CFLAGS"
+if test "x$with_mpi" != "xno"; then
+  AC_CHECK_PROG([MPICPP],[mpic++],[/usr/bin/mpic++],[no])
+  if test "x$MPICPP" != "xno"; then
+    LDFLAGS="${LDFLAGS} `mpic++ --showme:links`"
+    CXXFLAGS="${CXXFLAGS} `mpic++ --showme:compile`"
   else
-    AC_CHECK_LIB(mpi,main,,no_mpi=yes)
-    if test "x$no_mpi" != "xyes"; then
-      AC_CHECK_HEADER([mpi.h],,no_mpi=yes)
-      if test "x$no_mpi" = "xyes"; then
-        no_mpi=""
-        AC_CHECK_HEADER([mpi/mpi.h],,no_mpi=yes)
-        if test "$x$no_mpi" != "xyes"; then
-          CXXFLAGS="${CXXFLAGS} -I/usr/include/mpi"
+    if test "x$no_mpi" = "xyes"; then
+      PKG_CHECK_MODULES(MPI,"openmpi-1.4-gcc",no_mpi="")
+      LIBS="${LIBS} $MPI_LIBS"
+      CXXFLAGS="${CXXFLAGS} $MPI_CFLAGS"
+    else
+      AC_CHECK_LIB(mpi,main,,no_mpi=yes)
+      if test "x$no_mpi" != "xyes"; then
+        AC_CHECK_HEADER([mpi.h],,no_mpi=yes)
+        if test "x$no_mpi" = "xyes"; then
+          no_mpi=""
+          AC_CHECK_HEADER([mpi/mpi.h],,no_mpi=yes)
+          if test "$x$no_mpi" != "xyes"; then
+            CXXFLAGS="${CXXFLAGS} -I/usr/include/mpi"
+          fi
         fi
       fi
     fi

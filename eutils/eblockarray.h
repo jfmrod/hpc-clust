@@ -79,9 +79,6 @@ eblockarray<T>& eblockarray<T>::merge(eblockarray& barr)
     i=count%blocksize; j=0;
     addarray(lastblock(),i,blocksize,barr.lastblock(),j,barr.count%blocksize);    
     count+=barr.count;
-    if (count%blocksize==0)
-      blocks.add(new T[blocksize]);
-
     if (barr.blocks.size()>1){
       tmparr=lastblock();
       blocks[blocks.size()-1]=barr.blocks[0];
@@ -92,6 +89,8 @@ eblockarray<T>& eblockarray<T>::merge(eblockarray& barr)
       }
       blocks.add(tmparr);
     }
+    if (count%blocksize==0)
+      blocks.add(new T[blocksize]);
   }else{
     i=count%blocksize; j=0;
     addarray(lastblock(),i,blocksize,barr.lastblock(),j,barr.count%blocksize);

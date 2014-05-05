@@ -37,8 +37,7 @@ POST_UNINSTALL = :
 build_triplet = x86_64-unknown-linux-gnu
 host_triplet = x86_64-unknown-linux-gnu
 target_triplet = x86_64-unknown-linux-gnu
-bin_PROGRAMS = hpc-clust$(EXEEXT) $(am__EXEEXT_1) \
-	make-lookuptables$(EXEEXT)
+bin_PROGRAMS = hpc-clust$(EXEEXT) $(am__EXEEXT_1)
 DIST_COMMON = README $(am__configure_deps) $(dist_man_MANS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure AUTHORS COPYING \
@@ -73,9 +72,6 @@ am_hpc_clust_mpi_OBJECTS = hpc-clust-mpi.$(OBJEXT) \
 	eseq.$(OBJEXT) lookuptables.$(OBJEXT)
 hpc_clust_mpi_OBJECTS = $(am_hpc_clust_mpi_OBJECTS)
 hpc_clust_mpi_LDADD = $(LDADD)
-am_make_lookuptables_OBJECTS = make-lookuptables.$(OBJEXT)
-make_lookuptables_OBJECTS = $(am_make_lookuptables_OBJECTS)
-make_lookuptables_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -88,10 +84,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(hpc_clust_SOURCES) $(hpc_clust_mpi_SOURCES) \
-	$(make_lookuptables_SOURCES)
-DIST_SOURCES = $(hpc_clust_SOURCES) $(hpc_clust_mpi_SOURCES) \
-	$(make_lookuptables_SOURCES)
+SOURCES = $(hpc_clust_SOURCES) $(hpc_clust_mpi_SOURCES)
+DIST_SOURCES = $(hpc_clust_SOURCES) $(hpc_clust_mpi_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -129,7 +123,7 @@ CPPFLAGS =
 CXX = g++
 CXXCPP = 
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -O3 -pthread -DOS_LINUX -I/opt/openmpi/include -pthread
+CXXFLAGS = -g -O2 -pthread -DOS_LINUX -I/opt/openmpi/include -pthread
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -224,10 +218,9 @@ MPIBIN = hpc-clust-mpi
 
 #man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
 dist_man_MANS = man/hpc-clust.1 man/hpc-clust-mpi.1
-EXTRA_DIST = make-otus.sh examples/aligned-archaea-seqs.sto
+EXTRA_DIST = make-otus.sh examples/aligned-archaea-seqs.sto manual/hpc-clust-manual.tex
 hpc_clust_SOURCES = hpc-clust.cpp cluster-common.h cluster-common.cpp eseqcluster.h eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp eseqclustercount.h eseqclustercount.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp lookuptables.h lookuptables.cpp
 hpc_clust_mpi_SOURCES = hpc-clust-mpi.cpp cluster-common.h cluster-common.cpp eseqcluster.h eseqcluster.cpp eseqclustercount.h eseqclustercount.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp lookuptables.h lookuptables.cpp
-make_lookuptables_SOURCES = make-lookuptables.cpp
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -312,9 +305,6 @@ hpc-clust$(EXEEXT): $(hpc_clust_OBJECTS) $(hpc_clust_DEPENDENCIES)
 hpc-clust-mpi$(EXEEXT): $(hpc_clust_mpi_OBJECTS) $(hpc_clust_mpi_DEPENDENCIES) 
 	@rm -f hpc-clust-mpi$(EXEEXT)
 	$(CXXLINK) $(hpc_clust_mpi_LDFLAGS) $(hpc_clust_mpi_OBJECTS) $(hpc_clust_mpi_LDADD) $(LIBS)
-make-lookuptables$(EXEEXT): $(make_lookuptables_OBJECTS) $(make_lookuptables_DEPENDENCIES) 
-	@rm -f make-lookuptables$(EXEEXT)
-	$(CXXLINK) $(make_lookuptables_LDFLAGS) $(make_lookuptables_OBJECTS) $(make_lookuptables_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -332,7 +322,6 @@ include ./$(DEPDIR)/eseqclustersingle.Po
 include ./$(DEPDIR)/hpc-clust-mpi.Po
 include ./$(DEPDIR)/hpc-clust.Po
 include ./$(DEPDIR)/lookuptables.Po
-include ./$(DEPDIR)/make-lookuptables.Po
 
 .cpp.o:
 	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -529,7 +518,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/examples $(distdir)/m4 $(distdir)/man
+	$(mkdir_p) $(distdir)/examples $(distdir)/m4 $(distdir)/man $(distdir)/manual
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
@@ -775,11 +764,13 @@ uninstall-man: uninstall-man1
 	uninstall-man1
 
 
-lt_gap_count lt_nogap_count lt_nogap_len : make-lookuptables
-	./make-lookuptables
+#nodist_make_lookuptables_SOURCES=make-lookuptables.cpp
 
-lookuptables.cpp : lt_gap_count lt_nogap_count lt_nogap_len
-	for i in $^; do xxd -i $$i; done > $@
+# lt_gap_count lt_nogap_count lt_nogap_len : make-lookuptables
+#	./make-lookuptables
+
+#lookuptables.cpp : lt_gap_count lt_nogap_count lt_nogap_len
+#	for i in $^; do xxd -i $$i; done > $@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
