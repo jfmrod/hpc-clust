@@ -49,7 +49,7 @@ eseqcluster        clcluster;
 eseqclusteravg     alcluster;
 eseqclustersingle  slcluster;
 
-int nthreads=4;
+int nthreads=1;
 
 long int transfersize=1000;
 long int buffersize=10000;
@@ -342,8 +342,8 @@ long int nodePos;
 etaskman taskman;
 emutex mutexDists;
 long int partsFinished=0l;
-//long int partsTotal=1000l;
-long int partsTotal=1l;
+long int partsTotal=10000l;
+//long int partsTotal=1l;
 
 void nodeMakeDists(int count,estr& msg)
 {

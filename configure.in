@@ -1,4 +1,4 @@
-AC_INIT(hpc-clust,1.0.0,jfmrod@konceptfx.com)
+AC_INIT(hpc-clust,1.0.1,joao.rodrigues@imls.uzh.ch)
 
 : ${CXXFLAGS=-O3}
 
@@ -40,7 +40,7 @@ case "${target_os}" in
   esac
 
 
-AM_INIT_AUTOMAKE("hpc-clust","1.0.0")
+AM_INIT_AUTOMAKE("hpc-clust","1.0.1")
 
 #AC_CHECK_LIB(z,main)
 
