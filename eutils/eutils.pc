@@ -1,0 +1,10 @@
+prefix=/home/jfmrod/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: easycpp.eutils
+Description: The easy programming library
+Version: 1.0.0
+Libs: eutils/libeutils.a -lmpi_cxx -lrt   -lmpi -lmpi_cxx -lrt   -lmpi
+Cflags: -I${prefix}/include -O2 -pthread -I/opt/openmpi/include -pthread

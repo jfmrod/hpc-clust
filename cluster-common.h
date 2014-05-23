@@ -19,23 +19,29 @@
 #include "eseqcluster.h"
 #include "eseqclustersingle.h"
 #include "eseqclustercount.h"
+#include "lookuptables.h"
 
 extern float warnMemThres;
 extern bool warnedMemThres;
 extern float exitMemThres;
 extern bool ignoreMemThres;
 
+/*
 extern char lt_gap_count[0x1u << 16];
 
 extern char lt_nogap_count[0x1u << 16];
 extern char lt_nogap_len[0x1u << 16];
+*/
 
 extern char lt_tamura_p[0x1u << 16];
 extern char lt_tamura_q[0x1u << 16];
 extern char lt_tamura_len[0x1u << 16];
 extern char lt_tamura_gc[0x1u << 16];
 
-void initLookupTable();
+
+//void gap_initLookupTable();
+//void nogap_initLookupTable();
+//void initLookupTable();
 
 class eshortseq
 {
@@ -485,22 +491,21 @@ inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
 }
 */
 
-
 inline float dist_compressed2(const estr& s1,const estr& s2,int seqlen)
 {
   int len=seqlen;
   int count=0;
 
-  unsigned long *ep1=(unsigned long*)(s1._str)+(s1._strlen/8);
+  unsigned long *ep1=(unsigned long*)(s1._str)+(s1._strlen/8)-1;
   unsigned long *p1=(unsigned long*)s1._str;
   unsigned long *p2=(unsigned long*)s2._str;
   unsigned long t;
   for (; p1!=ep1; ++p1,++p2){
     t=((*p1) ^ (*p2));
-    count+=lt_gap_count[ t&0xffffu ] + lt_gap_count[ (t>>16)&0xffffu ] + lt_gap_count[ (t>>32)&0xffffu ] + lt_gap_count[ (t>>48)&0xffffu ];
+    count+=lt_gap_count[ t&0xfffful ] + lt_gap_count[ (t>>16)&0xfffful ] + lt_gap_count[ (t>>32)&0xfffful ] + lt_gap_count[ (t>>48)&0xfffful ];
   }
   t=((*p1) ^ (*p2));
-  count+=lt_gap_count[ t&0xffffu ] + lt_gap_count[ (t>>16)&0xffffu ] + lt_gap_count[ (t>>32)&0xffffu ] + lt_gap_count[ (t>>48)&0xffffu ] - (16-seqlen%16);
+  count+=lt_gap_count[ t&0xfffful ] + lt_gap_count[ (t>>16)&0xfffful ] + lt_gap_count[ (t>>32)&0xfffful ] + lt_gap_count[ (t>>48)&0xfffful ] - (16-seqlen%16);
   return((float)count/(float)seqlen);
 }
 
@@ -509,7 +514,7 @@ inline float dist_compressed(const estr& s1,const estr& s2,int seqlen)
 {
   int len=seqlen;
   int count=0;
-  long int *ep1=(long int*)(s1._str)+(s1._strlen/8);
+  long int *ep1=(long int*)(s1._str)+(s1._strlen/8)-1;
   long int *p1=(long int*)s1._str;
   long int *p2=(long int*)s2._str;
   long int tp1,tp2;
@@ -951,13 +956,13 @@ int t_calc_dists(emutex& mutex,T& arr,K& dists,int node,int tnodes,float thres)
 }
 
 template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
-int t_calc_dists_u(emutex& mutex,eintarray& uniqind,T& arr,K& dists,int seqlen,float thres,int node,int tnodes)
+int t_calc_dists_u(emutex& mutex,eintarray& uniqind,T& arr,K& dists,int seqlen,long int node,long int tnodes,float thres)
 {
   long int i,i2,j;
   long int start,end;
 
-  start=(long int)(node)*(long int)(uniqind.size()-1)/(long int)(2*tnodes);
-  end=(long int)(node+1)*(long int)(uniqind.size()-1)/(long int)(2*tnodes);
+  start=((long int)(node)*(long int)(uniqind.size()-1l))/(long int)(2l*tnodes);
+  end=((long int)(node+1l)*(long int)(uniqind.size()-1l))/(long int)(2l*tnodes);
 
   float tmpid,tmpid2,tmpid3;
   K tmpdists;
@@ -967,15 +972,15 @@ int t_calc_dists_u(emutex& mutex,eintarray& uniqind,T& arr,K& dists,int seqlen,f
       tmpid=fdist(arr[uniqind[i]],arr[uniqind[j]],seqlen);
       if (tmpid>=thres) tmpdists.add(M(uniqind[i],uniqind[j],tmpid));
     }
-    i2=uniqind.size()-i-2;
-    for (j=i2+1; j<uniqind.size(); ++j){
+    i2=uniqind.size()-i-2l;
+    for (j=i2+1l; j<uniqind.size(); ++j){
       tmpid=fdist(arr[uniqind[i2]],arr[uniqind[j]],seqlen);
       if (tmpid>=thres) tmpdists.add(M(uniqind[i2],uniqind[j],tmpid));
     }
   }
-  if (node==tnodes-1 && uniqind.size()%2==0){
-    i=uniqind.size()/2-1;
-    for (j=i+1; j<uniqind.size(); ++j){
+  if (node==tnodes-1l && uniqind.size()%2==0){
+    i=uniqind.size()/2-1l;
+    for (j=i+1l; j<uniqind.size(); ++j){
       tmpid=fdist(arr[uniqind[i]],arr[uniqind[j]],seqlen);
       if (tmpid>=thres) tmpdists.add(M(uniqind[i],uniqind[j],tmpid));
     }

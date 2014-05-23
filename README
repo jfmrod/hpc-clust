@@ -1,5 +1,5 @@
 
-HPC-CLUST v1.0.0 (March 2013)
+HPC-CLUST v1.0.1 (May 2014)
 by Joao F. Matias Rodrigues and Christian von Mering
 Institute of Molecular Life Sciences, University of Zurich, Switzerland
 =================================================
@@ -192,5 +192,19 @@ Sebastian Schmidt
 
 
 
+For further information contact: Joao F. Matias Rodrigues <joao.rodrigues@imls.uzh.ch>
 
-For further information contact: Joao F. Matias Rodrigues <jfmrod@konceptfx.com>
+
+
+
+
+=================================================
+HISTORY
+
+
+1.0.1 (May 2014)
+
+- Several bugs fixed in optimized distance calculation functions, sorting function (only with -O optimization), distributed computing (when distance threshold is strict or sparse databases)
+
+
+

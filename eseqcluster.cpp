@@ -69,6 +69,8 @@ void eseqcluster::init(int count,const estr& ofilename,const estr& seqsfile,cons
 {
   ofile.open(ofilename,"w");
   ofile.write("# seqsfile: "+seqsfile+"\n");
+  ofile.write("# OTU_count Merge_distance Merged_OTU_id1 Merged_OTU_id2\n");
+
   int i,j;
 
   mergecount=0;

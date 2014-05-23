@@ -1,7 +1,7 @@
 .\" Process this file with
 .\" groff -man -Tascii hpc-clust.1
 .\"
-.TH HPC-CLUST 1 "SEP 2012" Linux "User Manuals"
+.TH HPC-CLUST 1 "Mar 2013" Linux "User Manuals"
 .SH NAME
 hpc-clust \- high performance sequence clustering
 .SH SYNOPSIS
@@ -11,8 +11,6 @@ hpc-clust \- high performance sequence clustering
 .B hpc-clust-mpi [-t <threshold>] [-dfunc <dist_function>] [-nthreads <count>] [-ofile <output>] <-sl true|-cl true|-al true>
 .I aligned_seqs
 .P
-.B hpc-clust-dist [-t <threshold>] [-dfunc <dist_function>] [-ncpus <count>] [-nthreads <count>] [-ofile <output>] <-sl true|-cl true|-al true>
-.I aligned_seqs
 .SH DESCRIPTION
 .B hpc-clust
 Performs a hierarchical clustering of the sequences specified in 
@@ -28,8 +26,6 @@ Distance threshold until which to cluster the sequences.
 Number of nodes to run distributed clustering
 .IP -nthreads
 Number of threads to run per node (
-.B hpc-clust-dist
-or
 .B hpc-clust-mpi
 ) or for the single process (
 .B hpc-clust
@@ -58,7 +54,7 @@ and ".al", or with the same name
 as the input file if
 .B -ofile
 was not given.
-.SH AUTHOR
+.SH AUTHORS
 Joao F. Matias Rodrigues <jfmrod@konceptfx.com>
 .P
 Christian von Mering <mering@imls.uzh.ch>
