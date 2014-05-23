@@ -472,7 +472,7 @@ void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen)
     ++lineno;
     if (line.len()==0 || line[0]=='#') continue;
     
-    if (firstline) { firstline=false; if (line[0]=='>') { fasta=true; cout << "# loading fasta formatted sequences file" << endl; } else { cout << "# loading stockholm formatted sequences file" << endl;} }
+    if (firstline) { firstline=false; if (line[0]=='>') { fasta=true; cout << "# loading fasta formatted sequence file" << endl; } else { cout << "# loading stockholm formatted sequence file" << endl;} }
     if (fasta){ // fasta format
       if (line[0]=='>'){
         if (name.len()){
@@ -528,7 +528,7 @@ void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen)
     ++lineno;
     if (line.len()==0 || line[0]=='#') continue;
     
-    if (firstline) { firstline=false; if (line[0]=='>') { fasta=true; cout << "# loading fasta formatted sequences file" << endl; } else { cout << "# loading stockholm formatted sequences file" << endl;} }
+    if (firstline) { firstline=false; if (line[0]=='>') { fasta=true; cout << "# loading fasta formatted sequence file" << endl; } else { cout << "# loading stockholm formatted sequence file" << endl;} }
     if (fasta){ // fasta format
       if (line[0]=='>'){
         if (name.len()){
