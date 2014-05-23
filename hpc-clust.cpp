@@ -18,8 +18,8 @@ eseqcluster clcluster; // complete linkage
 eseqclustersingle slcluster; // single linkage
 eseqclusteravg alcluster; // avg linkage
 
-int partsFinished=0;
-int partsTotal=100;
+long partsFinished=0;
+long partsTotal=100;
 
 estrarray arr;
 unsigned totaldists;
@@ -49,17 +49,18 @@ void help()
   printf("HPC-CLUST v%s\n",HPC_CLUST_PACKAGE_VERSION);
   printf("by Joao F. Matias Rodrigues and Christian von Mering\n");
   printf("Institute of Molecular Life Sciences, University of Zurich, Switzerland\n");
+  printf("Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013:btt657–.\n");
   printf("\n");
   printf("Usage:\n");
   printf("    %s [...] <-sl true|-cl true|-al true> aligned_seqs\n",efile(argv[0]).basename()._str);
   printf("\n");
   printf("Cluster a set of multiple aligned sequences until a given threshold.\n");
-  printf("Example: hpc-clust -ncpus 4 -t 0.8 -dfunc gap -sl true myalignedseqs.sto\n"); 
+  printf("Example: hpc-clust -nthreads 4 -t 0.8 -dfunc gap -sl true myalignedseqs.sto\n"); 
   printf("\n");
   printf("Optional arguments:\n");
-  printf("%10s    %s.\n","-t","distance threshold until which to do the clustering [default: 0.9]");
-  printf("%10s    %s\n","-dfunc","distance function to use: nogap, gap, tamura [default: nogap]");
-  printf("%10s    %s\n","-ncpus","number of threads to use [default: 1]");
+  printf("%10s    %s\n","-t","distance threshold until which to do the clustering [default: 0.9]");
+  printf("%10s    %s\n","-dfunc","distance function to use: gap, nogap, tamura [default: gap]");
+  printf("%10s    %s\n","-nthreads","number of threads to use [default: 4]");
   printf("%10s    %s\n","-ofile","output filename [defaults to input filename]. \".sl\",\".cl\", or \".al\" extensions will be appended");
   printf("\n");
   printf("At least one is required:\n");
@@ -67,8 +68,8 @@ void help()
   printf("%10s    %s\n","-cl true","perform complete-linkage clustering");
   printf("%10s    %s\n","-al true","perform average-linkage clustering");
   printf("\n");
-  printf("Report bugs to: jfmrod@konceptfx.com\n");
-  printf("http://www.konceptfx.com/hpc-clust/\n");
+  printf("Report bugs to: joao.rodrigues@imls.uzh.ch\n");
+  printf("http://meringlab.org/software/hpc-clust/\n");
 
   exit(0);
 }
@@ -106,11 +107,11 @@ int emain()
   estr ofile;
   estr dfile;
   float t=0.90;
-  int ncpus=1;
+  int nthreads=4;
   bool ignoreUnique=false;
   epregister(ignoreUnique);
   epregister(t);
-  epregister(ncpus);
+  epregister(nthreads);
   epregister(ofile);
   epregister(dfile);
   epregister(ignoreMemThres);
@@ -159,26 +160,29 @@ int emain()
   epregisterClassMethod(ebasicarray<eseqdist>,subset);
   epregisterClassSerializeMethod(ebasicarray<eseqdist>);
 
-  long int i,j;
+  long i,j;
   cout << "# loading seqs file: " << argv[1] << endl;
   load_seqs_compressed(argv[1],arr,seqlen);
+#ifndef HPC_CLUST_USE_LONGIND
+  ldieif(arr.size() > (2l<<31),"To cluster more than 2 million sequences please recompile hpc-clust with the --enable-longind flag.");
+#endif
 
-  ebasicstrhashof<int> duphash;
-  ebasicstrhashof<int>::iter it;
+  ebasicstrhashof<long> duphash;
+  ebasicstrhashof<long>::iter it;
   eintarray uniqind;
-  earray<eintarray> dupslist;
+  earray<ebasicarray<INDTYPE> > dupslist;
   if (!ignoreUnique){
     duphash.reserve(arr.size());
     for (i=0; i<arr.size(); ++i){
       if (i%(arr.size()/10)==0)
-        fprintf(stderr,"\r%li/%li",i,(long int)arr.size());
+        fprintf(stderr,"\r%li/%li",i,(long)arr.size());
       it=duphash.get(arr.values(i));
       if (it==duphash.end())
-        { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
+        { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(ebasicarray<INDTYPE>(i)); }
       else 
         dupslist[it.value()].add(i);
     }
-    fprintf(stderr,"\r%li\n",(long int)arr.size());
+    fprintf(stderr,"\r%li\n",(long)arr.size());
   }else{
     uniqind.init(arr.size());
     for (i=0; i<uniqind.size(); ++i)
@@ -187,8 +191,8 @@ int emain()
   cout << endl;
   cout << "# unique seqs: " << uniqind.size() << endl;
 
-  long int maxdists=uniqind.size()*(uniqind.size()-1)/2;
-  long int maxmem=maxdists*sizeof(eseqdist)/1024/1024;
+  long maxdists=uniqind.size()*(uniqind.size()-1)/2;
+  long maxmem=maxdists*sizeof(eseqdist)/1024/1024;
   cout << "# maximum number of distance pairs: " << maxdists << " (" << maxmem << "Mb)" << endl;
 
   if (maxmem > warnMemThres){
@@ -214,7 +218,7 @@ int emain()
   for (i=0; i<partsTotal; ++i)
     taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
 
-  taskman.createThread(ncpus);
+  taskman.createThread(nthreads);
   taskman.wait();
 
   dtime=t1.lap()*0.001;

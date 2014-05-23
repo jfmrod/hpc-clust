@@ -4,7 +4,7 @@
 #include <eutils/efile.h>
 
 eseqdistCount::eseqdistCount(): count(1) {}
-eseqdistCount::eseqdistCount(int _x,int _y,float _dist): x(_x),y(_y),dist(_dist),count(1) {}
+eseqdistCount::eseqdistCount(INDTYPE _x,INDTYPE _y,float _dist): x(_x),y(_y),dist(_dist),count(1) {}
 
 
 void eseqdistCount::serial(estr& data) const
@@ -40,7 +40,7 @@ eseqclusterCount::eseqclusterCount(){}
 
 void eseqclusterCount::check(ebasicarray<eseqdistCount>& dists)
 {
-  int i;
+  long i;
   estr xystr;
   bool duplicate=false;
   for (i=0; i<dists.size(); ++i){
@@ -66,8 +66,8 @@ void eseqclusterCount::check(ebasicarray<eseqdistCount>& dists)
   cout << "# no duplicates found!" << endl;
 }
 
-void eseqclusterCount::init(int count) {
-  int i;
+void eseqclusterCount::init(INDTYPE count) {
+  long i;
   scount.reserve(count);
   scluster.reserve(count);
   smerge.reserve(count);
@@ -77,9 +77,9 @@ void eseqclusterCount::init(int count) {
     scount.add(1);
     scluster.add(i);
     smerge.add(-1);
-    incluster.add(list<int>());
+    incluster.add(list<INDTYPE>());
     incluster[i].push_back(i);
-    inter.add(list<int>());
+    inter.add(list<INDTYPE>());
   }
   cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
   cout << "# initializing smatrix with: " << (long int)(count)*(long int)(count)/20000l/2l<< " elements" << endl; 
@@ -88,16 +88,16 @@ void eseqclusterCount::init(int count) {
   mergecount=0;
 }
 
-long int eseqclusterCount::update(long int s)
+long eseqclusterCount::update(long s)
 {
-  int count=0;
-  int i;
-  int smergepos=0;
-  eintarray tmpsmerge;
-  int updcount;
-  int updind[smerge.size()];
-  int updcount2;
-  int updind2[smerge.size()];
+  long count=0;
+  long i;
+  long smergepos=0;
+  ebasicarray<long> tmpsmerge;
+  long updcount;
+  long updind[smerge.size()];
+  long updcount2;
+  long updind2[smerge.size()];
 
   for (i=0; i<smerge.size(); ++i)
     tmpsmerge.add(-1);
@@ -152,9 +152,9 @@ long int eseqclusterCount::update(long int s)
 
     cerr << "# updating: " << updcount << " merges smerge.size: "<<tmpsmerge.size()<<endl;
 
-    long int *uarr=new long int[updcount*updcount2];
-    ldieif (uarr==0x00,"not enough memory");
-    long int li,lj;
+    long *uarr=new long[updcount*updcount2];
+    ldieif(uarr==0x00,"not enough memory");
+    long li,lj;
     for (i=0; i<updcount*updcount2; ++i)
       uarr[i]=-1l;
 
@@ -189,10 +189,10 @@ long int eseqclusterCount::update(long int s)
   return(count);
 }
 
-long int eseqclusterCount::update(long int s,int x,int y)
+long eseqclusterCount::update(long int s,INDTYPE x,INDTYPE y)
 {
 //  int count=0;
-  int i,j;
+  long i,j;
 
   eintarray uarr;
   uarr.reserve(smerge.size());
@@ -224,11 +224,11 @@ long int eseqclusterCount::update(long int s,int x,int y)
 //  return(count);
 }
 
-long int eseqclusterCount::update(eblockarray<eseqdistCount>& dists,long int s)
+long eseqclusterCount::update(eblockarray<eseqdistCount>& dists,long s)
 {
-  int count=0;
-  int i,j;
-  int tmp;
+  long count=0;
+  long i,j;
+  long tmp;
   eseqdisthash cmatrix;
   eseqdisthash::iter it;
 //  ebasicstrhashof<int> cmatrix;
@@ -265,7 +265,7 @@ long int eseqclusterCount::update(eblockarray<eseqdistCount>& dists,long int s)
   return(count);
 }
 
-void eseqclusterCount::merge(int x,int y,float dist)
+void eseqclusterCount::merge(INDTYPE x,INDTYPE y,float dist)
 {
   ldieif(x==y,"should not happen!");
   ldieif(scount[x]==0 || scount[y]==0,"also should not happen");
@@ -278,7 +278,7 @@ void eseqclusterCount::merge(int x,int y,float dist)
   scount[x]+=scount[y];
   scount[y]=0;
 
-  list<int>::iterator it;
+  list<INDTYPE>::iterator it;
   for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
     scluster[*it]=x;
     incluster[x].push_back(*it);
@@ -289,7 +289,7 @@ void eseqclusterCount::merge(int x,int y,float dist)
   eseqdistCount tmpdist,tmpdist2;
   tmpdist.x=x;
   tmpdist2.x=y;
-  int i,j;
+  long i,j;
   for (it=inter[y].begin(); it!=inter[y].end(); ++it){
     j=scluster[*it];
     if (x==j || y==j) continue;
@@ -329,11 +329,11 @@ void eseqclusterCount::add(eseqdistCount& sdist){
 //  int y=scluster[sdist.y];
 
   ldieif(tmpdist.x<0 || tmpdist.y<0 || tmpdist.x>=scluster.size() || tmpdist.y>=scluster.size(),"out of bounds: sdist.x: "+estr(tmpdist.x)+" sdist.y: "+estr(tmpdist.y)+" scluster.size(): "+estr(scluster.size()));
-  int tmp;
+  long tmp;
   if (tmpdist.x>tmpdist.y) { tmp=tmpdist.x; tmpdist.x=tmpdist.y; tmpdist.y=tmp; }
 
-  int links;
-  int i;
+  long links;
+  long i;
   estr xystr;
 
 //  cout << x << " " << y << " " << sdist.dist << endl;
@@ -433,17 +433,17 @@ void eseqclusterCount::add(int ind){
 
 void eseqclusterCount::save(const estr& filename,const estrarray& arr)
 {
-  int i;
+  long i;
   estr otustr;
-  estrhashof<eintarray> otus;
+  estrhashof<ebasicarray<INDTYPE> > otus;
 
   efile f(filename+".clstr");
   for (i=0; i<scluster.size(); ++i)
     f.write(estr(scluster[i])+"     "+arr.keys(i)+"\n");
   f.close();
 
-  list<int>::iterator it;
-  int otucount=0;
+  list<INDTYPE>::iterator it;
+  long otucount=0;
   efile f2(filename);
   for (i=0; i<incluster.size(); ++i){
     if (scount[i]==0) continue;

@@ -1,6 +1,8 @@
 #ifndef ESEQCLUSTERCOUNT_H
 #define ESEQCLUSTERCOUNT_H
 
+#include "hpc-clust-config.h"
+
 #include <eutils/evar.h>
 #include <eutils/estr.h>
 #include <eutils/ethread.h>
@@ -13,12 +15,12 @@ class eseqdistCount
 {
  public:
   float dist;
-  int count;
-  int x;
-  int y;
+  long count;
+  INDTYPE x;
+  INDTYPE y;
 
   eseqdistCount();
-  eseqdistCount(int x,int y,float dist);
+  eseqdistCount(INDTYPE x,INDTYPE y,float dist);
 
   inline bool operator==(const eseqdistCount& sdist) const{ return(x==sdist.x && y==sdist.y || x==sdist.y && y==sdist.x); }
   inline bool operator<(const eseqdistCount& sdist) const{ return(dist<sdist.dist); }
@@ -29,47 +31,47 @@ class eseqdistCount
 
 inline size_t hash_lookup3_eseqdistCount(const eseqdistCount& dist)
 {
-  int tmp[2];
+  INDTYPE tmp[2];
   if (dist.x<dist.y)
     { tmp[0]=dist.x; tmp[1]=dist.y; }
   else
     { tmp[1]=dist.x; tmp[0]=dist.y; }
-  return(hash_lookup3(tmp,sizeof(int)*2,0));
+  return(hash_lookup3(tmp,sizeof(INDTYPE)*2,0));
 }
 
-typedef ebasichashmap<eseqdistCount,int,hash_lookup3_eseqdistCount> eseqdisthash;
+typedef ebasichashmap<eseqdistCount,INDTYPE,hash_lookup3_eseqdistCount> eseqdisthash;
 
 class eseqclusterCount
 {
  public:
-  int mergecount;
+  INDTYPE mergecount;
 
   emutex mutexDists;
   eblockarray<eseqdistCount> dists;
 
   eseqclusterData clusterData;
 
-  eintarray scount;
-  eintarray scluster;
-  eintarray smerge;
+  ebasicarray<INDTYPE> scount;
+  ebasicarray<INDTYPE> scluster;
+  ebasicarray<INDTYPE> smerge;
 
   eseqdisthash smatrix;
-  ebasicarray<list<int> > inter;
-  ebasicarray<list<int> > incluster;
+  ebasicarray<list<INDTYPE> > inter;
+  ebasicarray<list<INDTYPE> > incluster;
 
   void check(ebasicarray<eseqdistCount>& dists);
 
   eseqclusterCount();
 
-  void merge(int x,int y,float dist);
-  void init(int count);
+  void merge(INDTYPE x,INDTYPE y,float dist);
+  void init(INDTYPE count);
 
   void add(eseqdistCount& sdist);
 //  void add(int ind);
 
-  long int update(long int ind);
-  long int update(long int ind,int x,int y);
-  long int update(eblockarray<eseqdistCount>& dists,long int s);
+  long update(long ind);
+  long update(long ind,INDTYPE x,INDTYPE y);
+  long update(eblockarray<eseqdistCount>& dists,long s);
 
   void save(const estr& filename,const estrarray& arr);
 };

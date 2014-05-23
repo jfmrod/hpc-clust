@@ -14,24 +14,24 @@
 class eseqclustersingle
 {
  public:
-  int mergecount;
+  INDTYPE mergecount;
   efile ofile;
 
 //  emutex mutexDists;
 //  eblockarray<eseqdist> dists;
   eseqclusterData clusterData;
 
-  eintarray scount;
-  eintarray scluster;
-  eintarray smerge;
+  ebasicarray<INDTYPE> scount;
+  ebasicarray<INDTYPE> scluster;
+  ebasicarray<INDTYPE> smerge;
 
-  ebasicarray<list<int> > incluster;
+  ebasicarray<list<INDTYPE> > incluster;
 
   eseqclustersingle();
 
-  void merge(int x,int y,float dist);
-  void init(int count,const estr& ofile,const estr& seqsfile,const earray<eintarray>& dupslist);
-  void add(int ind);
+  void merge(INDTYPE x,INDTYPE y,float dist);
+  void init(INDTYPE count,const estr& ofile,const estr& seqsfile,const earray<ebasicarray<INDTYPE> >& dupslist);
+  void add(INDTYPE ind);
   void add(const eseqdist& sdist);
 
 //  int update(ebasicarray<eseqdist>& dists,int s);

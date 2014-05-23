@@ -4,10 +4,7 @@
 #include <eutils/efile.h>
 
 eseqdist::eseqdist() {}
-eseqdist::eseqdist(int _x,int _y,float _dist): x(_x),y(_y),dist(_dist) {}
-//eseqdist::eseqdist(): count(1) {}
-//eseqdist::eseqdist(int _x,int _y,float _dist): x(_x),y(_y),dist(_dist),count(1) {}
-
+eseqdist::eseqdist(INDTYPE _x,INDTYPE _y,float _dist): x(_x),y(_y),dist(_dist) {}
 
 void eseqdist::serial(estr& data) const
 {
@@ -39,7 +36,7 @@ eseqcluster::eseqcluster(){}
 
 void eseqcluster::check(ebasicarray<eseqdist>& dists)
 {
-  int i;
+  long i;
   estr xystr;
 //  eseqcount xy;
   bool duplicate=false;
@@ -47,7 +44,7 @@ void eseqcluster::check(ebasicarray<eseqdist>& dists)
     if (i%(dists.size()/10)==0) { cout << i*10/dists.size(); flush(cout); }
     xy2estr(dists[i].x,dists[i].y,xystr);
 
-    ebasicstrhashof<int>::iter it;
+    ebasicstrhashof<INDTYPE>::iter it;
 
 //    cout << dists[i].dist << " " << dists[i].x << " " << dists[i].y;
     it=smatrix.get(xystr);
@@ -65,13 +62,13 @@ void eseqcluster::check(ebasicarray<eseqdist>& dists)
   cout << "# no duplicates found!" << endl;
 }
 
-void eseqcluster::init(int count,const estr& ofilename,const estr& seqsfile,const earray<eintarray>& dupslist)
+void eseqcluster::init(INDTYPE count,const estr& ofilename,const estr& seqsfile,const earray<ebasicarray<INDTYPE> >& dupslist)
 {
   ofile.open(ofilename,"w");
   ofile.write("# seqsfile: "+seqsfile+"\n");
   ofile.write("# OTU_count Merge_distance Merged_OTU_id1 Merged_OTU_id2\n");
 
-  int i,j;
+  long i,j;
 
   mergecount=0;
   scount.reserve(count);
@@ -83,9 +80,9 @@ void eseqcluster::init(int count,const estr& ofilename,const estr& seqsfile,cons
     scount.add(1);
     scluster.add(i);
     smerge.add(-1);
-    incluster.add(list<int>());
+    incluster.add(list<INDTYPE>());
     incluster[i].push_back(i);
-    inter.add(list<int>());
+    inter.add(list<INDTYPE>());
   }
   for (i=0; i<dupslist.size(); ++i){
     for (j=1; j<dupslist[i].size(); ++j){
@@ -95,46 +92,12 @@ void eseqcluster::init(int count,const estr& ofilename,const estr& seqsfile,cons
     }
   }
   cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
-  cout << "# initializing smatrix with: " << (long int)(count)*(long int)(count)/(long int)(20000)<< " elements" << endl; 
-  smatrix.reserve((long int)(count)*(long int)(count)/(long int)(20000));
+  cout << "# initializing smatrix with: " << (long)(count)*(long)(count)/(long)(20000)<< " elements" << endl; 
+  smatrix.reserve((long)(count)*(long)(count)/(long)(20000));
 //  cout << "# smatrix._hashitems = " << smatrix._hashitems << endl;
 }
 
-/*
-int eseqcluster::update(ebasicarray<eseqdist>& dists,int s)
-{
-  int count=0;
-  int i,j;
-  ebasicstrhashof<int> cmatrix;
-  ebasichashmap<estr,int>::iter it;
-  estr tmps; 
-
-  for (i=s; i>=0; --i){
-    if (dists[i].count==0) continue;
-
-    if (smerge[dists[i].x]>=0 || smerge[dists[i].y]>=0){
-      xy2estr(scluster[dists[i].x],scluster[dists[i].y],tmps);
-      it=cmatrix.get(tmps);
-      if (it==cmatrix.end())
-        cmatrix.add(tmps,i);
-      else{
-        j=*it;
-        dists[i].count+=dists[j].count;
-        dists[j].count=0;
-        *it=i;
-        ++count;
-      }
-    }
-  }
-
-  for (i=0; i<smerge.size(); ++i)
-    smerge[i]=-1;
-
-  return(count);
-}
-*/
-
-void eseqcluster::merge(int x,int y,float dist)
+void eseqcluster::merge(INDTYPE x,INDTYPE y,float dist)
 {
   ldieif(x==y,"should not happen!");
   ldieif(scount[x]==0 || scount[y]==0,"also should not happen");
@@ -147,7 +110,7 @@ void eseqcluster::merge(int x,int y,float dist)
   scount[x]+=scount[y];
   scount[y]=0;
 
-  list<int>::iterator it;
+  list<INDTYPE>::iterator it;
   for (it=incluster[y].begin(); it!=incluster[y].end(); ++it){
     scluster[*it]=x;
     incluster[x].push_back(*it);
@@ -155,17 +118,17 @@ void eseqcluster::merge(int x,int y,float dist)
 
   estr tmpstr,tmpstr2;
 
-  int i,j;
+  INDTYPE i,j;
   for (it=inter[y].begin(); it!=inter[y].end(); ++it){
     j=scluster[*it];
     if (x==j || y==j) continue;
     xy2estr(x,j,tmpstr);
     xy2estr(y,j,tmpstr2);
 
-    ebasicstrhashof<int>::iter tmpit2=smatrix.get(tmpstr2);
+    ebasicstrhashof<INDTYPE>::iter tmpit2=smatrix.get(tmpstr2);
     if(tmpit2==smatrix.end()) continue;
 
-    ebasicstrhashof<int>::iter tmpit=smatrix.get(tmpstr);
+    ebasicstrhashof<INDTYPE>::iter tmpit=smatrix.get(tmpstr);
     if (tmpit!=smatrix.end())
       *tmpit+=*tmpit2;
     else{
@@ -181,15 +144,14 @@ void eseqcluster::add(const eseqdist& sdist){
 //  if (sdist.count==0) return;
   ldieif(sdist.x<0 || sdist.y<0 || sdist.x>=scluster.size() || sdist.y>=scluster.size(),"out of bounds: sdist.x: "+estr(sdist.x)+" sdist.y: "+estr(sdist.y)+" scluster.size(): "+estr(scluster.size()));
 
-  int x=scluster[sdist.x];
-  int y=scluster[sdist.y];
+  INDTYPE x=scluster[sdist.x];
+  INDTYPE y=scluster[sdist.y];
 
   ldieif(x<0 || y<0 || x>=scluster.size() || y>=scluster.size(),"out of bounds: sdist.x: "+estr(x)+" sdist.y: "+estr(y)+" scluster.size(): "+estr(scluster.size()));
-  int tmp;
+  INDTYPE tmp;
   if (x>y) { tmp=x; x=y; y=tmp; }
 
-  int links;
-  int i;
+  INDTYPE links;
   estr xystr;
 
 //  cout << x << " " << y << " " << sdist.dist << endl;
@@ -197,7 +159,7 @@ void eseqcluster::add(const eseqdist& sdist){
 
   xy2estr(x,y,xystr);
 
-  ebasicstrhashof<int>::iter it;
+  ebasicstrhashof<INDTYPE>::iter it;
 
   it=smatrix.get(xystr);
   if (it==smatrix.end()){
@@ -278,17 +240,17 @@ void eseqcluster::add(int ind){
 
 void eseqcluster::save(const estr& filename,const estrarray& arr)
 {
-  int i;
+  long i;
   estr otustr;
-  estrhashof<eintarray> otus;
+  estrhashof<ebasicarray<INDTYPE> > otus;
 
   efile f(filename+".clstr");
   for (i=0; i<scluster.size(); ++i)
     f.write(estr(scluster[i])+"     "+arr.keys(i)+"\n");
   f.close();
 
-  list<int>::iterator it;
-  int otucount=0;
+  list<INDTYPE>::iterator it;
+  long otucount=0;
   efile f2(filename);
   for (i=0; i<incluster.size(); ++i){
     if (scount[i]==0) continue;

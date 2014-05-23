@@ -1,10 +1,15 @@
-EUTILS light library - Copyright (c) 2005-2013 Joao F. Matias Rodrigues <jfmrod@konceptfx.com>
+EUTILS light library - Copyright (c) 2005-2014 Joao F. Matias Rodrigues <jfmrod@konceptfx.com>
 All rights reserved.
 
-The EUTILS light library may be modified for personal or non-comercial use only.
-Derivative and modified versions of the EUTILS light library may NOT be distributed in any form.
-The EUTILS light library may be included and used as part of any program (including HPC-CLUST) for personal or non-comercial use only.
-Comercial use of this library is allowed only when the EUTILS light library is included as part of an original version of the HPC-CLUST program downloaded from http://www.konceptfx.com/.
+
+Modified versions of the EUTILS light library may NOT be publicly distributed.
+
+Non-comercial use:
+For personal and non-comercial use, the EUTILS light library may be modified but not publicly distributed. Distribution inside a non-comerical organization is allowed if the modifications were made by employees of the organization.
+
+Comercial use:
+The EUTILS light library may only be modified to fix bugs or for making it work in a computer system that it does not originally work in. In this case any such bugs or problems (but not the fixes) have to be reported to the author.
+The EUTILS light library may be used comercially as part of the HPC-CLUST program when it (HPC-CLUST) has not been so modified that it no longer is used for its intended purpose: the clustering of sequence data (nucleotide or protein).
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 

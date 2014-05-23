@@ -56,7 +56,7 @@ long int buffersize=10000;
 long int tbucket=100000;
 float tdists;
 
-ebasicarray<long int> cdists;
+ebasicarray<long> cdists;
 ebasicarray<ebasicarray<eseqdist> > cmindists;
 earray<emutex> cmindistsMutexs;
 eintarray cpos,cend;
@@ -79,7 +79,7 @@ float radixKey(eblockarray<eseqdist>& dists,long int i)
 }
 
 template <class T>
-void seq(T& arr,int n)
+void seq(T& arr,long n)
 {
   arr.clear();
   arr.reserve(n);
@@ -91,9 +91,9 @@ void seq(T& arr,int n)
 template <class T>
 void randperm(T& arr)
 {
-  int i,j;
+  long i,j;
   for (i=arr.size()-1; i>0; --i){
-    j=(int)(rnd.uniform()*(i+1));
+    j=(long)(rnd.uniform()*(i+1));
     if (j!=i) arr.swap(i,j);
   }
 }
@@ -113,7 +113,7 @@ void serverClusterDistance(edcBaseServer& server);
 
 void serverFinished(edcBaseServerNode& sclient,const estr& msg)
 {
-  int i;
+  long i;
   bool allFinished=true;
   bool foundSocket=false;
   for (i=0; i<sclient.server.nodeCount(); ++i){
@@ -149,7 +149,7 @@ void serverFinished(edcBaseServerNode& sclient,const estr& msg)
 
 void serverClusterDistance(edcBaseServer& server)
 {
-  int i,j;
+  long i,j;
   float maxdist;
 
   for (i=0; i<cmindists.size(); ++i)
@@ -196,17 +196,17 @@ void serverClusterDistance(edcBaseServer& server)
     cmindistsMutexs[i].unlock();
 }
 
-void serverProcessDists(int i,const estr& msg,int& count)
+void serverProcessDists(long i,const estr& msg,long& count)
 {
   if (msg.len()==0) { count=0; return; }
   uint32_t *pstr=(uint32_t*)msg._str;
   count=*pstr;
   ++pstr;
-  int j;
+  long j;
   for (j=0; j<count; ++j){
-    cmindists[i][cend[i]+j].x=*pstr; ++pstr;
-    cmindists[i][cend[i]+j].y=*pstr; ++pstr;
-    cmindists[i][cend[i]+j].dist=*(float*)pstr; ++pstr;
+    cmindists[i][cend[i]+j].x=*reinterpret_cast<INDTYPE*>(pstr); pstr+=sizeof(INDTYPE)/sizeof(uint32_t);
+    cmindists[i][cend[i]+j].y=*reinterpret_cast<INDTYPE*>(pstr); pstr+=sizeof(INDTYPE)/sizeof(uint32_t);
+    cmindists[i][cend[i]+j].dist=*reinterpret_cast<float*>(pstr); ++pstr;
   }
   cend[i]=(cend[i]+count)%cmindists[i].size();
 }
@@ -215,7 +215,7 @@ void serverRecvDistance(edcBaseServerNode& sclient,const estr& msg)
 {
   t4.reset();
   bool foundServer=false;
-  int i,j,count;
+  long i,j,count;
   for (i=0; i<sclient.server.nodeCount(); ++i){
     if (&sclient.server.getClient(i)==&sclient){
       cmindistsMutexs[i].lock();
@@ -265,7 +265,7 @@ void serverStartComputation(edcBaseServer& server)
   t1.reset();
   cout << "# starting distributed computation" << endl;
 
-  long int i,j;
+  long i,j;
   for (i=0; i<server.nodeCount(); ++i){
     cmindists.add(ebasicarray<eseqdist>());
     cmindistsMutexs.add(emutex());
@@ -283,7 +283,7 @@ void serverStartComputation(edcBaseServer& server)
 void savearray(efile& f,ebasicarray<eseqdist>& sdist)
 {
   estr tmpstr;
-  long int i;
+  long i;
   for (i=0; i<sdist.size(); ++i){
     tmpstr.clear();
     sdist[i].serial(tmpstr);
@@ -295,7 +295,7 @@ void savearray(eblockarray<eseqdist>& sdist,const estr& filename)
 {
   efile f(filename);
   estr tmpstr;
-  long int i;
+  long i;
   for (i=0; i<sdist.size(); ++i){
     tmpstr.clear();
     sdist[i].serial(tmpstr);
@@ -316,7 +316,7 @@ void savearray(const ebasicarray<eseqdist>& sdist,const estr& filename)
 
 float getmaxdist()
 {
-  int i;
+  long i;
   float maxdist=-1.0;
 
   for (i=0; i<cmindists.size(); ++i){
@@ -336,28 +336,28 @@ void doIncoming(esocket& socket)
     serverStartComputation(server);
 }
 
-long int nodePos;
+long nodePos;
 
 
 etaskman taskman;
 emutex mutexDists;
-long int partsFinished=0l;
-long int partsTotal=10000l;
+long partsFinished=0l;
+long partsTotal=10000l;
 //long int partsTotal=1l;
 
 void nodeMakeDists(int count,estr& msg)
 {
-  msg.reserve(sizeof(uint32_t)*3*count+sizeof(uint32_t));
+  msg.reserve((sizeof(float)+2*sizeof(INDTYPE))*count+sizeof(uint32_t));
   uint32_t *pstr=(uint32_t*)msg._str;
   ++pstr;
   int i;
   for (i=0; i<count && nodePos>=0l; ++i,--nodePos){
-    *pstr=nodeDists[nodePos].x; ++pstr;
-    *pstr=nodeDists[nodePos].y; ++pstr;
-    *(float*)pstr=nodeDists[nodePos].dist; ++pstr;
+    *reinterpret_cast<INDTYPE*>(pstr)=nodeDists[nodePos].x; pstr+=sizeof(INDTYPE)/sizeof(uint32_t);
+    *reinterpret_cast<INDTYPE*>(pstr)=nodeDists[nodePos].y; pstr+=sizeof(INDTYPE)/sizeof(uint32_t);
+    *reinterpret_cast<float*>(pstr)=nodeDists[nodePos].dist; ++pstr;
   }
   *(uint32_t*)msg._str=i;
-  msg._strlen=sizeof(uint32_t)*3*i+sizeof(uint32_t);
+  msg._strlen=(sizeof(float)+2*sizeof(INDTYPE))*i+sizeof(uint32_t);
 }
 
 void nodeSendDistances(edcBaseClient& client)
@@ -365,7 +365,7 @@ void nodeSendDistances(edcBaseClient& client)
   cerr << cnode << " sending starting from nodePos: " << nodePos<< endl;
   if (nodePos==-1l) return;
 
-  int j;
+  long j;
   estr tmpdata;
   do {
     tmpdata.clear();
@@ -374,7 +374,7 @@ void nodeSendDistances(edcBaseClient& client)
 
 }
 
-long int nodeComputeDistances(eintarray _uniqind,long int node,long int tnodes,float thres,int _nthreads)
+long nodeComputeDistances(eintarray _uniqind,long node,long tnodes,float thres,int _nthreads)
 {
   load_seqs_compressed(argv[1],nodeArr,seqlen);
 
@@ -386,7 +386,7 @@ long int nodeComputeDistances(eintarray _uniqind,long int node,long int tnodes,f
   if ((long int)partsTotal>=((long int)nodeArr.size()-1l)*(long int)nodeArr.size()/(20l*tnodes))
     partsTotal=((long int)nodeArr.size()-1l)*(long int)nodeArr.size()/(20l*tnodes);
 
-  long int i;
+  long i;
   for (i=0; i<partsTotal; ++i){
     taskman.addTask(dfunc.value(),evararray(mutexDists,_uniqind,nodeArr,nodeDists,(const int&)seqlen,(const long int&)(node*partsTotal+i),(const long int&)(partsTotal*tnodes),(const float&)thres));
   }
@@ -435,18 +435,21 @@ void doStartClient(edcBaseClient& client)
 
 void doStartServer(edcBaseServer& server)
 {
-  long int i;
+  long i;
   load_seqs_compressed(argv[1],arr,seqlen);
-  ebasicstrhashof<int> duphash;
-  ebasicstrhashof<int>::iter it;
+#ifndef HPC_CLUST_USE_LONGIND
+  ldieif(arr.size() > (2l<<31),"To cluster more than 2 million sequences please recompile hpc-clust with the --enable-longind flag.");
+#endif
+  ebasicstrhashof<long> duphash;
+  ebasicstrhashof<long>::iter it;
   duphash.reserve(arr.size());
-  earray<eintarray> dupslist;
+  earray<ebasicarray<INDTYPE> > dupslist;
   for (i=0; i<arr.size(); ++i){
     if (i%(arr.size()/10)==0)
-      fprintf(stderr,"\r%li/%li",i,(long int)arr.size());
+      fprintf(stderr,"\r%li/%li",i,(long)arr.size());
     it=duphash.get(arr.values(i));
     if (it==duphash.end())
-      { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(eintarray(i)); }
+      { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(ebasicarray<INDTYPE>(i)); }
     else 
       dupslist[it.value()].add(i);
   }
@@ -476,17 +479,19 @@ void help()
   printf("HPC-CLUST-MPI v%s\n",HPC_CLUST_PACKAGE_VERSION);
   printf("by Joao F. Matias Rodrigues and Christian von Mering\n");
   printf("Institute of Molecular Life Sciences, University of Zurich, Switzerland\n");
+  printf("Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013:btt657–.\n");
   printf("\n");
   printf("Usage:\n");
   printf("    %s [...] <-sl true|-cl true|-al true> aligned_seqs\n",efile(argv[0]).basename()._str);
   printf("\n");
-  printf("Cluster a set of multiple aligned sequences until a given threshold.\n");
-  printf("Example: hpc-clust -ncpus 4 -t 0.8 -dfunc gap -sl true myalignedseqs.sto\n"); 
+  printf("Distributed hierarchical clustering of a set of multiple aligned sequences until a given threshold.\n");
+  printf("Example: mpirun -n 20 hpc-clust-mpi -nthreads 1 -t 0.8 -dfunc gap -sl true myalignedseqs.sto\n");
+  printf("   Will start 20 processes (with one thread each) to compute the clustering of the input file until 80%% id threshold\n");
   printf("\n");
   printf("Optional arguments:\n");
-  printf("%10s    %s.\n","-t","distance threshold until which to do the clustering [default: 0.9]");
-  printf("%10s    %s\n","-dfunc","distance function to use: nogap, gap, tamura [default: nogap]");
-  printf("%10s    %s\n","-ncpus","number of threads to use [default: 1]");
+  printf("%10s    %s\n","-t","distance threshold until which to do the clustering [default: 0.9]");
+  printf("%10s    %s\n","-dfunc","distance function to use: gap, nogap, tamura [default: gap]");
+  printf("%10s    %s\n","-nthreads","number of threads to use [default: 1]");
   printf("%10s    %s\n","-ofile","output filename [defaults to input filename]. \".sl\",\".cl\", or \".al\" extensions will be appended");
   printf("\n");
   printf("At least one is required:\n");
@@ -494,8 +499,8 @@ void help()
   printf("%10s    %s\n","-cl true","perform complete-linkage clustering");
   printf("%10s    %s\n","-al true","perform average-linkage clustering");
   printf("\n");
-  printf("Report bugs to: jfmrod@konceptfx.com\n");
-  printf("http://www.konceptfx.com/hpc-clust/\n");
+  printf("Report bugs to: joao.rodrigues@imls.uzh.ch\n");
+  printf("http://meringlab.org/software/hpc-clust/\n");
 
   exit(0);
 }

@@ -9,7 +9,7 @@ eseqclusteravg::eseqclusteravg(){}
 
 void eseqclusteravg::check(ebasicarray<eseqdistCount>& dists)
 {
-  int i;
+  long i;
   estr xystr;
   bool duplicate=false;
   eseqdisthash checkmatrix;
@@ -35,12 +35,12 @@ void eseqclusteravg::check(ebasicarray<eseqdistCount>& dists)
   cout << "# no duplicates found!" << endl;
 }
 
-void eseqclusteravg::init(int count,const estr& filename,const estr& seqsfile,const earray<eintarray>& dupslist)
+void eseqclusteravg::init(INDTYPE count,const estr& filename,const estr& seqsfile,const earray<ebasicarray<INDTYPE> >& dupslist)
 {
   ofile.open(filename,"w");
   ofile.write("# seqsfile: "+seqsfile+"\n");
   ofile.write("# OTU_count Merge_distance Merged_OTU_id1 Merged_OTU_id2\n");
-  int i,j;
+  long i,j;
   incmaxdist=0.0;
   lastdist=0.0;
   scount.reserve(count);
@@ -53,9 +53,9 @@ void eseqclusteravg::init(int count,const estr& filename,const estr& seqsfile,co
     scount.add(1);
     scluster.add(i);
     smerge.add(-1);
-    incluster.add(list<int>());
+    incluster.add(list<INDTYPE>());
     incluster[i].push_back(i);
-    inter.add(list<int>());
+    inter.add(list<INDTYPE>());
   }
   for (i=0; i<dupslist.size(); ++i){
     for (j=1; j<dupslist[i].size(); ++j){
@@ -65,21 +65,21 @@ void eseqclusteravg::init(int count,const estr& filename,const estr& seqsfile,co
     }
   }
   cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
-  cout << "# initializing smatrix with: " << (long int)(count)*(long int)(count)/20000l/2l<< " elements" << endl; 
-  smatrix.reserve((long int)(count)*(long int)(count)/20000l/2l);
+  cout << "# initializing smatrix with: " << (long)(count)*(long)(count)/20000l/2l<< " elements" << endl; 
+  smatrix.reserve((long)(count)*(long)(count)/20000l/2l);
 //  cout << "# smatrix._hashitems = " << smatrix._hashitems << endl;
 }
 
-long int eseqclusteravg::update(eblockarray<eseqdistCount>& dists,long int s)
+long eseqclusteravg::update(eblockarray<eseqdistCount>& dists,long s)
 {
-  int count=0;
-  int i;
-  int smergepos=0;
-  eintarray tmpsmerge;
-  int updcount;
-  int updind[smerge.size()];
-  int updcount2;
-  int updind2[smerge.size()];
+  long count=0;
+  long i;
+  long smergepos=0;
+  ebasicarray<long> tmpsmerge;
+  long updcount;
+  long updind[smerge.size()];
+  long updcount2;
+  long updind2[smerge.size()];
 
   for (i=0; i<smerge.size(); ++i)
     tmpsmerge.add(-1);
@@ -134,9 +134,9 @@ long int eseqclusteravg::update(eblockarray<eseqdistCount>& dists,long int s)
 
     cerr << "# updating: " << updcount << " merges smerge.size: "<<tmpsmerge.size()<<endl;
 
-    long int *uarr=new long int[updcount*updcount2];
+    long *uarr=new long[updcount*updcount2];
     ldieif (uarr==0x00,"not enough memory");
-    long int li,lj;
+    long li,lj;
     for (i=0; i<updcount*updcount2; ++i)
       uarr[i]=-1l;
 
@@ -184,7 +184,7 @@ void eseqclusteravg::merge(const eseqdistCount& sdist)
   scount[sdist.x]+=scount[sdist.y];
   scount[sdist.y]=0;
 
-  list<int>::iterator it;
+  list<INDTYPE>::iterator it;
   for (it=incluster[sdist.y].begin(); it!=incluster[sdist.y].end(); ++it){
     scluster[*it]=sdist.x;
     incluster[sdist.x].push_back(*it);
@@ -195,7 +195,7 @@ void eseqclusteravg::merge(const eseqdistCount& sdist)
   tmpdist.x=sdist.x;
   tmpdist2.x=sdist.y;
 
-  int i,j;
+  INDTYPE i,j;
   for (it=inter[sdist.y].begin(); it!=inter[sdist.y].end(); ++it){
     j=scluster[*it];
     if (sdist.x==j || sdist.y==j) continue;
@@ -310,8 +310,8 @@ void eseqclusteravg::add(const eseqdist& sdist){
 //  int tmp;
 //  if (tmpdist.x>tmpdist.y) { tmp=tmpdist.x; tmpdist.x=tmpdist.y; tmpdist.y=tmp; }
 
-  int links;
-  int i;
+  long links;
+  long i;
 
   ldieif(tmpdist.x==tmpdist.y,"should not happen: "+estr(tmpdist.x)+","+estr(tmpdist.y)+" --- "+estr(sdist.x)+","+estr(sdist.y));
 
@@ -369,11 +369,11 @@ void eseqclusteravg::add(const eseqdistCount& sdist){
   tmpdist.count=sdist.count;
 
   ldieif(tmpdist.x<0 || tmpdist.y<0 || tmpdist.x>=scluster.size() || tmpdist.y>=scluster.size(),"out of bounds: sdist.x: "+estr(tmpdist.x)+" sdist.y: "+estr(tmpdist.y)+" scluster.size(): "+estr(scluster.size()));
-  int tmp;
+  INDTYPE tmp;
   if (tmpdist.x>tmpdist.y) { tmp=tmpdist.x; tmpdist.x=tmpdist.y; tmpdist.y=tmp; }
 
-  int links;
-  int i;
+  long links;
+  long i;
 //  estr xystr;
 
 //  cout << x << " " << y << " " << sdist.dist << endl;
@@ -468,17 +468,17 @@ void eseqclusteravg::add(int ind){
 
 void eseqclusteravg::save(const estr& filename,const estrarray& arr)
 {
-  int i;
+  long i;
   estr otustr;
-  estrhashof<eintarray> otus;
+  estrhashof<ebasicarray<INDTYPE> > otus;
 
   efile f(filename+".clstr");
   for (i=0; i<scluster.size(); ++i)
     f.write(estr(scluster[i])+"     "+arr.keys(i)+"\n");
   f.close();
 
-  list<int>::iterator it;
-  int otucount=0;
+  list<INDTYPE>::iterator it;
+  INDTYPE otucount=0;
   efile f2(filename);
   for (i=0; i<incluster.size(); ++i){
     if (scount[i]==0) continue;

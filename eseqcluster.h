@@ -1,6 +1,8 @@
 #ifndef ESEQCLUSTER_H
 #define ESEQCLUSTER_H
 
+#include "hpc-clust-config.h"
+
 #include <eutils/evar.h>
 #include <eutils/estr.h>
 #include <eutils/efile.h>
@@ -10,16 +12,23 @@
 
 #undef check
 
+#ifdef HPC_CLUST_USE_LONGIND
+ #define INDTYPE long
+#else
+ #define INDTYPE int
+#endif
+
 class eseqdist
 {
  public:
   float dist;
 //  int count;
-  int x;
-  int y;
+
+  INDTYPE x;
+  INDTYPE y;
 
   eseqdist();
-  eseqdist(int x,int y,float dist);
+  eseqdist(INDTYPE x,INDTYPE y,float dist);
 
   inline bool operator<(const eseqdist& sdist) const{ return(dist<sdist.dist); }
   void serial(estr& data) const;
@@ -33,7 +42,7 @@ class eseqcluster
  public:
   efile ofile;
 
-  int mergecount;
+  INDTYPE mergecount;
 
 //  emutex mutexDists;
 //  eblockarray<eseqdist> dists;
@@ -43,28 +52,19 @@ class eseqcluster
   eintarray scluster;
   eintarray smerge;
 
-//  ehashmap<eseqcount,int> smatrix;
-  ebasicstrhashof<int> smatrix;
-
-//  ebasicarray<eintarray> inter;
-  ebasicarray<list<int> > inter;
-
-//  ebasicarray<eintarray> incluster;
-  ebasicarray<list<int> > incluster;
+  ebasicstrhashof<INDTYPE> smatrix;
+  ebasicarray<list<INDTYPE> > inter;
+  ebasicarray<list<INDTYPE> > incluster;
 
   void check(ebasicarray<eseqdist>& dists);
 
   eseqcluster();
 
-  void merge(int x,int y,float dist);
-  void init(int count,const estr& ofile,const estr& seqsfile,const earray<eintarray>& dupslist);
-//  void add(int ind);
+  void merge(INDTYPE x,INDTYPE y,float dist);
+  void init(INDTYPE count,const estr& ofile,const estr& seqsfile,const earray<ebasicarray<INDTYPE> >& dupslist);
   void add(const eseqdist& sdist);
 
-//  int update(ebasicarray<eseqdist>& dists,int s);
-
   void save(const estr& filename,const estrarray& arr);
-//  eseqdist* operator()(int x,int y);
 };
 
 

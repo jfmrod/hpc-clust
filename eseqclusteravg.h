@@ -17,18 +17,18 @@ typedef ebasichashmap<eseqdistCount,eseqdistCount,hash_lookup3_eseqdistCount> es
 class eseqclusteravg
 {
  public:
-  int mergecount;
+  INDTYPE mergecount;
   efile ofile;
   float incmaxdist;
   float lastdist;
 
-  eintarray scount;
-  eintarray scluster;
-  eintarray smerge;
+  ebasicarray<INDTYPE> scount;
+  ebasicarray<INDTYPE> scluster;
+  ebasicarray<INDTYPE> smerge;
 
   eseqdistavghash smatrix;
-  ebasicarray<list<int> > inter;
-  ebasicarray<list<int> > incluster;
+  ebasicarray<list<INDTYPE> > inter;
+  ebasicarray<list<INDTYPE> > incluster;
 
   eseqclusterData clusterData;
 
@@ -38,7 +38,7 @@ class eseqclusteravg
 
   eseqclusteravg();
 
-  void init(int count,const estr& ofile,const estr& seqsfile,const earray<eintarray>& dupslist);
+  void init(INDTYPE count,const estr& ofile,const estr& seqsfile,const earray<ebasicarray<INDTYPE> >& dupslist);
 
   void merge(const eseqdistCount& dist);
 
@@ -46,7 +46,7 @@ class eseqclusteravg
   void add(const eseqdistCount& sdist);
 //  void add(int ind);
 
-  long int update(eblockarray<eseqdistCount>& dists,long int s);
+  long update(eblockarray<eseqdistCount>& dists,long s);
 
   float getIncompleteMaxDist(float newdist);
   void mergeComplete(float dist);

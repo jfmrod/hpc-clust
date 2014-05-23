@@ -1,4 +1,4 @@
-AC_INIT(hpc-clust,1.0.1,joao.rodrigues@imls.uzh.ch)
+AC_INIT(hpc-clust,1.0.2,joao.rodrigues@imls.uzh.ch)
 
 : ${CXXFLAGS=-O3}
 
@@ -40,7 +40,7 @@ case "${target_os}" in
   esac
 
 
-AM_INIT_AUTOMAKE("hpc-clust","1.0.1")
+AM_INIT_AUTOMAKE("hpc-clust","1.0.2")
 
 #AC_CHECK_LIB(z,main)
 
@@ -100,6 +100,14 @@ if test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
   AC_CHECK_LIB(mpi++,main)
 fi
 AM_CONDITIONAL(HAVE_MPILIB, test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno")
+
+
+AC_ARG_ENABLE(longind,[AS_HELP_STRING([--enable-longind],[Use 64bit indices. Allows clustering more than 2million sequences but requires almost double the memory per stored distance.])],,enable_longind=yes)
+if test "x$enable_longind" != "xno"; then
+  echo "Compiling support for more than 2 million sequences"
+  AC_DEFINE_UNQUOTED(USE_LONGIND,1,[define when using 64bit indices])
+fi
+
 
 #AC_SUBST(HPC_CLUST_CXXFLAGS)
 #AC_SUBST(HPC_CLUST_LDFLAGS)

@@ -459,21 +459,55 @@ void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen)
 {
   estr line;
   estr name;
+  estr seq;
   efile f(filename);
 
   int i;
 
+  bool fasta=false;
+  bool firstline=true;
+  seqlen=0;
+  int lineno=0;
   while (f.readln(line)){
+    ++lineno;
     if (line.len()==0 || line[0]=='#') continue;
     
-    i=line.find(" ");
-    if (i==-1) continue;
-    name=line.substr(0,i);
-    line.del(0,i);
-    line.trim();
-    seqlen=line.len();
-    arr.add(seq_compress(line.uppercase()));
+    if (firstline) { firstline=false; if (line[0]=='>') { fasta=true; cout << "# loading fasta formatted sequences file" << endl; } else { cout << "# loading stockholm formatted sequences file" << endl;} }
+    if (fasta){ // fasta format
+      if (line[0]=='>'){
+        if (name.len()){
+          ldieif(seqlen>0 && seqlen!=seq.len(),"sequence length mismatch. previous lengths: "+estr(seqlen)+" new length: "+estr(seq.len())+" on line: "+estr(lineno));
+          seqlen=seq.len();
+          arr.add(seq_compress(seq.uppercase()));
+        }
+        i=line.find(" ");
+        if (i==-1) name=line.substr(1);
+        else name=line.substr(1,i-1);
+        seq.clear();
+      }else{
+        line.trim();
+        seq+=line;
+      }
+    }else{ // stockholm non-interleaved format
+      i=line.find(" ");
+      ldieif(i==-1,"space separator not found on line: "+estr(lineno));
+      name=line.substr(0,i);
+      line.del(0,i);
+      line.trim();
+      ldieif(seqlen>0 && seqlen!=line.len(),"sequence length mismatch. previous lengths: "+estr(seqlen)+" new length: "+estr(line.len())+" on line: "+estr(lineno));
+      seqlen=line.len();
+      arr.add(seq_compress(line.uppercase()));
+    }
   }
+
+  if (fasta){
+    if (name.len()){
+      ldieif(seqlen>0 && seqlen!=seq.len(),"sequence length mismatch. previous lengths: "+estr(seqlen)+" new length: "+estr(seq.len())+" on line: "+estr(lineno));
+      seqlen=seq.len();
+      arr.add(seq_compress(seq.uppercase()));
+    }
+  }
+
   cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
 }
 
@@ -481,20 +515,52 @@ void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen)
 {
   estr line;
   estr name;
+  estr seq;
   efile f(filename);
 
   int i;
+  bool fasta=false;
+  bool firstline=true;
+  seqlen=0;
+  int lineno=0;
 
   while (f.readln(line)){
+    ++lineno;
     if (line.len()==0 || line[0]=='#') continue;
     
-    i=line.find(" ");
-    if (i==-1) continue;
-    name=line.substr(0,i);
-    line.del(0,i);
-    line.trim();
-    seqlen=line.len();
-    arr.add(name,seq_compress(line.uppercase()));
+    if (firstline) { firstline=false; if (line[0]=='>') { fasta=true; cout << "# loading fasta formatted sequences file" << endl; } else { cout << "# loading stockholm formatted sequences file" << endl;} }
+    if (fasta){ // fasta format
+      if (line[0]=='>'){
+        if (name.len()){
+          ldieif(seqlen>0 && seqlen!=seq.len(),"sequence length mismatch. previous lengths: "+estr(seqlen)+" new length: "+estr(seq.len())+" on line: "+estr(lineno));
+          seqlen=seq.len();
+          arr.add(name,seq_compress(seq.uppercase()));
+        }
+        i=line.find(" ");
+        if (i==-1) name=line.substr(1);
+        else name=line.substr(1,i-1);
+        seq.clear();
+      }else{
+        line.trim();
+        seq+=line;
+      }
+    }else{ // stockholm non-interleaved format
+      i=line.find(" ");
+      ldieif(i==-1,"space separator not found on line: "+estr(lineno));
+      name=line.substr(0,i);
+      line.del(0,i);
+      line.trim();
+      ldieif(seqlen>0 && seqlen!=line.len(),"sequence length mismatch. previous lengths: "+estr(seqlen)+" new length: "+estr(line.len())+" on line: "+estr(lineno));
+      seqlen=line.len();
+      arr.add(name,seq_compress(line.uppercase()));
+    }
+  }
+  if (fasta){
+    if (name.len()){
+      ldieif(seqlen>0 && seqlen!=seq.len(),"sequence length mismatch. previous lengths: "+estr(seqlen)+" new length: "+estr(seq.len())+" on line: "+estr(lineno));
+      seqlen=seq.len();
+      arr.add(seq_compress(seq.uppercase()));
+    }
   }
   cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
 }

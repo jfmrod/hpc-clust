@@ -32,7 +32,7 @@ void ebasicarray<T>::init(size_t count)
   clear();
   vector<T>::reserve(count);
   for (i=0; i<count; ++i)
-    push_back(T());
+    this->push_back(T());
 }
 
 template <class T>
@@ -42,7 +42,7 @@ void ebasicarray<T>::init(size_t count,const T& initval)
   clear();
   vector<T>::reserve(count);
   for (i=0; i<count; ++i)
-    push_back(initval);
+    this->push_back(initval);
 }
 
 template <class T>
@@ -153,64 +153,64 @@ ebasicarray<T>::ebasicarray(const ebasicarray<T> &arr): vector<T>()
 template <class T>
 ebasicarray<T>::ebasicarray(const T& value): vector<T>()
 {
-  push_back(value);
+  this->push_back(value);
 }
 
 template <class T>
 ebasicarray<T>::ebasicarray(const T& v1,const T& v2): vector<T>()
 {
-  push_back(v1);
-  push_back(v2);
+  this->push_back(v1);
+  this->push_back(v2);
 }
 
 template <class T>
 ebasicarray<T>::ebasicarray(const T& v1,const T& v2,const T& v3): vector<T>()
 {
-  push_back(v1);
-  push_back(v2);
-  push_back(v3);
+  this->push_back(v1);
+  this->push_back(v2);
+  this->push_back(v3);
 }
 
 template <class T>
 ebasicarray<T>::ebasicarray(const T& v1,const T& v2,const T& v3,const T& v4): vector<T>()
 {
-  push_back(v1);
-  push_back(v2);
-  push_back(v3);
-  push_back(v4);
+  this->push_back(v1);
+  this->push_back(v2);
+  this->push_back(v3);
+  this->push_back(v4);
 }
 
 template <class T>
 ebasicarray<T>::ebasicarray(const T& v1,const T& v2,const T& v3,const T& v4,const T& v5): vector<T>()
 {
-  push_back(v1);
-  push_back(v2);
-  push_back(v3);
-  push_back(v4);
-  push_back(v5);
+  this->push_back(v1);
+  this->push_back(v2);
+  this->push_back(v3);
+  this->push_back(v4);
+  this->push_back(v5);
 }
 
 template <class T>
 ebasicarray<T>::ebasicarray(const T& v1,const T& v2,const T& v3,const T& v4,const T& v5,const T& v6): vector<T>()
 {
-  push_back(v1);
-  push_back(v2);
-  push_back(v3);
-  push_back(v4);
-  push_back(v5);
-  push_back(v6);
+  this->push_back(v1);
+  this->push_back(v2);
+  this->push_back(v3);
+  this->push_back(v4);
+  this->push_back(v5);
+  this->push_back(v6);
 }
 
 template <class T>
 ebasicarray<T>::ebasicarray(const T& v1,const T& v2,const T& v3,const T& v4,const T& v5,const T& v6,const T& v7): vector<T>()
 {
-  push_back(v1);
-  push_back(v2);
-  push_back(v3);
-  push_back(v4);
-  push_back(v5);
-  push_back(v6);
-  push_back(v7);
+  this->push_back(v1);
+  this->push_back(v2);
+  this->push_back(v3);
+  this->push_back(v4);
+  this->push_back(v5);
+  this->push_back(v6);
+  this->push_back(v7);
 }
 
 template <class T>
@@ -231,7 +231,7 @@ ebasicarray<T> &ebasicarray<T>::operator+=(const ebasicarray<T> &arr)
 {
   size_t i;
   for (i=0; i<arr.size(); ++i)
-    push_back(arr[i]);
+    this->push_back(arr[i]);
   return(*this);
 }
 
