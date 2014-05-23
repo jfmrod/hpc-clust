@@ -19,7 +19,7 @@ eseqclustersingle slcluster; // single linkage
 eseqclusteravg alcluster; // avg linkage
 
 long partsFinished=0;
-long partsTotal=100;
+long partsTotal=10000;
 
 estrarray arr;
 unsigned totaldists;
@@ -49,7 +49,7 @@ void help()
   printf("HPC-CLUST v%s\n",HPC_CLUST_PACKAGE_VERSION);
   printf("by Joao F. Matias Rodrigues and Christian von Mering\n");
   printf("Institute of Molecular Life Sciences, University of Zurich, Switzerland\n");
-  printf("Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013:btt657–.\n");
+  printf("Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013.\n");
   printf("\n");
   printf("Usage:\n");
   printf("    %s [...] <-sl true|-cl true|-al true> aligned_seqs\n",efile(argv[0]).basename()._str);
@@ -169,7 +169,7 @@ int emain()
 
   ebasicstrhashof<long> duphash;
   ebasicstrhashof<long>::iter it;
-  eintarray uniqind;
+  ebasicarray<INDTYPE> uniqind;
   earray<ebasicarray<INDTYPE> > dupslist;
   if (!ignoreUnique){
     duphash.reserve(arr.size());
@@ -214,7 +214,11 @@ int emain()
 
   efile df(dfile);
   cout << "# computing distances" << endl;
-  if (partsTotal>(arr.size()-1)*arr.size()/20) partsTotal=(arr.size()-1)*arr.size()/20;
+//  if ((arr.size()-1l)*arr.size()/2l/partsTotal > 10000l) partsTotal=(arr.size()-1l)*arr.size()/2l/10000l;  // make more tasks if too many calculations per task
+  if (partsTotal>(arr.size()-1l)*arr.size()/20l) partsTotal=(arr.size()-1l)*arr.size()/20l; // make fewer tasks if to few calculations per task
+
+  cout << "partsTotal: " << partsTotal << endl;
+
   for (i=0; i<partsTotal; ++i)
     taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
 

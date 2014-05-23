@@ -956,13 +956,15 @@ int t_calc_dists(emutex& mutex,T& arr,K& dists,int node,int tnodes,float thres)
 }
 
 template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
-int t_calc_dists_u(emutex& mutex,eintarray& uniqind,T& arr,K& dists,int seqlen,long int node,long int tnodes,float thres)
+int t_calc_dists_u(emutex& mutex,ebasicarray<INDTYPE>& uniqind,T& arr,K& dists,int seqlen,long int node,long int tnodes,float thres)
 {
   long int i,i2,j;
   long int start,end;
 
   start=((long int)(node)*(long int)(uniqind.size()-1l))/(long int)(2l*tnodes);
   end=((long int)(node+1l)*(long int)(uniqind.size()-1l))/(long int)(2l*tnodes);
+
+//  cout << "start: " << start << " end: " << end << " uniqind.size(): " << uniqind.size() << endl;
 
   float tmpid,tmpid2,tmpid3;
   K tmpdists;

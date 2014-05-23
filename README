@@ -1,8 +1,19 @@
 
-HPC-CLUST v1.0.1 (May 2014)
+HPC-CLUST v1.0.2 (23 May 2014)
 by Joao F. Matias Rodrigues and Christian von Mering
 Institute of Molecular Life Sciences, University of Zurich, Switzerland
+Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013.
 =================================================
+Table of contents
+
+1. Installation
+2. HPC-CLUST(-MPI) usage instructions
+3. File output
+4. FAQ
+5. Acknowledgments
+6. History
+
+-
 
 HPC-CLUST is a set of tools designed to cluster large numbers (1 million or more)
 pre-aligned nucleotide sequences. HPC-CLUST performs the clustering of sequences
@@ -30,7 +41,7 @@ Another feature of the way HPC-CLUST is implemented is that the single, complete
 linkage clusterings can be computed in a single go with little overhead.
 
 
-INSTALLATION
+1. INSTALLATION
 =================================================
 
 i) Linux/Unix/MacOSX
@@ -53,7 +64,7 @@ your home directory (i.e.: $HOME/usr/bin/hpc-clust), after you type
 the command "make install".
 
 
-HPC-CLUST, HPC-CLUST-MPI
+2. HPC-CLUST, HPC-CLUST-MPI usage instructions
 =================================================
 
 Two programs are provided in the HPC-CLUST package.
@@ -66,7 +77,7 @@ HPC-CLUST to be used on a cluster of computers. HPC-CLUST-MPI uses the MPI libra
 to automatically setup the communication between master and slave instances.
 
 
-USING HPC-CLUST
+a) USING HPC-CLUST
 =================================================
 
 To use HPC-CLUST you must first prepare your alignment file. You can accomplish this
@@ -75,11 +86,21 @@ against a model consensus sequence. Any other alignment such as multiple sequenc
 alignment will work as well, although, in practice, for very large numbers of sequences
 it becomes difficult to compute a multiple sequence alignment.
 
-HPC-CLUST takes the alignment file in the non-interleaved Stockholm format. For example:
+HPC-CLUST takes the alignment file in the non-interleaved Stockholm format or aligned fasta format.
+It detects automatically the format based on the first character. It switches to fasta format if the first
+character is '>'.
 
+An example of non-interleaved stockholm format is: 
 SEQUENCE_ID1      ---ATGCAT---GCATGCATGC----... ...AT--AATT
 SEQUENCE_ID2      ---ATCCAC---GCACGCATGC-AT-... ...AT--ATAA
 ...
+...
+
+An example of aligned fasta format is:
+>SEQUENCE_ID1
+---ATGCAT---GCATGCATGC----... ...AT--AATT
+>SEQUENCE_ID2
+---ATCCAC---GCACGCATGC-AT-... ...AT--ATAA
 ...
 
 
@@ -114,7 +135,7 @@ requirement.
 
 
 
-USING HPC-CLUST-MPI
+b) USING HPC-CLUST-MPI
 =================================================
 
 To run the distributed version of HPC-CLUST, one needs to have the MPI library installed
@@ -142,7 +163,7 @@ thread per node, in this manner the sequence data is shared between the threads.
 increase the number of threads to use in each node by specifying the -nthreads <number_threads>
 argument to hpc-clust-mpi.
 
-EXAMPLE MERGE FILE OUTPUT
+3. FILE OUTPUT
 =================================================
 
 # seqsfile: aligned-archaea-seqs.sto
@@ -167,7 +188,7 @@ as the smallest OTU id merged. For example, if OTUs' 37 and 12176 are merged, th
 will have id 37.
 
 
-OBTAINING CLUSTERS FROM THE MERGE RESULTS
+a) OBTAINING CLUSTERS FROM THE MERGE RESULTS
 =================================================
 
 Once the merge result files (.sl,.cl,.al) have been computed, you can produce the clusters
@@ -179,13 +200,13 @@ Would generate the clusters produced at the 97% identity threshold from the sing
 merge file.
 
 
-FAQ
+4. FAQ
 =================================================
 Frequently asked questions and other documentation can be found at
-http://www.konceptfx.com/hpc-clust/faq
+http://meringlab.org/software/hpc-clust/faq.html
 
 
-ACKNOWLEDGMENTS
+5. ACKNOWLEDGMENTS
 =================================================
 
 Sebastian Schmidt
@@ -196,11 +217,13 @@ For further information contact: Joao F. Matias Rodrigues <joao.rodrigues@imls.u
 
 
 
-
-
 =================================================
-HISTORY
+6. HISTORY
 
+1.0.2 (23 May 2014)
+- Added support for aligned fasta format (automatically detects format based on whether the first character is '>')
+- Added support for computing the clustering of more than 2 million sequences (--enable-longind option for configure command)
+- Fixed issue with eutils not compiling with some gnu compiler versions (push_back error in ebasicarray.h)
 
 1.0.1 (May 2014)
 

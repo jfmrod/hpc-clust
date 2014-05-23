@@ -15,7 +15,7 @@
 
 edcmpi dcmpi;
 
-eintarray uniqind;
+ebasicarray<long> uniqind;
 
 eoption<efunc> dfunc;
 estrarray arr;
@@ -374,7 +374,7 @@ void nodeSendDistances(edcBaseClient& client)
 
 }
 
-long nodeComputeDistances(eintarray _uniqind,long node,long tnodes,float thres,int _nthreads)
+long nodeComputeDistances(ebasicarray<long> _uniqind,long node,long tnodes,float thres,int _nthreads)
 {
   load_seqs_compressed(argv[1],nodeArr,seqlen);
 
@@ -479,7 +479,7 @@ void help()
   printf("HPC-CLUST-MPI v%s\n",HPC_CLUST_PACKAGE_VERSION);
   printf("by Joao F. Matias Rodrigues and Christian von Mering\n");
   printf("Institute of Molecular Life Sciences, University of Zurich, Switzerland\n");
-  printf("Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013:btt657–.\n");
+  printf("Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013.\n");
   printf("\n");
   printf("Usage:\n");
   printf("    %s [...] <-sl true|-cl true|-al true> aligned_seqs\n",efile(argv[0]).basename()._str);
