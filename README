@@ -1,5 +1,5 @@
 
-HPC-CLUST v1.0.2 (23 May 2014)
+HPC-CLUST v1.1.0 (5 June 2014)
 by Joao F. Matias Rodrigues and Christian von Mering
 Institute of Molecular Life Sciences, University of Zurich, Switzerland
 Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013.
@@ -39,6 +39,9 @@ for each threshold independently.
 
 Another feature of the way HPC-CLUST is implemented is that the single, complete, and average
 linkage clusterings can be computed in a single go with little overhead.
+
+-
+For bugs and more information contact: Joao F. Matias Rodrigues <joao.rodrigues@imls.uzh.ch>
 
 
 1. INSTALLATION
@@ -213,12 +216,13 @@ Sebastian Schmidt
 
 
 
-For further information contact: Joao F. Matias Rodrigues <joao.rodrigues@imls.uzh.ch>
-
-
 
 =================================================
 6. HISTORY
+
+1.1.0 (5 June 2014)
+- Added test suite
+- Fixed bug in mpi version introducted after changing to long indices
 
 1.0.2 (23 May 2014)
 - Added support for aligned fasta format (automatically detects format based on whether the first character is '>')
