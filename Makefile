@@ -219,7 +219,7 @@ TESTS = tests/single-sl.sh tests/mpi-sl.sh
 
 #man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
 dist_man_MANS = man/hpc-clust.1 man/hpc-clust-mpi.1
-EXTRA_DIST = make-otus.sh examples/aligned-archaea-seqs.sto manual/hpc-clust-manual.tex
+EXTRA_DIST = make-otus.sh examples/aligned-archaea-seqs.sto manual/hpc-clust-manual.tex manual/hpc-clust-manual.pdf
 hpc_clust_SOURCES = hpc-clust.cpp cluster-common.h cluster-common.cpp eseqcluster.h eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp eseqclustercount.h eseqclustercount.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp lookuptables.h lookuptables.cpp
 hpc_clust_mpi_SOURCES = hpc-clust-mpi.cpp cluster-common.h cluster-common.cpp eseqcluster.h eseqcluster.cpp eseqclustercount.h eseqclustercount.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp lookuptables.h lookuptables.cpp
 all: config.h
