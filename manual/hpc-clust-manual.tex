@@ -18,7 +18,7 @@
  \vspace*{\baselineskip} % Whitespace at the top of the page
  {\Large by Jo\~ao F. Matias Rodrigues and Christian von Mering\\
  Institute of Molecular Life Sciences\\University of Z\"urich\\Switzerland}\\[0.167\textheight] % Author name
- {\Huge HPC-CLUST v1.0.0 (March 2013)}\\[\baselineskip] % Main title which draws the focus of the reader
+ {\Huge HPC-CLUST v1.1.0 (June 2014)}\\[\baselineskip] % Main title which draws the focus of the reader
  {\Large \textit{Distributed hierarchical clustering of large number of pre-aligned sequences}}\par % Tagline or further description
 }
 \vfill % Whitespace between the title block and the publisher
@@ -101,11 +101,20 @@ against a model consensus sequence. Any other alignment such as multiple sequenc
 alignment will work as well, although, in practice, for very large numbers of sequences
 it becomes difficult to compute a multiple sequence alignment.
 
-HPC-CLUST takes the alignment file in the non-interleaved Stockholm format. For example:
+HPC-CLUST takes the alignment file in the non-interleaved Stockholm format or aligned fasta format.
+It detects automatically the format based on the first character. It switches to fasta format if the first
+character is '\textgreater'.
 
 SEQUENCE\_ID1      ---ATGCAT---GCATGCATGC----... ...AT--AATT\\
 SEQUENCE\_ID2      ---ATCCAC---GCACGCATGC-AT-... ...AT--ATAA\\
 ...\\
+...
+
+An example of aligned fasta format is:
+{\textgreater}SEQUENCE\_ID1
+---ATGCAT---GCATGCATGC----... ...AT--AATT
+{\textgreater}SEQUENCE\_ID2
+---ATCCAC---GCACGCATGC-AT-... ...AT--ATAA
 ...
 
 
@@ -204,7 +213,7 @@ merge file.
 
 \section{FAQ}
 Frequently asked questions and other documentation can be found at
-http://www.konceptfx.com/hpc-clust/faq
+http://meringlab.org/software/hpc-clust/faq.html
 
 
 \section*{ACKNOWLEDGMENTS}
@@ -213,7 +222,7 @@ Sebastian Schmidt
 
 
 
-For further information contact: Jo\~ao F. Matias Rodrigues \textless jfmrod@konceptfx.com \textgreater
+For further information contact: Jo\~ao F. Matias Rodrigues {\textless}joao.rodrigues@imls.uzh.ch\textgreater
 
 
 \end{document}
