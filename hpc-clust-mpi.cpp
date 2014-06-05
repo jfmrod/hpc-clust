@@ -582,6 +582,16 @@ int emain()
   epregisterClassMethod(earray<int>,subset);
   epregisterClassSerializeMethod(earray<int>);
 
+  epregisterClass(ebasicarray<long>);
+  epregisterClassInheritance(ebasicarray<long>,ebasearray);
+  epregisterClassMethod(ebasicarray<long>,subset);
+  epregisterClassSerializeMethod(ebasicarray<long>);
+
+  epregisterClass(earray<long>);
+  epregisterClassInheritance(earray<long>,ebasearray);
+  epregisterClassMethod(earray<long>,subset);
+  epregisterClassSerializeMethod(earray<long>);
+
   epregisterClassInheritance(edcmpi,edcBaseServer);
   epregisterClassInheritance(edcmpi,edcBaseClient);
   epregisterClassInheritance(edcmpiServerNode,edcBaseServerNode);

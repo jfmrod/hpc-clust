@@ -193,6 +193,28 @@ void epregisterCommon()
   epregisterFuncMethod(int,inteq,"==");
   epregisterFuncMethod(int,intneq,"!=");
 
+  epregisterClass(long);
+  epregisterClassCout(long);
+  epregisterClassSerializeType(long);
+  epregisterFuncMethod(long,longintinc,"++");
+  epregisterFuncMethod(long,longintdec,"--");
+  epregisterFuncMethod(long,longintincpre,"++prefix");
+  epregisterFuncMethod(long,longintdecpre,"--prefix");
+  epregisterFuncMethod(long,longintssum,"+=");
+  epregisterFuncMethod(long,longintssub,"-=");
+  epregisterFuncMethod(long,longintsum,"+");
+  epregisterFuncMethod(long,longintstrsum,"+");
+  epregisterFuncMethod(long,longintsub,"-");
+  epregisterFuncMethod(long,longintmul,"*");
+  epregisterFuncMethod(long,longintdiv,"/");
+  epregisterFuncMethod(long,longintmod,"%");
+  epregisterFuncMethod(long,longintgt,">");
+  epregisterFuncMethod(long,longintlt,"<");
+  epregisterFuncMethod(long,longintgteq,"<=");
+  epregisterFuncMethod(long,longintlteq,">=");
+  epregisterFuncMethod(long,longinteq,"==");
+  epregisterFuncMethod(long,longintneq,"!=");
+
   epregisterClass(long int);
   epregisterClassCout(long int);
   epregisterClassSerializeType(long int);
