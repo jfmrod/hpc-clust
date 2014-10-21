@@ -8,9 +8,15 @@ fi
 awk -v "joinfile=$2" -v "seqfile=$1" -v "thres=$3" '
 BEGIN {
   seqcount=0;
+  fasta=0;
   while (getline<seqfile > 0){
     if (/^(#|$)/) continue;
-    seqs[seqcount++]=$1;
+    if (substr($0,1,1)==">") fasta=1;
+    if (fasta==1 && /^>/){
+      $1=substr($1,2);
+      seqs[seqcount++]=$1;
+    }else if (fasta==0)
+      seqs[seqcount++]=$1;
   }
 }
 
@@ -24,6 +30,7 @@ $2 >= thres {
 
 END {
   print "# date: " strftime();
+  print "# fasta: " fasta;
   print "# merge file: " joinfile;
   print "# sequences file: " seqfile;
   print "# threshold: " thres;

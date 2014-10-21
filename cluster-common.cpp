@@ -267,7 +267,7 @@ void load_seqs(const estr& filename,estrarray& arr,eintarray& arrgaps)
   int i;
 
   while (f.readln(line)){
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
     
     i=line.find(" ");
     if (i==-1) continue;
@@ -382,7 +382,7 @@ void load_short_compressed(const estr& filename,estrarray& arr,int& seqlen)
   int i;
 
   while (f.readln(line)){
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
     
     i=line.find(" ");
     if (i==-1) continue;
@@ -434,7 +434,7 @@ void load_short_compressed(const estr& filename,ebasicarray<eshortseq>& arr)
 
   estrarray args;
   while (f.readln(line)){
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
 
     args=line.explode(" ");
     if (args.size()==2){
@@ -470,7 +470,7 @@ void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen)
   int lineno=0;
   while (f.readln(line)){
     ++lineno;
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
     
     if (firstline) { firstline=false; if (line[0]=='>') { fasta=true; cout << "# loading fasta formatted sequence file" << endl; } else { cout << "# loading stockholm formatted sequence file" << endl;} }
     if (fasta){ // fasta format
@@ -526,7 +526,7 @@ void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen)
 
   while (f.readln(line)){
     ++lineno;
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
     
     if (firstline) { firstline=false; if (line[0]=='>') { fasta=true; cout << "# loading fasta formatted sequence file" << endl; } else { cout << "# loading stockholm formatted sequence file" << endl;} }
     if (fasta){ // fasta format
@@ -575,7 +575,7 @@ void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<int>& a
   int i;
 
   while (f.readln(line)){
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
     
     i=line.find(" ");
     if (i==-1) continue;
@@ -598,7 +598,7 @@ void load_seqs(const estr& filename,estrarray& arr)
   int i;
 
   while (f.readln(line)){
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
     
     i=line.find(" ");
     if (i==-1) continue;
@@ -623,7 +623,7 @@ void load_seqs(const estr& filename,estrhash& arr)
   int i;
 
   while (f.readln(line)){
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
     
     i=line.find(" ");
     if (i==-1) continue;
@@ -648,7 +648,7 @@ void load_seqs(const estr& filename,estrhashof<int>& arrind)
   int i;
 
   while (f.readln(line)){
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
 	    
     i=line.find(" ");
     if (i==-1) continue;
@@ -670,7 +670,7 @@ void load_seqs(const estr& filename,estrarray& arr,estrhashof<int>& arrind)
   int i;
 
   while (f.readln(line)){
-    if (line.len()==0 || line[0]=='#') continue;
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
 	    
     i=line.find(" ");
     if (i==-1) continue;

@@ -12,4 +12,8 @@ LASTDIST2=`tail -n 1 tests/single-sl.sl | cut -d ' ' -f 2`
 
 if [ "$OTUCOUNT" != "$OTUCOUNT2" -o "$LASTDIST" != "$LASTDIST2" ]; then exit 99; fi
 
+./make-otus.sh examples/aligned-archaea-seqs.sto tests/single-sl.sl 0.98 > tests/single-sl.sl.0.98.otu
+
+./make-otus.sh examples/aligned-archaea-seqs.fasta tests/single-sl.sl.ref 0.98 > tests/single-sl.fasta.sl.ref.0.98.otu
+
 exit 0

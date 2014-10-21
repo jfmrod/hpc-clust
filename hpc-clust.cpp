@@ -106,9 +106,12 @@ int emain()
 
   estr ofile;
   estr dfile;
+  estr dupfile;
+
   float t=0.90;
   int nthreads=4;
   bool ignoreUnique=false;
+  epregister(dupfile);
   epregister(ignoreUnique);
   epregister(t);
   epregister(nthreads);
@@ -190,6 +193,18 @@ int emain()
   }
   cout << endl;
   cout << "# unique seqs: " << uniqind.size() << endl;
+
+
+  if (dupfile.len()){
+    efile dupf(dupfile,"w");
+    for (i=0; i<dupslist.size(); ++i){
+      dupf.write(estr(dupslist[i][0])+" "+estr(dupslist[i].size()));
+      for (j=1; j<dupslist[i].size(); ++j)
+        dupf.write(estr(" ")+dupslist[i][j]);
+      dupf.write("\n");
+    }
+    dupf.close();
+  }
 
   long maxdists=uniqind.size()*(uniqind.size()-1)/2;
   long maxmem=maxdists*sizeof(eseqdist)/1024/1024;

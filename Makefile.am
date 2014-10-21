@@ -14,7 +14,7 @@ dist_man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
 bin_PROGRAMS=hpc-clust $(MPIBIN)
 
 LIBS=`eutils/eutils-config --libs`
-EXTRA_DIST=make-otus.sh examples/aligned-archaea-seqs.sto manual/hpc-clust-manual.tex manual/hpc-clust-manual.pdf
+EXTRA_DIST=make-otus-mothur.sh make-otus.sh examples/aligned-archaea-seqs.sto manual/hpc-clust-manual.tex manual/hpc-clust-manual.pdf
 
 hpc_clust_SOURCES=hpc-clust.cpp cluster-common.h cluster-common.cpp eseqcluster.h eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp eseqclustercount.h eseqclustercount.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp lookuptables.h lookuptables.cpp
 
