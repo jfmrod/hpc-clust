@@ -24,7 +24,9 @@
 #endif
 
 /* Define to 1 if you have the `mpi++' library (-lmpi++). */
-/* #undef HAVE_LIBMPI__ */
+#ifndef EUTILS_HAVE_LIBMPI__ 
+#define EUTILS_HAVE_LIBMPI__  1 
+#endif
 
 /* Define to 1 if you have the `rt' library (-lrt). */
 #ifndef EUTILS_HAVE_LIBRT 

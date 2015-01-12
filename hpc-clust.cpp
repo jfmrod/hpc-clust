@@ -74,6 +74,16 @@ void help()
   exit(0);
 }
 
+typedef float (*t_dfunc)(const estr&,const estr&,int);
+
+class edistfunc
+{
+ public:
+  efunc calcfunc;
+  t_dfunc calcfunc_single;
+  edistfunc(const efunc& _calcfunc,t_dfunc _calcfunc_single): calcfunc(_calcfunc),calcfunc_single(_calcfunc_single) {}
+};
+
 int emain()
 { 
   bool cl=false;
@@ -86,18 +96,18 @@ int emain()
   epregister(cdist);
   epregisterFunc(help);
 
-  eoption<efunc> dfunc;
+  eoption<edistfunc> dfunc;
 
   dfunc.choice=0;
-  dfunc.add("gap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed2>);
-  dfunc.add("nogap",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>);
-  dfunc.add("gap2",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>);
-  dfunc.add("nogap2",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
-  dfunc.add("nogapsingle",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
-  dfunc.add("tamura",t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+  dfunc.add("gap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed2>,dist_compressed2));
+  dfunc.add("nogap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>,dist_nogap_compressed2));
+  dfunc.add("gap2",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>,dist_compressed));
+  dfunc.add("nogap2",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>,dist_nogap_compressed));
+  dfunc.add("nogapsingle",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>,dist_nogapsingle_compressed));
+  dfunc.add("tamura",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>,dist_tamura_compressed));
 
-  epregisterClass(eoption<efunc>);
-  epregisterClassMethod4(eoption<efunc>,operator=,int,(const estr& val),"=");
+  epregisterClass(eoption<edistfunc>);
+  epregisterClassMethod4(eoption<edistfunc>,operator=,int,(const estr& val),"=");
 
   epregister(dfunc);
 
@@ -235,7 +245,7 @@ int emain()
   cout << "partsTotal: " << partsTotal << endl;
 
   for (i=0; i<partsTotal; ++i)
-    taskman.addTask(dfunc.value(),evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
+    taskman.addTask(dfunc.value().calcfunc,evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
 
   taskman.createThread(nthreads);
   taskman.wait();
@@ -280,11 +290,10 @@ int emain()
   if (sl)
     slcluster.init(arr.size(),ofile+".sl",argv[1],dupslist);
   if (al)
-    alcluster.init(arr.size(),ofile+".al",argv[1],dupslist);
+    alcluster.init(arr.size(),ofile+".al",argv[1],dupslist,t,dfunc.value().calcfunc_single,arr,seqlen);
 
   cout << "# starting clustering"<<endl;
   t1.reset();
-  int lastupdate=0;
   for (i=dists.size()-1; i>=0; --i){
     if (cl)
       clcluster.add(dists[i]);
@@ -293,6 +302,9 @@ int emain()
     if (sl)
       slcluster.add(dists[i]);
   }
+  if (al)
+    alcluster.finalize();
+
   float clustime=t1.lap()*0.001;
   cout << "# time calculating distances: " << dtime << endl;
   cout << "# time sorting distances: " << stime << endl;

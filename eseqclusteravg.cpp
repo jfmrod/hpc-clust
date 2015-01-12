@@ -35,13 +35,19 @@ void eseqclusteravg::check(ebasicarray<eseqdistCount>& dists)
   cout << "# no duplicates found!" << endl;
 }
 
-void eseqclusteravg::init(INDTYPE count,const estr& filename,const estr& seqsfile,const earray<ebasicarray<INDTYPE> >& dupslist)
+void eseqclusteravg::init(INDTYPE count,const estr& filename,const estr& seqsfile,const earray<ebasicarray<INDTYPE> >& dupslist,float _thres,float (_fdist)(const estr&,const estr&,int),estrarray& _seqarr,int _seqlen)
 {
+  thres=_thres;
+  seqarr=&_seqarr;
+  seqlen=_seqlen;
+  fdist=_fdist;
   ofile.open(filename,"w");
   ofile.write("# seqsfile: "+seqsfile+"\n");
   ofile.write("# OTU_count Merge_distance Merged_OTU_id1 Merged_OTU_id2\n");
   long i,j;
-  incmaxdist=0.0;
+  incmaxdist=1.0;
+  incmaxit=smatrix.end();
+  cf=0;
   lastdist=0.0;
   scount.reserve(count);
   scluster.reserve(count);
@@ -231,17 +237,23 @@ void eseqclusteravg::merge(const eseqdistCount& sdist)
     if (scount[tmpit->x]*scount[tmpit->y]==tmpit->count){
 //      ldieif(tmpit->dist>sdist.dist,"sdist.dist: "+estr(sdist.dist)+" tmpit.dist: "+tmpit->dist+" tmpit.count: "+tmpit->count);
       completemerges.insert(*tmpit);
+      if (tmpit == incmaxit)
+        incmaxit=smatrix.end();
     }
+    if (tmpit2==incmaxit)
+      incmaxit=smatrix.end();
     smatrix.erase(tmpit2);
   }
   ++mergecount;
 }
 
-float eseqclusteravg::getIncompleteMaxDist(float newdist)
+//float eseqclusteravg::getIncompleteMaxDist(float newdist)
+void eseqclusteravg::getIncompleteMaxDist(float newdist,float &maxdist,eseqdistavghash::iter& maxit)
 {
-  float maxdist=0.0;
+  if (smatrix.size()==0){ maxit=smatrix.end(); maxdist=newdist;  return; }
+  maxdist=0.0;
   float tmpdist;
-  eseqdistavghash::iter it,maxit;
+  eseqdistavghash::iter it;
   maxit=smatrix.end();
   for (it=smatrix.begin(); it!=smatrix.end(); ++it){
 //    lassert(scount[it->x]==0 || scount[it->y]==0);
@@ -251,10 +263,8 @@ float eseqclusteravg::getIncompleteMaxDist(float newdist)
       if (tmpdist>maxdist) { maxdist=tmpdist; maxit=it; }
     }
   }
-  if (maxit!=smatrix.end()){
+  if (maxit!=smatrix.end())
     cout << "# maxit: " << *maxit << " scount[x]: " << scount[maxit->x] << " scount[y]: "<< scount[maxit->y] << " nextthres: " << (completemerges.size()?estr( ((double)scount[maxit->x]*scount[maxit->y]*completemerges.begin()->dist-(double)maxit->count*maxit->dist)/(double)(scount[maxit->x]*scount[maxit->y]-maxit->count)):estr("n/a")) << endl;
-  }
-  return(maxdist);
 }
 
 void eseqclusteravg::clearComplete()
@@ -273,30 +283,74 @@ void eseqclusteravg::mergeComplete(float dist)
 {
   multiset<eseqdistCount>::iterator it,it_next;
   eseqdistavghash::iter sit;
-  for (it=completemerges.begin(); it!=completemerges.end() && it->dist>=dist; it=completemerges.begin()){
+  for (it=completemerges.begin(); it!=completemerges.end() && incmaxit != smatrix.end() && it->dist>=incmaxdist || incmaxit==smatrix.end() && it->dist>=dist; it=completemerges.begin()){
     sit=smatrix.get(*it);
     if (sit==smatrix.end() || sit->dist!=it->dist || scount[sit->x]==0 || scount[sit->y]==0 || scount[sit->x]*scount[sit->y]!=sit->count) { completemerges.erase(it); continue; }
+    if (sit->dist<thres) return; // do not merge past threshold (possible missing links)
+
     lassert(scluster[sit->x]!=sit->x || scluster[sit->y]!=sit->y);
     cout << "* " << scluster.size()-mergecount << " " << sit->dist << " ("<<sit->dist<<") " << sit->x << " " << scount[sit->x]<< " " << sit->y << " " << scount[sit->y] << " " << smatrix.size() << " " << completemerges.size() << " " << incmaxdist << " " << (completemerges.size()?estr(completemerges.begin()->dist):estr("n/a")) << endl;
     ofile.write(estr(scluster.size()-mergecount)+" "+sit->dist+" "+sit->x+" "+sit->y+"\n");
     merge(*sit);
+    ofile.write(estr(scluster.size()-mergecount)+" "+sit->dist+" "+sit->x+" "+sit->y+"\n");
     smatrix.erase(sit);
     completemerges.erase(it);
+    if (incmaxit==smatrix.end())
+      getIncompleteMaxDist(dist,incmaxdist,incmaxit);
+  }
+  ofile.flush();
+}
+
+void eseqclusteravg::finalize()
+{
+  while (incmaxit!=smatrix.end()){
+    while (completemerges.size() && (incmaxit!=smatrix.end() && completemerges.begin()->dist>=incmaxdist || incmaxit==smatrix.end() && completemerges.begin()->dist>=lastdist)){
+      if (completemerges.begin()->dist<thres) return;
+      mergeComplete(lastdist);
+    }
+    double avgdist=0.0;
+    std::list<long> &arr(incluster[incmaxit->x]);
+    std::list<long> &arr2(incluster[incmaxit->y]);
+    for (std::list<long>::iterator i=arr.begin(); i!=arr.end(); ++i){
+      for (std::list<long>::iterator j=arr2.begin(); j!=arr2.end(); ++j){
+//        cout << "dist: " << *i << "," << *j << ": " << fdist(*i,*j) << endl;
+        avgdist+=fdist((*seqarr).values(*i),(*seqarr).values(*j),seqlen);
+      }
+    }
+    avgdist=avgdist/(arr.size()*arr2.size());
+    incmaxit->count=arr.size()*arr2.size();
+    incmaxit->dist=avgdist;
+    cout << "# calculating avg cluster distance: " << incmaxit->x << "," << incmaxit->y << " : " << incmaxdist << " : " << avgdist << endl;
+    completemerges.insert(*incmaxit);
+    getIncompleteMaxDist(lastdist,incmaxdist,incmaxit);
   }
 }
+
 
 void eseqclusteravg::add(const eseqdist& sdist){
   ldieif(sdist.x<0 || sdist.y<0 || sdist.x>=scluster.size() || sdist.y>=scluster.size(),"out of bounds: sdist.x: "+estr(sdist.x)+" sdist.y: "+estr(sdist.y)+" scluster.size(): "+estr(scluster.size()));
 
-  if (lastdist!=sdist.dist){
-    incmaxdist=getIncompleteMaxDist(sdist.dist);
-    while (completemerges.size() && completemerges.begin()->dist>=incmaxdist){
-      mergeComplete(incmaxdist);
-      incmaxdist=getIncompleteMaxDist(sdist.dist);
-    }
-    clearComplete();
-    lastdist=sdist.dist;
+  if (lastdist != sdist.dist){
+    if (incmaxit!=smatrix.end())
+      incmaxdist=((double)incmaxit->count*incmaxit->dist+(double)(scount[incmaxit->x]*scount[incmaxit->y]-incmaxit->count)*sdist.dist)/(double)(scount[incmaxit->x]*scount[incmaxit->y]);
+    else
+      getIncompleteMaxDist(sdist.dist,incmaxdist,incmaxit);
   }
+
+  if (completemerges.size()>0l && completemerges.begin()->dist>=incmaxdist){
+    cout << "# trying merge: smatrix: " << smatrix.size() << " completemerges: " << completemerges.size() << " cf: " << cf << " dist: " << sdist.dist << " incmaxdist: " << incmaxdist << " topdist: " << completemerges.begin()->dist << " " << mergecount << endl;
+    cout << "# merging: smatrix: " << smatrix.size() << " completemerges: " << completemerges.size() << " cf: " << cf << " dist: " << sdist.dist << " incmaxdist: " << incmaxdist << " topdist: " << completemerges.begin()->dist << " " << mergecount << endl;
+    long tmpmc=mergecount;
+    while (completemerges.size() && completemerges.begin()->dist>=incmaxdist){
+      mergeComplete(sdist.dist);
+    }
+    if (tmpmc!=mergecount)
+      clearComplete();
+    cf=completemerges.size()/100000;
+    cout << "# after merge: smatrix: " << smatrix.size() << " completemerges: " << completemerges.size() << " cf: " << cf << " dist: " << sdist.dist << " incmaxdist: " << incmaxdist << " topdist: " << completemerges.begin()->dist << " " << mergecount << endl;
+    ++cf;
+  }
+  lastdist=sdist.dist;
 
   eseqdistCount tmpdist;
   tmpdist.x=scluster[sdist.x];
@@ -321,9 +375,10 @@ void eseqclusteravg::add(const eseqdist& sdist){
   if (it==smatrix.end()){
     if (scount[tmpdist.x]*scount[tmpdist.y]==tmpdist.count){
       if (tmpdist.dist>=incmaxdist){
-        cout << "1 " << scluster.size()-mergecount << " " << tmpdist.dist << " ("<<tmpdist.dist<<") " << tmpdist.x << " " << scount[tmpdist.x]<< " " << tmpdist.y << " " << scount[tmpdist.y] << " " << smatrix.size() << " " << completemerges.size() << " " << incmaxdist << " " << (completemerges.size()?estr(completemerges.begin()->dist):estr("n/a")) << endl;
-        ofile.write(estr(scluster.size()-mergecount)+" "+tmpdist.dist+" "+tmpdist.x+" "+tmpdist.y+"\n");
+//        cout << "1 " << scluster.size()-mergecount << " " << tmpdist.dist << " ("<<tmpdist.dist<<") " << tmpdist.x << " " << scount[tmpdist.x]<< " " << tmpdist.y << " " << scount[tmpdist.y] << " " << smatrix.size() << " " << completemerges.size() << " " << incmaxdist << " " << (completemerges.size()?estr(completemerges.begin()->dist):estr("n/a")) << endl;
         merge(tmpdist);
+        ofile.write(estr(scluster.size()-mergecount)+" "+tmpdist.dist+" "+tmpdist.x+" "+tmpdist.y+"\n");
+        ofile.flush();
       }else{
         smatrix.add(tmpdist,tmpdist);
         inter[tmpdist.x].push_back(tmpdist.y); inter[tmpdist.y].push_back(tmpdist.x);
@@ -332,6 +387,8 @@ void eseqclusteravg::add(const eseqdist& sdist){
     }else{
       smatrix.add(tmpdist,tmpdist);
       inter[tmpdist.x].push_back(tmpdist.y); inter[tmpdist.y].push_back(tmpdist.x);
+      if (incmaxit==smatrix.end())
+        incmaxit=smatrix.get(tmpdist);
     }
     return;
   }
@@ -342,9 +399,10 @@ void eseqclusteravg::add(const eseqdist& sdist){
   // complete linkage
   if (it->count==scount[tmpdist.x]*scount[tmpdist.y]){
     if (it->dist>=incmaxdist){
-      cout << "+ " << scluster.size()-mergecount << " " << it->dist << " ("<<tmpdist.dist<<") " << it->x << " " << scount[it->x]<< " " << it->y << " " << scount[it->y] << " " << smatrix.size() << " " << completemerges.size() << " " << incmaxdist << " " << (completemerges.size()?estr(completemerges.begin()->dist):estr("n/a")) << endl;
-      ofile.write(estr(scluster.size()-mergecount)+" "+it->dist+" "+it->x+" "+it->y+"\n");
+//      cout << "+ " << scluster.size()-mergecount << " " << it->dist << " ("<<tmpdist.dist<<") " << it->x << " " << scount[it->x]<< " " << it->y << " " << scount[it->y] << " " << smatrix.size() << " " << completemerges.size() << " " << incmaxdist << " " << (completemerges.size()?estr(completemerges.begin()->dist):estr("n/a")) << endl;
       merge(*it);
+      ofile.write(estr(scluster.size()-mergecount)+" "+it->dist+" "+it->x+" "+it->y+"\n");
+      ofile.flush();
       smatrix.erase(it);
 //      incmaxdist=getIncompleteMaxDist(sdist.dist);
 //      while (completemerges.size() && completemerges.begin()->dist>=incmaxdist){
@@ -355,6 +413,8 @@ void eseqclusteravg::add(const eseqdist& sdist){
       completemerges.insert(*it);
 //      cout << "# " << scluster.size()-mergecount << " " << tmpdist.dist << " " << tmpdist.x << " " << tmpdist.y << " " << smatrix.size() << " " << completemerges.size() << " " << incmaxdist << endl;
     }
+    if (it == incmaxit || incmaxit==smatrix.end())
+      getIncompleteMaxDist(sdist.dist,incmaxdist,incmaxit);
   }
 }
 
@@ -388,6 +448,7 @@ void eseqclusteravg::add(const eseqdistCount& sdist){
     if (scount[tmpdist.x]*scount[tmpdist.y]==sdist.count){
       merge(tmpdist);
       ofile.write(estr(scluster.size()-mergecount)+" "+tmpdist.dist+" "+tmpdist.x+" "+tmpdist.y+"\n");
+      ofile.flush();
 //      cout << scluster.size()-mergecount << " " << sdist.dist << " " << sdist.x << " " << sdist.y << endl;
     }else{
       smatrix.add(tmpdist,tmpdist);
@@ -405,6 +466,7 @@ void eseqclusteravg::add(const eseqdistCount& sdist){
     merge(tmpdist);
 //    update(ind-1,x,y);
     ofile.write(estr(scluster.size()-mergecount)+" "+tmpdist.dist+" "+tmpdist.x+" "+tmpdist.y+"\n");
+    ofile.flush();
 //    cout << scluster.size()-mergecount << " " << tmpdist.dist << " " << tmpdist.x << " " << tmpdist.y << endl;
 //    sleep(1);
 //    cout << sdist.dist << " " << x << " " << y << endl;

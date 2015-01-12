@@ -18,7 +18,7 @@
  \vspace*{\baselineskip} % Whitespace at the top of the page
  {\Large by Jo\~ao F. Matias Rodrigues and Christian von Mering\\
  Institute of Molecular Life Sciences\\University of Z\"urich\\Switzerland}\\[0.167\textheight] % Author name
- {\Huge HPC-CLUST v1.1.0 (June 2014)}\\[\baselineskip] % Main title which draws the focus of the reader
+ {\Huge HPC-CLUST v1.1.1 (October 2014)}\\[\baselineskip] % Main title which draws the focus of the reader
  {\Large \textit{Distributed hierarchical clustering of large number of pre-aligned sequences}}\par % Tagline or further description
 }
 \vfill % Whitespace between the title block and the publisher
@@ -206,11 +206,15 @@ will have id 37.
 Once the merge result files (.sl,.cl,.al) have been computed, you can produce the clusters
 at different thresholds by using the script "make-otus.sh" provided.
 
-make-otus.sh alignedseqs.sto alignedseqs.sto.sl 0.97
+make-otus.sh alignedseqs.sto alignedseqs.sto.sl 0.97\\
+or\\
+make-otus.sh alignedseqs.fasta alignedseqs.fasta.sl 0.97
 
 Would generate the clusters produced at the 97\% identity threshold from the single linkage
 merge file.
-
+\\
+You can also produce a mothur compatible OTU list with the following command:
+make-otus-mothur.sh alignedseqs.sto alignedseqs.sto.sl\\
 
 \section{FAQ}
 Frequently asked questions and other documentation can be found at

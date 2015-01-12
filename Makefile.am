@@ -5,7 +5,7 @@ if HAVE_MPILIB
   MPIBIN=hpc-clust-mpi
 endif
 
-TESTS=tests/single-sl.sh tests/mpi-sl.sh
+TESTS=tests/single-al.sh tests/single-sl.sh tests/mpi-sl.sh
 
 
 #man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1

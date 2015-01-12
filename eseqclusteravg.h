@@ -18,7 +18,15 @@ class eseqclusteravg
 {
  public:
   INDTYPE mergecount;
+  INDTYPE cf;
+
+  float thres;
+  int seqlen;
+  estrarray *seqarr;
+  float (*fdist)(const estr&,const estr&,int);
+
   efile ofile;
+  eseqdistavghash::iter incmaxit;
   float incmaxdist;
   float lastdist;
 
@@ -38,7 +46,9 @@ class eseqclusteravg
 
   eseqclusteravg();
 
-  void init(INDTYPE count,const estr& ofile,const estr& seqsfile,const earray<ebasicarray<INDTYPE> >& dupslist);
+  void init(INDTYPE count,const estr& ofile,const estr& seqsfile,const earray<ebasicarray<INDTYPE> >& dupslist,float thres,float (fdist)(const estr&,const estr&,int),estrarray& arr,int seqlen);
+
+  void finalize();
 
   void merge(const eseqdistCount& dist);
 
@@ -48,7 +58,8 @@ class eseqclusteravg
 
   long update(eblockarray<eseqdistCount>& dists,long s);
 
-  float getIncompleteMaxDist(float newdist);
+//  float getIncompleteMaxDist(float newdist);
+  void getIncompleteMaxDist(float newdist,float &maxdist,eseqdistavghash::iter& maxit);
   void mergeComplete(float dist);
   void clearComplete();
 

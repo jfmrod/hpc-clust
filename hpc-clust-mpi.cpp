@@ -17,7 +17,17 @@ edcmpi dcmpi;
 
 ebasicarray<long> uniqind;
 
-eoption<efunc> dfunc;
+typedef float (*t_dfunc)(const estr&,const estr&,int);
+
+class edistfunc
+{
+ public:
+  efunc calcfunc;
+  t_dfunc calcfunc_single;
+  edistfunc(const efunc& _calcfunc,t_dfunc _calcfunc_single): calcfunc(_calcfunc),calcfunc_single(_calcfunc_single) {}
+};
+
+eoption<edistfunc> dfunc;
 estrarray arr;
 estr ofile;
 
@@ -388,7 +398,7 @@ long nodeComputeDistances(ebasicarray<long> _uniqind,long node,long tnodes,float
 
   long i;
   for (i=0; i<partsTotal; ++i){
-    taskman.addTask(dfunc.value(),evararray(mutexDists,_uniqind,nodeArr,nodeDists,(const int&)seqlen,(const long int&)(node*partsTotal+i),(const long int&)(partsTotal*tnodes),(const float&)thres));
+    taskman.addTask(dfunc.value().calcfunc,evararray(mutexDists,_uniqind,nodeArr,nodeDists,(const int&)seqlen,(const long int&)(node*partsTotal+i),(const long int&)(partsTotal*tnodes),(const float&)thres));
   }
   taskman.wait();
 
@@ -459,7 +469,7 @@ void doStartServer(edcBaseServer& server)
   cout << "# unique seqs: " << uniqind.size() << endl;
 
   if (al)
-    alcluster.init(arr.size(),ofile+".al",argv[1],dupslist);
+    alcluster.init(arr.size(),ofile+".al",argv[1],dupslist,t,dfunc.value().calcfunc_single,arr,seqlen);
   if (cl)
     clcluster.init(arr.size(),ofile+".cl",argv[1],dupslist);
   if (sl)
@@ -508,15 +518,15 @@ void help()
 int emain()
 {
   dfunc.choice=0;
-  dfunc.add("gap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed2>);
-  dfunc.add("nogap",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>);
-  dfunc.add("gap2",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>);
-  dfunc.add("nogap2",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>);
-  dfunc.add("nogapsingle",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>);
-  dfunc.add("tamura",t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>);
+  dfunc.add("gap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed2>,dist_compressed2));
+  dfunc.add("nogap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>,dist_nogap_compressed2));
+  dfunc.add("gap2",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>,dist_compressed));
+  dfunc.add("nogap2",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>,dist_nogap_compressed));
+  dfunc.add("nogapsingle",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>,dist_nogapsingle_compressed));
+  dfunc.add("tamura",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>,dist_tamura_compressed));
 
-  epregisterClass(eoption<efunc>);
-  epregisterClassMethod4(eoption<efunc>,operator=,int,(const estr& val),"=");
+  epregisterClass(eoption<edistfunc>);
+  epregisterClassMethod4(eoption<edistfunc>,operator=,int,(const estr& val),"=");
 
   epregisterFunc(help);
   epregister(dfunc);

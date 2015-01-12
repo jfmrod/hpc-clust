@@ -1,5 +1,5 @@
 
-HPC-CLUST v1.1.0 (5 June 2014)
+HPC-CLUST v1.1.1 (21 October 2014)
 by Joao F. Matias Rodrigues and Christian von Mering
 Institute of Molecular Life Sciences, University of Zurich, Switzerland
 Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013.
@@ -219,6 +219,10 @@ Sebastian Schmidt
 
 =================================================
 6. HISTORY
+
+1.1.1 (21 October 2014)
+- Fixed bug in make-otus.sh when using fasta files
+- Added make-otus-mothur.sh to create otu list files in mothur format
 
 1.1.0 (5 June 2014)
 - Added test suite
