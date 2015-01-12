@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 edcBaseServerNode::edcBaseServerNode(edcBaseServer& _server): server(_server) {}
 

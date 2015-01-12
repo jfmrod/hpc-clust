@@ -148,7 +148,7 @@ void earray<T>::init(size_t count)
   clear();
   reserve(count);
   for (i=0; i<count; ++i)
-    push_back(new T());
+    this->push_back(new T());
 }
 
 template <class T>
@@ -158,7 +158,7 @@ void earray<T>::init(size_t count,const T& initval)
   clear();
   reserve(count);
   for (i=0; i<count; ++i)
-    push_back(new T(initval));
+    this->push_back(new T(initval));
 }
 
 template <class T>
@@ -205,91 +205,91 @@ earray<T>::earray(const earray<T> &arr): ebasicarray<T*>()
 template <class T>
 earray<T>::earray(const T &value): ebasicarray<T*>()
 {
-  push_back(new T(value));
+  this->push_back(new T(value));
 }
 
 template <class T>
 earray<T>::earray(const T &value1,const T &value2): ebasicarray<T*>()
 {
-  push_back(new T(value1));
-  push_back(new T(value2));
+  this->push_back(new T(value1));
+  this->push_back(new T(value2));
 }
 
 template <class T>
 earray<T>::earray(const T &value1,const T &value2,const T &value3): ebasicarray<T*>()
 {
-  push_back(new T(value1));
-  push_back(new T(value2));
-  push_back(new T(value3));
+  this->push_back(new T(value1));
+  this->push_back(new T(value2));
+  this->push_back(new T(value3));
 }
 
 template <class T>
 earray<T>::earray(const T &value1,const T &value2,const T &value3,const T& value4): ebasicarray<T*>()
 {
-  push_back(new T(value1));
-  push_back(new T(value2));
-  push_back(new T(value3));
-  push_back(new T(value4));
+  this->push_back(new T(value1));
+  this->push_back(new T(value2));
+  this->push_back(new T(value3));
+  this->push_back(new T(value4));
 }
 
 template <class T>
 earray<T>::earray(const T &value1,const T &value2,const T &value3,const T& value4,const T& value5): ebasicarray<T*>()
 {
-  push_back(new T(value1));
-  push_back(new T(value2));
-  push_back(new T(value3));
-  push_back(new T(value4));
-  push_back(new T(value5));
+  this->push_back(new T(value1));
+  this->push_back(new T(value2));
+  this->push_back(new T(value3));
+  this->push_back(new T(value4));
+  this->push_back(new T(value5));
 }
 
 template <class T>
 earray<T>::earray(const T &value1,const T &value2,const T &value3,const T& value4,const T& value5,const T& value6): ebasicarray<T*>()
 {
-  push_back(new T(value1));
-  push_back(new T(value2));
-  push_back(new T(value3));
-  push_back(new T(value4));
-  push_back(new T(value5));
-  push_back(new T(value6));
+  this->push_back(new T(value1));
+  this->push_back(new T(value2));
+  this->push_back(new T(value3));
+  this->push_back(new T(value4));
+  this->push_back(new T(value5));
+  this->push_back(new T(value6));
 }
 
 template <class T>
 earray<T>::earray(const T &value1,const T &value2,const T &value3,const T& value4,const T& value5,const T& value6,const T& value7): ebasicarray<T*>()
 {
-  push_back(new T(value1));
-  push_back(new T(value2));
-  push_back(new T(value3));
-  push_back(new T(value4));
-  push_back(new T(value5));
-  push_back(new T(value6));
-  push_back(new T(value7));
+  this->push_back(new T(value1));
+  this->push_back(new T(value2));
+  this->push_back(new T(value3));
+  this->push_back(new T(value4));
+  this->push_back(new T(value5));
+  this->push_back(new T(value6));
+  this->push_back(new T(value7));
 }
 
 template <class T>
 earray<T>::earray(const T &value1,const T &value2,const T &value3,const T& value4,const T& value5,const T& value6,const T& value7,const T& value8): ebasicarray<T*>()
 {
-  push_back(new T(value1));
-  push_back(new T(value2));
-  push_back(new T(value3));
-  push_back(new T(value4));
-  push_back(new T(value5));
-  push_back(new T(value6));
-  push_back(new T(value7));
-  push_back(new T(value8));
+  this->push_back(new T(value1));
+  this->push_back(new T(value2));
+  this->push_back(new T(value3));
+  this->push_back(new T(value4));
+  this->push_back(new T(value5));
+  this->push_back(new T(value6));
+  this->push_back(new T(value7));
+  this->push_back(new T(value8));
 }
 
 template <class T>
 earray<T>::earray(const T &value1,const T &value2,const T &value3,const T& value4,const T& value5,const T& value6,const T& value7,const T& value8,const T& value9): ebasicarray<T*>()
 {
-  push_back(new T(value1));
-  push_back(new T(value2));
-  push_back(new T(value3));
-  push_back(new T(value4));
-  push_back(new T(value5));
-  push_back(new T(value6));
-  push_back(new T(value7));
-  push_back(new T(value8));
-  push_back(new T(value9));
+  this->push_back(new T(value1));
+  this->push_back(new T(value2));
+  this->push_back(new T(value3));
+  this->push_back(new T(value4));
+  this->push_back(new T(value5));
+  this->push_back(new T(value6));
+  this->push_back(new T(value7));
+  this->push_back(new T(value8));
+  this->push_back(new T(value9));
 }
 
 template <class T>

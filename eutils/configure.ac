@@ -1,5 +1,4 @@
-
-AC_INIT()
+AC_INIT(eutils,1.1.0,joao.rodrigues@imls.uzh.ch)
 
 LT_INIT
 
@@ -52,7 +51,7 @@ AM_CONDITIONAL(OSX, test "x$os" = "xmacosx")
 AC_CHECK_TOOL(AR, ar)
 AC_PROG_INSTALL
 
-AM_INIT_AUTOMAKE("eutils","1.0.0")
+AM_INIT_AUTOMAKE
 
 AC_CHECK_LIB(rt,main)
 

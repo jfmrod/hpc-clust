@@ -40,7 +40,7 @@ case "${target_os}" in
   esac
 
 
-AM_INIT_AUTOMAKE("hpc-clust","1.1.1")
+AM_INIT_AUTOMAKE
 
 #AC_CHECK_LIB(z,main)
 

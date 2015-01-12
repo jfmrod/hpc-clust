@@ -3,7 +3,7 @@
  
 /* eutils-config.h. Generated automatically at end of configure. */
 /* config.h.  Generated from config.h.in by configure.  */
-/* config.h.in.  Generated from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #ifndef EUTILS_HAVE_DLFCN_H 
@@ -49,7 +49,9 @@
 #endif
 
 /* Have PTHREAD_PRIO_INHERIT. */
-/* #undef HAVE_PTHREAD_PRIO_INHERIT */
+#ifndef EUTILS_HAVE_PTHREAD_PRIO_INHERIT 
+#define EUTILS_HAVE_PTHREAD_PRIO_INHERIT  1 
+#endif
 
 /* define when regex exists */
 #ifndef EUTILS_HAVE_REGEX 
@@ -104,22 +106,22 @@
 
 /* Define to the address where bug reports for this package should be sent. */
 #ifndef EUTILS_PACKAGE_BUGREPORT 
-#define EUTILS_PACKAGE_BUGREPORT  "" 
+#define EUTILS_PACKAGE_BUGREPORT  "joao.rodrigues@imls.uzh.ch" 
 #endif
 
 /* Define to the full name of this package. */
 #ifndef EUTILS_PACKAGE_NAME 
-#define EUTILS_PACKAGE_NAME  "" 
+#define EUTILS_PACKAGE_NAME  "eutils" 
 #endif
 
 /* Define to the full name and version of this package. */
 #ifndef EUTILS_PACKAGE_STRING 
-#define EUTILS_PACKAGE_STRING  "" 
+#define EUTILS_PACKAGE_STRING  "eutils 1.1.0" 
 #endif
 
 /* Define to the one symbol short name of this package. */
 #ifndef EUTILS_PACKAGE_TARNAME 
-#define EUTILS_PACKAGE_TARNAME  "" 
+#define EUTILS_PACKAGE_TARNAME  "eutils" 
 #endif
 
 /* Define to the home page for this package. */
@@ -129,7 +131,7 @@
 
 /* Define to the version of this package. */
 #ifndef EUTILS_PACKAGE_VERSION 
-#define EUTILS_PACKAGE_VERSION  "" 
+#define EUTILS_PACKAGE_VERSION  "1.1.0" 
 #endif
 
 /* Define to necessary symbol if this constant uses a non-standard name on
@@ -148,7 +150,7 @@
 
 /* Version number of package */
 #ifndef EUTILS_VERSION 
-#define EUTILS_VERSION  "1.0.0" 
+#define EUTILS_VERSION  "1.1.0" 
 #endif
  
 /* once: _EUTILS_CONFIG_H */

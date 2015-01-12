@@ -1,10 +1,10 @@
-prefix=/home/jfmrod/gaia/usr
+prefix=/home/jfmrod/usr
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
 Name: easycpp.eutils
 Description: The easy programming library
-Version: 1.0.0
+Version: 1.1.0
 Libs: eutils/libeutils.a -lmpi++ -lmpi_cxx -lrt   -lmpi -lmpi++ -lmpi_cxx -lrt   -lmpi
-Cflags: -I${prefix}/include -O2 -pthread -I/usr/lib/openmpi/include -I/usr/lib/openmpi/include/openmpi -pthread
+Cflags: -I${prefix}/include -O2 -I/home/jfmrod/usr/include -pthread -I/usr/lib/openmpi/include -I/usr/lib/openmpi/include/openmpi -pthread

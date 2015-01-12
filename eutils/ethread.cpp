@@ -231,6 +231,7 @@ void *ethread::entrypoint(void *pthis)
 #ifndef EUTILS_NOTEST
 
 #include "etest.h"
+#include <unistd.h>
 
 void ethread_test_sfunc(int i)
 {

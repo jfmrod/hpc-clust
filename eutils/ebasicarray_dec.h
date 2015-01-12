@@ -41,9 +41,9 @@ class ebasicarray : public vector<T>,public ebasearray
    ebasicarray<T> &operator=(const ebasicarray<T> &arr);
    inline size_t size() const { return(vector<T>::size()); }
 
-   inline ebasicarray<T>& operator+=(const T &value) { push_back(value); return(*this); }
+   inline ebasicarray<T>& operator+=(const T &value) { this->push_back(value); return(*this); }
 
-   inline T& add(const T& value) { push_back(value); return(vector<T>::back()); }
+   inline T& add(const T& value) { this->push_back(value); return(vector<T>::back()); }
 
    inline void erase(size_t i) { vector<T>::erase(vector<T>::begin()+i); }
    inline void insert(size_t i,const T& value) { vector<T>::insert(vector<T>::begin()+i,value); }

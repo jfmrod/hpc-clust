@@ -13,6 +13,8 @@
 
 #include "cluster-common.h"
 
+#include <unistd.h>
+
 edcmpi dcmpi;
 
 ebasicarray<long> uniqind;

@@ -48,7 +48,7 @@ class ebasicstrhashof : public ebasichashmap<estr,T,hashfunc>
 template <class T,size_t (*hashfunc)(const estr& str)>
 void estrhashof<T,hashfunc>::addvar(evar& evarkey,evar& var)
 {
-  addref(evarkey.get<estr>(),&var.get<T>());
+  this->addref(evarkey.get<estr>(),&var.get<T>());
 }
 
 //template <class T,unsigned int (*hashfunc)(const estr& str)>
