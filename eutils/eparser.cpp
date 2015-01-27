@@ -550,9 +550,6 @@ void eparser::registerParser()
 void eparser::execArg(estr cmd,const estr& args)
 {
 //  int i;
-  if (cmd[0]=='-') cmd.del(0,1);
-  if (cmd[0]=='-') cmd.del(0,1);
-
 //  cout << argAlias << endl;
   if (argAlias.exists(cmd))
     cmd=argAlias[cmd];
@@ -648,9 +645,10 @@ void eparser::parseArgs(int& _argvc,char** &_argv)
 
   ebasicarray<char*> newargs;
   estr fargs;
-  char* fcmd;
+  estr fcmd;
 
   parsing=true;
+  estr setaction;
 
   newargs+=(*argv)[0]; 
  
@@ -662,13 +660,22 @@ void eparser::parseArgs(int& _argvc,char** &_argv)
 
     if (!strcmp("--",(*argv)[i])) { process=false; continue; } // do not parse arguments after a "--" argument
 
-    fcmd=(*argv)[i];
-    fargs="";
-    if (i+1<(*argvc) && (*argv)[i+1][0]!='-' && (*argv)[i+1][0]!='+'){
-      fargs+=(*argv)[i+1];
-      ++i;
+    fcmd=estr((*argv)[i]);
+    if (fcmd.len() && fcmd[0]=='-') fcmd.del(0,1);
+    if (fcmd.len() && fcmd[0]=='-') fcmd.del(0,1);
+
+    if (actions.exists(fcmd)){
+      setaction=fcmd;
+      process=false;
+      continue;
+    }else{
+      fargs="";
+      if (i+1<(*argvc) && (*argv)[i+1][0]!='-' && (*argv)[i+1][0]!='+'){
+        fargs+=(*argv)[i+1];
+        ++i;
+      }
+      execArg(fcmd,fargs);
     }
-    execArg(fcmd,fargs);
   }
 
   if (*argvc > newargs.size()){
@@ -682,6 +689,8 @@ void eparser::parseArgs(int& _argvc,char** &_argv)
   }
 
   parsing=false;
+  if (setaction.len()>0)
+    actions[setaction].call();
 }
 
 evar apply(const efunc& func,const evararray& args)

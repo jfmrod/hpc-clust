@@ -1,6 +1,6 @@
 #! /bin/sh
 
-prefix=/home/jfmrod/usr
+prefix=/home/jfmrod/gaia/usr
 exec_prefix=${prefix}
 includedir=${prefix}/include
 
@@ -54,11 +54,11 @@ while test $# -gt 0; do
 	;;
 
     --cxxflags)
-       	echo -I${prefix}/include -O2 -I/home/jfmrod/usr/include -pthread -I/usr/lib/openmpi/include -I/usr/lib/openmpi/include/openmpi -pthread 
+       	echo -I${prefix}/include -O2 -pthread -I/usr/lib/openmpi/include -I/usr/lib/openmpi/include/openmpi -pthread 
        	;;
 
     --libs)
-       	echo -L/home/jfmrod/usr/lib -pthread -L/usr//lib -L/usr/lib/openmpi/lib -lmpi_cxx -lmpi -ldl -lhwloc eutils/libeutils.a -lmpi++ -lmpi_cxx -lrt   -lmpi
+       	echo  -pthread -L/usr/lib/openmpi/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -ldl -Wl,--export-dynamic -lnsl -lutil -lm -ldl eutils/libeutils.a -lmpi++ -lmpi_cxx -lrt   -lmpi
        	;;
 
     *)

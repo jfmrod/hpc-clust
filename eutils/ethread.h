@@ -145,6 +145,7 @@ class etaskman
   etask& addTask(const efunc& func,const evararray& args);
   etask* getTask(etaskthread& thread);
   void wait();
+  void clear();
 };
 
 #endif

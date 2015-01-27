@@ -311,6 +311,17 @@ etaskman::~etaskman()
 {
 }
 
+void etaskman::clear()
+{
+  runThreadsMutex.lock();
+//  cout << "tasks.size: " << tasks.size() << " firstPending: " << firstPendingTask << endl;
+  while (runningThreads>0 || firstPendingTask<tasks.size())
+    finishedThreadsCond.wait(runThreadsMutex);
+  tasks.clear();
+  firstPendingTask=0;
+  runThreadsMutex.unlock();
+}
+
 void etaskman::createThread(int n)
 {
   runThreadsMutex.lock();

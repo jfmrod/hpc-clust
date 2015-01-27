@@ -30,7 +30,7 @@ $2 >= thres {
 
 END {
   print "# date: " strftime();
-  print "# fasta: " fasta;
+  print "# fasta: " (fasta==1?"yes":"no");
   print "# merge file: " joinfile;
   print "# sequences file: " seqfile;
   print "# threshold: " thres;

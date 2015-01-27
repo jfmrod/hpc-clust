@@ -84,6 +84,80 @@ class edistfunc
   edistfunc(const efunc& _calcfunc,t_dfunc _calcfunc_single): calcfunc(_calcfunc),calcfunc_single(_calcfunc_single) {}
 };
 
+eoption<edistfunc> dfunc;
+etaskman taskman;
+
+int nthreads=4;
+int winlen=70;
+float t=0.90;
+
+
+void actionMakeRefs()
+{
+  estrhashof<INDTYPE> seqind;
+
+  estrarray uarr;
+
+  cout << "# loading seqs file: " << argv[1] << endl;
+  load_seqs_compressed(argv[1],arr,seqind,seqlen);
+  load_seqs(argv[1],uarr);
+
+  earray<ebasicarray<INDTYPE> > otus;
+
+  efile f;
+  estr line;
+  f.open(argv[2],"r");
+  while (!f.eof()){
+    f.readln(line);
+    if (line.len()==0 || line[0]=='#') continue;
+    if (line[0]=='>'){
+      otus.add(ebasicarray<INDTYPE>());
+      continue;
+    }
+    ldieif(otus.size()==0,"first entry not start of OTU or missing '>'");
+    ldieif(!seqind.exists(line),"sequence not found: "+line);
+    otus[otus.size()-1].add(seqind[line]);
+  }
+
+  ebasicarray<INDTYPE> uniqind;
+  taskman.createThread(nthreads);
+
+  efloatarray avgdist;
+  for (long j=0; j<otus.size(); ++j){
+//    cout << "# computing distances for otu "<< j << " size: " << otus[j].size() <<  endl;
+    if (otus[j].size()==1){
+      cout << ">OTU" << j << " " << arr.keys(otus[j][0]) << " avg_id=1.0 otu_size=1" << endl;
+      cout << uarr.values(otus[j][0]) << endl;
+      continue;
+    }
+    uniqind=otus[j];
+    avgdist.init(arr.size(),0.0);
+    dists.clear();
+  
+    partsTotal=10000;
+    if (partsTotal>(uniqind.size()-1l)*uniqind.size()/20l) partsTotal=(uniqind.size()-1l)*uniqind.size()/20l; // make fewer tasks if to few calculations per task
+    if (partsTotal<=0) partsTotal=1;
+
+    taskman.clear();
+    for (long i=0; i<partsTotal; ++i)
+      taskman.addTask(dfunc.value().calcfunc,evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)0.0,(const int&)winlen));
+    taskman.wait();
+    for (long i=0; i<dists.size(); ++i){
+      avgdist[dists[i].x]+=dists[i].dist;
+      avgdist[dists[i].y]+=dists[i].dist;
+    }
+    long k=0;
+    for (long i=1; i<avgdist.size(); ++i)
+      if (avgdist[k]<avgdist[i]) k=i;
+//    cout << "OTU" << j << " " << otus[j].size() << " " << arr.keys(k) << " " << avgdist[k]/(otus[j].size()-1) << " " << dists.size() << endl;
+    cout << ">OTU" << j << " " << arr.keys(k) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
+    cout << uarr.values(k) << endl;
+  }
+
+
+  exit(0);
+}
+
 int emain()
 { 
   bool cl=false;
@@ -95,8 +169,6 @@ int emain()
   epregister(al);
   epregister(cdist);
   epregisterFunc(help);
-
-  eoption<edistfunc> dfunc;
 
   dfunc.choice=0;
   dfunc.add("gap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed2>,dist_compressed2));
@@ -111,15 +183,12 @@ int emain()
 
   epregister(dfunc);
 
-  int winlen=70;
   epregister(winlen);
 
   estr ofile;
   estr dfile;
   estr dupfile;
 
-  float t=0.90;
-  int nthreads=4;
   bool ignoreUnique=false;
   epregister(dupfile);
   epregister(ignoreUnique);
@@ -128,6 +197,8 @@ int emain()
   epregister(ofile);
   epregister(dfile);
   epregister(ignoreMemThres);
+
+  getParser()->actions.add("makerefs",actionMakeRefs);
   eparseArgs(argvc,argv);
 
 //  cout << "# initializing identity lookup table" << endl;
@@ -234,8 +305,6 @@ int emain()
   float dtime,stime;
   etimer t1;
   t1.reset();
-
-  etaskman taskman;
 
   efile df(dfile);
   cout << "# computing distances" << endl;

@@ -589,6 +589,30 @@ void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<int>& a
   cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
 }
 
+void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<long>& arrind,int& seqlen)
+{
+  estr line;
+  estr name;
+  estrarray tmps;
+  efile f(filename);
+
+  int i;
+
+  while (f.readln(line)){
+    if (line.len()==0 || line[0]=='#' || line=="//") continue;
+    
+    i=line.find(" ");
+    if (i==-1) continue;
+    name=line.substr(0,i);
+    line.del(0,i);
+    line.trim();
+    seqlen=line.len();
+    arr.add(name,seq_compress(line.uppercase()));
+    arrind.add(name,arrind.size());
+  }
+  cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
+}
+
 void load_seqs(const estr& filename,estrarray& arr)
 {
   estr line;

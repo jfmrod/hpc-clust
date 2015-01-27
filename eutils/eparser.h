@@ -33,6 +33,7 @@ class eparser
   estrhash   initvalues;
   estrhash   argAlias;
 
+  estrhashof<efunc> actions;
   estrhashof<evar>  objects;
   estrhashof< earray<efunc> > funcs;
 //  estrhashof<epclassBase> classes;

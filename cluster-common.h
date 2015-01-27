@@ -1174,6 +1174,7 @@ void load_short_compressed(const estr& filename,ebasicarray<eshortseq>& arr);
 void load_seqs_compressed(const estr& filename,earray<estr>& arr,int& seqlen);
 void load_seqs_compressed(const estr& filename,estrarray& arr,int& seqlen);
 void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<int>& arrind,int& seqlen);
+void load_seqs_compressed(const estr& filename,estrarray& arr,estrhashof<long>& arrind,int& seqlen);
 void load_seqs(const estr& filename,estrarray& arr,eintarray& arrgaps);
 void load_seqs(const estr& filename,estrhash& arr);
 void load_seqs(const estr& filename,estrhashof<int>& arrind);

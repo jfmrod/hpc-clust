@@ -292,7 +292,6 @@ void eseqclusteravg::mergeComplete(float dist)
     cout << "* " << scluster.size()-mergecount << " " << sit->dist << " ("<<sit->dist<<") " << sit->x << " " << scount[sit->x]<< " " << sit->y << " " << scount[sit->y] << " " << smatrix.size() << " " << completemerges.size() << " " << incmaxdist << " " << (completemerges.size()?estr(completemerges.begin()->dist):estr("n/a")) << endl;
     ofile.write(estr(scluster.size()-mergecount)+" "+sit->dist+" "+sit->x+" "+sit->y+"\n");
     merge(*sit);
-    ofile.write(estr(scluster.size()-mergecount)+" "+sit->dist+" "+sit->x+" "+sit->y+"\n");
     smatrix.erase(sit);
     completemerges.erase(it);
     if (incmaxit==smatrix.end())

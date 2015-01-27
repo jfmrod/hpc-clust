@@ -49,9 +49,7 @@
 #endif
 
 /* Have PTHREAD_PRIO_INHERIT. */
-#ifndef EUTILS_HAVE_PTHREAD_PRIO_INHERIT 
-#define EUTILS_HAVE_PTHREAD_PRIO_INHERIT  1 
-#endif
+/* #undef HAVE_PTHREAD_PRIO_INHERIT */
 
 /* define when regex exists */
 #ifndef EUTILS_HAVE_REGEX 
