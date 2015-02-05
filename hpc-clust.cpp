@@ -52,22 +52,29 @@ void help()
   printf("Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("    %s [...] <-sl true|-cl true|-al true> aligned_seqs\n",efile(argv[0]).basename()._str);
+  printf("    %s [...] <-sl true|-cl true|-al true> alignedseqs.fa\n",efile(argv[0]).basename()._str);
   printf("\n");
-  printf("Cluster a set of multiple aligned sequences until a given threshold.\n");
-  printf("Example: hpc-clust -nthreads 4 -t 0.8 -dfunc gap -sl true myalignedseqs.sto\n"); 
-  printf("\n");
+  printf("Clusters a set of multiple aligned sequences in fasta or stockholm format to a given threshold.\n");
+  printf("Example: hpc-clust -nthreads 4 -t 0.8 -dfunc gap -sl true alignedseqs.fa\n"); 
+  printf("\n"); 
   printf("Optional arguments:\n");
   printf("%10s    %s\n","-t","distance threshold until which to do the clustering [default: 0.9]");
   printf("%10s    %s\n","-dfunc","distance function to use: gap, nogap, tamura [default: gap]");
   printf("%10s    %s\n","-nthreads","number of threads to use [default: 4]");
-  printf("%10s    %s\n","-ofile","output filename [defaults to input filename]. \".sl\",\".cl\", or \".al\" extensions will be appended");
+  printf("%10s    %s\n","-ofile","output filename [defaults to input filename] + \".sl\",\".cl\", or \".al\" extension");
   printf("\n");
-  printf("At least one is required:\n");
+  printf("One or more is required:\n");
   printf("%10s    %s\n","-sl true","perform single-linkage clustering");
   printf("%10s    %s\n","-cl true","perform complete-linkage clustering");
   printf("%10s    %s\n","-al true","perform average-linkage clustering");
   printf("\n");
+
+  printf("After clustering:\n");
+  printf("%10s    %s\n","-makeotus <alignment> <mergelog> <threshold>","generate an OTU file at a given threshold");
+  printf("%10s    %s\n","-makeotus_mothur <alignment> <mergelog> <threshold>","generate a MOTHUR compatible OTU file at a given threshold");
+  printf("%10s    %s\n","-makerefs <alignment> <otu>","generate a fasta file of OTU representatives. Sequences chosen have the minimum average distance to other sequences in the OTU.");
+  printf("\n");
+
   printf("Report bugs to: joao.rodrigues@imls.uzh.ch\n");
   printf("http://meringlab.org/software/hpc-clust/\n");
 
@@ -91,9 +98,64 @@ int nthreads=4;
 int winlen=70;
 float t=0.90;
 
+void actionMakeOtusMothur()
+{
+  estrarray uarr;
+  eseqclusterData cdata;
+  ldieif(argvc<4,"syntax: "+efile(argv[0]).basename()+" -makeotus_mothur <alignment> <mergelog> <cutoff>");
+
+  cout << "# loading seqs file: " << argv[1] << endl;
+  load_seqs(argv[1],uarr);
+  cdata.load(argv[2],uarr.size());
+
+  float t=estr(argv[3]).f();
+  earray<eintarray> otuarr;
+  cdata.getOTU(t,otuarr,uarr.size());
+
+  cout << "label\tnumOtus";
+  for (long i=0; i<otuarr.size(); ++i)
+    cout << "\tOTU" << i;
+  cout << endl;
+
+  cout << (1.0-t) << "\t" << otuarr.size();
+  for (long i=0; i<otuarr.size(); ++i){
+//    cout << ">OTU" << i << " otu_size="<< otuarr[i].size() << endl;
+    cout << "\t" << uarr.keys(otuarr[i][0]);
+    for (long j=1; j<otuarr[i].size(); ++j)
+      cout << "," << uarr.keys(otuarr[i][j]);
+  }
+  cout << endl;
+
+  exit(0);
+}
+
+void actionMakeOtus()
+{
+  estrarray uarr;
+  eseqclusterData cdata;
+  ldieif(argvc<4,"syntax: "+efile(argv[0]).basename()+" -makeotus <alignment> <mergelog> <cutoff>");
+
+  cout << "# loading seqs file: " << argv[1] << endl;
+  load_seqs(argv[1],uarr);
+  cdata.load(argv[2],uarr.size());
+
+  float t=estr(argv[3]).f();
+  earray<eintarray> otuarr;
+  cdata.getOTU(t,otuarr,uarr.size());
+
+  for (long i=0; i<otuarr.size(); ++i){
+    cout << ">OTU" << i << " otu_size="<< otuarr[i].size() << endl;
+    for (long j=0; j<otuarr[i].size(); ++j)
+      cout << uarr.keys(otuarr[i][j]) << endl;
+  }
+
+  exit(0);
+}
+
 
 void actionMakeRefs()
 {
+  ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" -makerefs <alignment> <otu>");
   estrhashof<INDTYPE> seqind;
 
   estrarray uarr;
@@ -199,6 +261,8 @@ int emain()
   epregister(ignoreMemThres);
 
   getParser()->actions.add("makerefs",actionMakeRefs);
+  getParser()->actions.add("makeotus",actionMakeOtus);
+  getParser()->actions.add("makeotus_mothur",actionMakeOtusMothur);
   eparseArgs(argvc,argv);
 
 //  cout << "# initializing identity lookup table" << endl;
@@ -258,7 +322,7 @@ int emain()
   if (!ignoreUnique){
     duphash.reserve(arr.size());
     for (i=0; i<arr.size(); ++i){
-      if (i%(arr.size()/10)==0)
+      if (i%1000==0)
         fprintf(stderr,"\r%li/%li",i,(long)arr.size());
       it=duphash.get(arr.values(i));
       if (it==duphash.end())

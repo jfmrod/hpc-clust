@@ -16,4 +16,6 @@ if [ "$OTUCOUNT" != "$OTUCOUNT2" -o "$LASTDIST" != "$LASTDIST2" ]; then exit 99;
 
 ./make-otus.sh examples/aligned-archaea-seqs.fasta tests/single-sl.sl.ref 0.98 > tests/single-sl.fasta.sl.ref.0.98.otu
 
+./hpc-clust -make_refs tests/single-sl.sl.0.98.otu examples/aligned-archaea-seqs.sto > tests/single-sl.0.98.otureps
+
 exit 0

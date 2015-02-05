@@ -126,13 +126,14 @@ int eseqclusterData::getOTU(float dist,earray<eintarray>& otus,int size)
   // translate all the merged seq ids to the last seq id of the otu
   for (i=0; i<otuarr.size(); ++i){
     for (j=otuarr[i]; j!=otuarr[j]; j=otuarr[j]);
+    otuarr[i]=j;
     if (otuind[j]==-1){
       otuind[j]=otus.size();
       otus.add(eintarray());
     }
-    otuarr[i]=otuind[j];
-    otus[otuind[j]].add(i);
   }
+  for (i=0; i<otuarr.size(); ++i)
+    otus[otuind[otuarr[i]]].add(i);
   return(otus.size());
 }
 
