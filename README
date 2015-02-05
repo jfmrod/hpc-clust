@@ -1,5 +1,5 @@
 
-HPC-CLUST v1.1.1 (21 October 2014)
+HPC-CLUST v1.2 (5 February 2015)
 by Joao F. Matias Rodrigues and Christian von Mering
 Institute of Molecular Life Sciences, University of Zurich, Switzerland
 Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013.
@@ -9,6 +9,9 @@ Table of contents
 1. Installation
 2. HPC-CLUST(-MPI) usage instructions
 3. File output
+ a) The merge log file
+ b) Obtaining OTU/clusters from the merge results
+ c) Obtaining OTU representatives
 4. FAQ
 5. Acknowledgments
 6. History
@@ -72,26 +75,27 @@ the command "make install".
 
 Two programs are provided in the HPC-CLUST package.
 
-When running on a single machine you should use HPC-CLUST. It is multi-threaded
+When running on a single machine you should use HPC-CLUST. It is multithreaded
 so it can make use of several processors if you run it on a multi-core computer.
 
 HPC-CLUST-MPI is the distributed computing version of
 HPC-CLUST to be used on a cluster of computers. HPC-CLUST-MPI uses the MPI library
-to automatically setup the communication between master and slave instances.
+to automatically setup the communication between master and slave processes running
+on multiple computing nodes.
 
 
 a) USING HPC-CLUST
 =================================================
 
 To use HPC-CLUST you must first prepare your alignment file. You can accomplish this
-using the INFERNAL aligner (http://infernal.janelia.org/), which aligns all sequences
-against a model consensus sequence. Any other alignment such as multiple sequence
+using the INFERNAL aligner (http://infernal.janelia.org/) which aligns all sequences
+against a consensus sequence model. Any other alignment such as multiple sequence
 alignment will work as well, although, in practice, for very large numbers of sequences
 it becomes difficult to compute a multiple sequence alignment.
 
-HPC-CLUST takes the alignment file in the non-interleaved Stockholm format or aligned fasta format.
+HPC-CLUST takes the alignment file in aligned fasta formar or non-interleaved Stockholm format.
 It detects automatically the format based on the first character. It switches to fasta format if the first
-character is '>'.
+character is a '>'.
 
 An example of non-interleaved stockholm format is: 
 SEQUENCE_ID1      ---ATGCAT---GCATGCATGC----... ...AT--AATT
@@ -169,6 +173,9 @@ argument to hpc-clust-mpi.
 3. FILE OUTPUT
 =================================================
 
+a) THE MERGE LOG FILE
+=================================================
+
 # seqsfile: aligned-archaea-seqs.sto
 # OTU_count Merge_distance Merged_OTU_id1 Merged_OTU_id2
 51094 1.0 37 38
@@ -191,17 +198,34 @@ as the smallest OTU id merged. For example, if OTUs' 37 and 12176 are merged, th
 will have id 37.
 
 
-a) OBTAINING CLUSTERS FROM THE MERGE RESULTS
+b) OBTAINING OTUS/CLUSTERS FROM THE MERGE RESULTS
 =================================================
 
 Once the merge result files (.sl,.cl,.al) have been computed, you can produce the clusters
-at different thresholds by using the script "make-otus.sh" provided.
+at different thresholds by running hpc-clust with the -makeotus option.
 
-make-otus.sh alignedseqs.sto alignedseqs.sto.sl 0.97
+hpc-clust -makeotus alignedseqs.sto alignedseqs.sto.sl 0.97
 
 Would generate the clusters produced at the 97% identity threshold from the single linkage
-merge file.
+merge file "alignedseqs.sto.sl".
 
+It is possible to obtain the OTU list in a format compatible with MOTHUR by using
+the "-makeotus_mothur" option
+
+hpc-clust -makeotus_mothur alignedseqs.sto alignedseqs.sto.sl 0.97
+
+
+c) OBTAINING OTU REPRESENTATIVES
+=================================================
+
+After clustering and producing an OTU file at a certain threshold it is possible to
+obtain a fasta file containing a set of representatives for each OTU by using the
+-makereps option.
+
+hpc-clust -makereps alignedseqs.sto alignedseqs.sto.sl.0.97.otu
+
+For each OTU, the sequence chosen to be the representative is the one having the smallest
+average distance to all other sequences in the OTU.
 
 4. FAQ
 =================================================
@@ -220,6 +244,10 @@ Sebastian Schmidt
 =================================================
 6. HISTORY
 
+1.2.0 (5 February 2015)
+- Average linkage computation now is calculated until the specified threshold
+- Added -makeotus, -makeotus_mothur, and -makerefs options to hpc-clust
+
 1.1.1 (21 October 2014)
 - Fixed bug in make-otus.sh when using fasta files
 - Added make-otus-mothur.sh to create otu list files in mothur format
@@ -234,7 +262,6 @@ Sebastian Schmidt
 - Fixed issue with eutils not compiling with some gnu compiler versions (push_back error in ebasicarray.h)
 
 1.0.1 (May 2014)
-
 - Several bugs fixed in optimized distance calculation functions, sorting function (only with -O optimization), distributed computing (when distance threshold is strict or sparse databases)
 
 

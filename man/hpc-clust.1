@@ -52,8 +52,16 @@ and ".al", or with the same name
 as the input file if
 .B -ofile
 was not given.
+.SH AFTER CLUSTERING
+.IP -makeotus
+Produce the set of OTUS at a given threshold given a merge log file
+.IP -makeotus_mothur
+Same as above but in a format compatible with MOTHUR
+.IP -makereps
+Produce a fasta file containing the OTU representatives. For each OTU, the sequence having the smallest average distance
+to all other sequences in the OTU is chosen.
 .SH AUTHORS
-Joao F. Matias Rodrigues <jfmrod@konceptfx.com>
+Joao F. Matias Rodrigues <joao.rodrigues@imls.uzh.ch>
 .P
 Christian von Mering <mering@imls.uzh.ch>
 .SH "ACKNOWLEDGMENTS"

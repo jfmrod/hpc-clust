@@ -18,7 +18,7 @@
  \vspace*{\baselineskip} % Whitespace at the top of the page
  {\Large by Jo\~ao F. Matias Rodrigues and Christian von Mering\\
  Institute of Molecular Life Sciences\\University of Z\"urich\\Switzerland}\\[0.167\textheight] % Author name
- {\Huge HPC-CLUST v1.1.1 (October 2014)}\\[\baselineskip] % Main title which draws the focus of the reader
+ {\Huge HPC-CLUST v1.2 (February 2015)}\\[\baselineskip] % Main title which draws the focus of the reader
  {\Large \textit{Distributed hierarchical clustering of large number of pre-aligned sequences}}\par % Tagline or further description
 }
 \vfill % Whitespace between the title block and the publisher
@@ -51,12 +51,12 @@ There are currently 4 sequence distance functions implemented, these are:
 One advantage that HCA has over other algorithms is that instead of producing only the
 clustering at a given threshold, it produces the set of merges happening at each threshold.
 With this approach, the clusters can be very quickly computed for every threshold with
-little extra computations. This approach also allows the plotting of the variation of
+little extra computations. This approach allows the plotting of the variation of
 number of clusters with clustering threshold without requiring the clustering to be run
 for each threshold independently.
 
-Another feature of the way HPC-CLUST is implemented is that the single, complete, and average
-linkage clusterings can be computed in a single go with little overhead.
+Another advantage of the HPC-CLUST implementation is that the single, complete, and average
+linkage clusterings can be computed in a single run with little extra overhead.
 
 
 \section{INSTALLATION}
@@ -101,7 +101,7 @@ against a model consensus sequence. Any other alignment such as multiple sequenc
 alignment will work as well, although, in practice, for very large numbers of sequences
 it becomes difficult to compute a multiple sequence alignment.
 
-HPC-CLUST takes the alignment file in the non-interleaved Stockholm format or aligned fasta format.
+HPC-CLUST takes the alignment file in aligned fasta format or non-interleaved Stockholm format.
 It detects automatically the format based on the first character. It switches to fasta format if the first
 character is '\textgreater'.
 
@@ -141,7 +141,7 @@ hpc-clust -sl true -cl true -al true alignedseqs.sto
 In this case, the single, complete and average linkage clusterings will be written to the
 "alignedseqs.sto.sl", "alignedseqs.sto.cl", and "alignedseqs.sto.al", respectively.
 
-You can change the number of cpus that hpc-clust should use with the -ncpus \textless no\_cpus \textgreater argument.
+You can change the number of cores used by hpc-clust with the -nthreads \textless no\_cores \textgreater argument.
 The name of the output file using the -ofile \textless output\_filename \textgreater argument.
 The threshold at which distances should be kept is specified using the -t \textless threshold \textgreater argument.
 The lower this value, the more distances will be stored, and the lower the threshold until which
@@ -204,17 +204,27 @@ will have id 37.
 \section{OBTAINING CLUSTERS FROM THE MERGE RESULTS}
 
 Once the merge result files (.sl,.cl,.al) have been computed, you can produce the clusters
-at different thresholds by using the script "make-otus.sh" provided.
+at different thresholds by using hpc-clust with the "-makeotus" option.
 
-make-otus.sh alignedseqs.sto alignedseqs.sto.sl 0.97\\
-or\\
-make-otus.sh alignedseqs.fasta alignedseqs.fasta.sl 0.97
+hpc-clust -makeotus alignedseqs.fa alignedseqs.fa.sl 0.97\\
 
 Would generate the clusters produced at the 97\% identity threshold from the single linkage
-merge file.
+merge file "alignedseqs.fa.sl".
 \\
 You can also produce a mothur compatible OTU list with the following command:
-make-otus-mothur.sh alignedseqs.sto alignedseqs.sto.sl\\
+hpc-clust -makeotus\_mothur alignedseqs.fa alignedseqs.fa.sl\\
+
+\section{OBTAINING CLUSTER REPRESENTATIVES}
+
+After clustering and producing an OTU file at a certain threshold it is possible to
+obtain a fasta file containing a set of representatives for each OTU by using the
+-makereps option.
+
+hpc-clust -makereps alignedseqs.fa alignedseqs.fa.sl.0.97.otu\\
+
+For each OTU, the sequence chosen to be the representative is the one having the smallest
+average distance to all other sequences in the OTU.
+
 
 \section{FAQ}
 Frequently asked questions and other documentation can be found at
