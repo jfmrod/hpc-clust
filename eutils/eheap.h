@@ -637,7 +637,7 @@ void fradix256sort(T& array)
   while (1){
     shift=(ksize-1-l)*8;
 //    printf("level: %i mask: %x  shift: %i\n",l,mask,shift);
-    cout << "l: " << l << "start: " << start << " end: " << end << endl;
+//    cout << "l: " << l << "start: " << start << " end: " << end << endl;
 
     pBinCount=&bincount[256*l];
     pBinPos=&binpos[256*l];
