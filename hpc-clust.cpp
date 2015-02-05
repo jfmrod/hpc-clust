@@ -72,7 +72,7 @@ void help()
   printf("After clustering:\n");
   printf("%10s    %s\n","-makeotus <alignment> <mergelog> <threshold>","generate an OTU file at a given threshold");
   printf("%10s    %s\n","-makeotus_mothur <alignment> <mergelog> <threshold>","generate a MOTHUR compatible OTU file at a given threshold");
-  printf("%10s    %s\n","-makerefs <alignment> <otu>","generate a fasta file of OTU representatives. Sequences chosen have the minimum average distance to other sequences in the OTU.");
+  printf("%10s    %s\n","-makereps <alignment> <otu>","generate a fasta file of OTU representatives. Sequences chosen have the minimum average distance to other sequences in the OTU.");
   printf("\n");
 
   printf("Report bugs to: joao.rodrigues@imls.uzh.ch\n");
@@ -153,9 +153,9 @@ void actionMakeOtus()
 }
 
 
-void actionMakeRefs()
+void actionMakeReps()
 {
-  ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" -makerefs <alignment> <otu>");
+  ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" -makereps <alignment> <otu>");
   estrhashof<INDTYPE> seqind;
 
   estrarray uarr;
@@ -181,6 +181,7 @@ void actionMakeRefs()
     otus[otus.size()-1].add(seqind[line]);
   }
 
+  cerr << endl;
   ebasicarray<INDTYPE> uniqind;
   taskman.createThread(nthreads);
 
@@ -215,7 +216,7 @@ void actionMakeRefs()
     cout << ">OTU" << j << " " << arr.keys(k) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
     cout << uarr.values(k) << endl;
   }
-
+  cerr << endl;
 
   exit(0);
 }
@@ -260,7 +261,7 @@ int emain()
   epregister(dfile);
   epregister(ignoreMemThres);
 
-  getParser()->actions.add("makerefs",actionMakeRefs);
+  getParser()->actions.add("makereps",actionMakeReps);
   getParser()->actions.add("makeotus",actionMakeOtus);
   getParser()->actions.add("makeotus_mothur",actionMakeOtusMothur);
   eparseArgs(argvc,argv);
@@ -376,12 +377,14 @@ int emain()
   if (partsTotal>(arr.size()-1l)*arr.size()/20l) partsTotal=(arr.size()-1l)*arr.size()/20l; // make fewer tasks if to few calculations per task
 
   cout << "partsTotal: " << partsTotal << endl;
+  cerr << endl; // needed for keeping track of the progress
 
   for (i=0; i<partsTotal; ++i)
     taskman.addTask(dfunc.value().calcfunc,evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
 
   taskman.createThread(nthreads);
   taskman.wait();
+  cerr << endl;
 
   dtime=t1.lap()*0.001;
   cout << "# time calculating distances: " << dtime << endl;

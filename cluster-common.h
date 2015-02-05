@@ -990,7 +990,8 @@ int t_calc_dists_u(emutex& mutex,ebasicarray<INDTYPE>& uniqind,T& arr,K& dists,i
   mutex.lock();
   dists+=tmpdists;
   float memUsed=dists.size()*sizeof(eseqdist)/1024/1024;
-  cout << "# dists: " << dists.size() << "(" <<memUsed <<"Mb)" << endl;
+  if (isatty(2))
+    fprintf(stderr,"\r# finished: %.1f%% dists: %li (%liMb)",float(node+1)*100.0/tnodes,(long)dists.size(),(long)memUsed);
   if (!warnedMemThres && memUsed >= warnMemThres){
     warnedMemThres=true;
     cout << "# WARNING: Exceeded warnMemThres ("<< warnMemThres <<"Mb) with " << dists.size() << " ("<< memUsed <<"Mb) stored distance pairs" << endl;
