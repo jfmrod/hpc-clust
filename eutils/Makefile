@@ -344,7 +344,7 @@ libeutils_a_SOURCES = $(headers) eutils.cpp ernd.cpp logger.cpp eparser.cpp \
   eoption.h etest.cpp etest.h \
   $(DLSRC) $(WIN32SRC) $(LINUXSRC) $(OSXSRC) $(GMPLIBSRC) $(MPFRLIBSRC)
 
-EXTRA_DIST = m4 bootstrap eutils-config.in eutils.pc.in configure.in eutils.m4
+EXTRA_DIST = m4 bootstrap eutils-config.in eutils.pc.in configure.ac eutils.m4
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
