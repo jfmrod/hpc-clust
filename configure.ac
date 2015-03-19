@@ -1,4 +1,4 @@
-AC_INIT(hpc-clust,1.2.0,joao.rodrigues@imls.uzh.ch)
+AC_INIT(hpc-clust,1.2.1,joao.rodrigues@imls.uzh.ch)
 
 : ${CXXFLAGS=-O3}
 
