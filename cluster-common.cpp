@@ -617,25 +617,56 @@ void load_seqs(const estr& filename,estrarray& arr)
 {
   estr line;
   estr name;
+  estr seq;
   efile f(filename);
 
   int i;
 
+  bool fasta=false;
+  bool firstline=true;
+  int seqlen=0;
+  int lineno=0;
   while (f.readln(line)){
+    ++lineno;
     if (line.len()==0 || line[0]=='#' || line=="//") continue;
     
-    i=line.find(" ");
-    if (i==-1) continue;
-    name=line.substr(0,i);
-    line.del(0,i);
-    line.trim();
-//    if (!arr.exists(name)){
+    if (firstline) { firstline=false; if (line[0]=='>') { fasta=true; cout << "# loading fasta formatted sequence file" << endl; } else { cout << "# loading stockholm formatted sequence file" << endl;} }
+    if (fasta){ // fasta format
+      if (line[0]=='>'){
+        if (name.len()){
+          ldieif(seqlen>0 && seqlen!=seq.len(),"sequence length mismatch. previous lengths: "+estr(seqlen)+" new length: "+estr(seq.len())+" on line: "+estr(lineno));
+          seqlen=seq.len();
+          arr.add(name,seq.uppercase());
+        }
+        i=line.find(" ");
+        if (i==-1) name=line.substr(1);
+        else name=line.substr(1,i-1);
+        seq.clear();
+      }else{
+        line.trim();
+        seq+=line;
+      }
+    }else{ // stockholm non-interleaved format
+      i=line.find(" ");
+      ldieif(i==-1,"space separator not found on line: "+estr(lineno));
+      name=line.substr(0,i);
+      line.del(0,i);
+      line.trim();
+      ldieif(seqlen>0 && seqlen!=line.len(),"sequence length mismatch. previous lengths: "+estr(seqlen)+" new length: "+estr(line.len())+" on line: "+estr(lineno));
+      seqlen=line.len();
       arr.add(name,line.uppercase());
-//      arr[name].reserve(1500);
-//    }else
-//      arr[name]+=line;
+    }
   }
-  cout << "# seqs: " << arr.size() << endl;
+
+  if (fasta){
+    if (name.len()){
+      ldieif(seqlen>0 && seqlen!=seq.len(),"sequence length mismatch. previous lengths: "+estr(seqlen)+" new length: "+estr(seq.len())+" on line: "+estr(lineno));
+      seqlen=seq.len();
+      arr.add(name,seq.uppercase());
+    }
+  }
+
+  cout << "# seqs: " << arr.size() << " seqlen: "<< seqlen<< endl;
 }
 
 void load_seqs(const estr& filename,estrhash& arr)
