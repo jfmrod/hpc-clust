@@ -77,7 +77,7 @@ if test "x$with_mpi" != "xno"; then
         if test "x$no_mpi" = "xyes"; then
           no_mpi=""
           AC_CHECK_HEADER([mpi/mpi.h],,no_mpi=yes)
-          if test "$x$no_mpi" != "xyes"; then
+          if test "x$no_mpi" != "xyes"; then
             CXXFLAGS="${CXXFLAGS} -I/usr/include/mpi"
           fi
         fi

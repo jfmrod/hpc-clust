@@ -13,6 +13,7 @@
 
 #include <list>
 #include <math.h>
+#include <unistd.h>
 
 #include <eutils/ethread.h>
 
@@ -954,6 +955,129 @@ int t_calc_dists(emutex& mutex,T& arr,K& dists,int node,int tnodes,float thres)
   mutex.unlock();
   return(0);
 }
+
+template <class T,class M,float (*fdist)(const estr&,const estr&,int)>
+int part_calc_dists_u(emutex& mutex,ebasicarray<INDTYPE>& uniqind,T& arr,ebasicarray<INDTYPE>& curotuid,int seqlen,long int node,long int tnodes,float thres)
+{
+  long int i,i2,j;
+  long int start,end;
+
+  mutex.lock();
+  ebasicarray<INDTYPE> otuid(curotuid);
+  mutex.unlock();
+
+  start=((long int)(node)*(long int)(uniqind.size()-1l))/(long int)(2l*tnodes);
+  end=((long int)(node+1l)*(long int)(uniqind.size()-1l))/(long int)(2l*tnodes);
+
+//  cout << "start: " << start << " end: " << end << " uniqind.size(): " << uniqind.size() << endl;
+
+  float tmpid,tmpid2,tmpid3;
+
+  long tmpoid,nextoid;
+  long oid_i,oid_j;
+  for (i=start; i<end; ++i){
+    oid_i=otuid[i];
+    if (oid_i!=otuid[oid_i]){
+      for (oid_i=otuid[oid_i]; oid_i!=otuid[oid_i]; oid_i=otuid[oid_i]);
+      for (tmpoid=i; tmpoid!=otuid[tmpoid]; tmpoid=nextoid) { nextoid=otuid[tmpoid]; otuid[tmpoid]=oid_i; }
+    }
+    for (j=i+1; j<uniqind.size(); ++j){
+      oid_j=otuid[j];
+      if (oid_i==oid_j) continue; // skip distances for sequences already in the same otu
+      if (oid_j!=otuid[oid_j]){
+        for (oid_j=otuid[oid_j]; oid_j!=otuid[oid_j]; oid_j=otuid[oid_j]);
+        for (tmpoid=j; tmpoid!=otuid[tmpoid]; tmpoid=nextoid) { nextoid=otuid[tmpoid]; otuid[tmpoid]=oid_j; }
+      }
+      if (oid_i==oid_j) continue; // skip distances for sequences already in the same otu
+      tmpid=fdist(arr[uniqind[i]],arr[uniqind[j]],seqlen);
+      if (tmpid>=thres){
+        otuid[oid_j]=oid_i;
+//        cout << "merge: " << oid_i << " " << oid_j << endl;
+      }
+    }
+    i2=uniqind.size()-i-2l;
+    oid_i=otuid[i2];
+    if (oid_i!=otuid[oid_i]){
+      for (oid_i=otuid[oid_i]; oid_i!=otuid[oid_i]; oid_i=otuid[oid_i]);
+      for (tmpoid=i2; tmpoid!=otuid[tmpoid]; tmpoid=nextoid) { nextoid=otuid[tmpoid]; otuid[tmpoid]=oid_i; }
+    }
+    for (j=i2+1l; j<uniqind.size(); ++j){
+      oid_j=otuid[j];
+      if (oid_i==oid_j) continue; // skip distances for sequences already in the same otu
+      if (oid_j!=otuid[oid_j]){
+        for (oid_j=otuid[oid_j]; oid_j!=otuid[oid_j]; oid_j=otuid[oid_j]);
+        for (tmpoid=j; tmpoid!=otuid[tmpoid]; tmpoid=nextoid) { nextoid=otuid[tmpoid]; otuid[tmpoid]=oid_j; }
+      }
+      if (oid_i==oid_j) continue; // skip distances for sequences already in the same otu
+      tmpid=fdist(arr[uniqind[i2]],arr[uniqind[j]],seqlen);
+      if (tmpid>=thres){
+        otuid[oid_j]=oid_i;
+//        cout << "merge: " << oid_i << " " << oid_j << endl;
+      }
+    }
+  }
+  if (node==tnodes-1l && uniqind.size()%2==0){
+    i=uniqind.size()/2-1l;
+    oid_i=otuid[i];
+    if (oid_i!=otuid[oid_i]){
+      for (oid_i=otuid[oid_i]; oid_i!=otuid[oid_i]; oid_i=otuid[oid_i]);
+      for (tmpoid=i; tmpoid!=otuid[tmpoid]; tmpoid=nextoid) { nextoid=otuid[tmpoid]; otuid[tmpoid]=oid_i; }
+    }
+    for (j=i+1l; j<uniqind.size(); ++j){
+      oid_j=otuid[j];
+      if (oid_i==oid_j) continue; // skip distances for sequences already in the same otu
+      if (oid_j!=otuid[oid_j]){
+        for (oid_j=otuid[oid_j]; oid_j!=otuid[oid_j]; oid_j=otuid[oid_j]);
+        for (tmpoid=j; tmpoid!=otuid[tmpoid]; tmpoid=nextoid) { nextoid=otuid[tmpoid]; otuid[tmpoid]=oid_j; }
+      }
+      if (oid_i==oid_j) continue; // skip distances for sequences already in the same otu
+      tmpid=fdist(arr[uniqind[i]],arr[uniqind[j]],seqlen);
+      if (tmpid>=thres){
+        otuid[oid_j]=oid_i;
+//        cout << "merge: " << oid_i << " " << oid_j << endl;
+      }
+    }
+  }
+  // update list of membership
+  long notucount=0l;
+  for (long i=0; i<otuid.size(); ++i){
+    oid_i=otuid[i];
+    if (i==oid_i){ ++notucount; continue; }
+    for (oid_i=otuid[oid_i]; oid_i!=otuid[oid_i]; oid_i=otuid[oid_i]);
+    for (tmpoid=i; tmpoid!=otuid[tmpoid]; tmpoid=nextoid) { nextoid=otuid[tmpoid]; otuid[tmpoid]=oid_i; }
+  }
+  mutex.lock();
+  long noid;
+  for (long i=0; i<otuid.size(); ++i){
+    if (otuid[i]==curotuid[i] || i==otuid[i]) continue; //unchanged otuid
+    // do not change otuid's, but change final oid of curotuid 
+//    cout << "difference found: " << i << " " << otuid[i] << " " << curotuid[i] << endl;
+
+    for (oid_i=curotuid[i]; oid_i!=curotuid[oid_i]; oid_i=curotuid[oid_i]);
+
+    noid=otuid[i];
+    do {
+      for (oid_j=curotuid[noid]; oid_j!=curotuid[oid_j]; oid_j=curotuid[oid_j]);
+      if (oid_j==oid_i) break;
+//      cout << "setting: " << oid_j << " to: " << oid_i << endl;
+      curotuid[oid_j]=oid_i;
+      noid=oid_j;
+    } while (1);
+  }
+  // update all otu ids
+  long otucount=0;
+  for (long i=0; i<curotuid.size(); ++i){
+    oid_i=curotuid[i];
+    if (i==oid_i) { ++otucount; continue; }
+    for (oid_i=curotuid[oid_i]; oid_i!=curotuid[oid_i]; oid_i=curotuid[oid_i]);
+    for (tmpoid=i; tmpoid!=curotuid[tmpoid]; tmpoid=nextoid) { nextoid=curotuid[tmpoid]; curotuid[tmpoid]=oid_i; }
+  }
+  if (isatty(2))
+    fprintf(stderr,"\r# finished: %.1f%% %li %li %li %li",float(node+1)*100.0/tnodes,otucount,notucount,otuid.size(),curotuid.size());
+  mutex.unlock();
+  return(0);
+}
+
 
 template <class T,class M,class K,float (*fdist)(const estr&,const estr&,int)>
 int t_calc_dists_u(emutex& mutex,ebasicarray<INDTYPE>& uniqind,T& arr,K& dists,int seqlen,long int node,long int tnodes,float thres)

@@ -25,6 +25,7 @@ estrarray arr;
 unsigned totaldists;
 
 int seqlen=0;
+bool ignoreUnique=false;
 
 float radixKey(eblockarray<eseqdist>& dists,long int i)
 {
@@ -91,12 +92,38 @@ class edistfunc
   edistfunc(const efunc& _calcfunc,t_dfunc _calcfunc_single): calcfunc(_calcfunc),calcfunc_single(_calcfunc_single) {}
 };
 
+eoption<edistfunc> dfuncpart;
 eoption<edistfunc> dfunc;
 etaskman taskman;
 
 int nthreads=4;
 int winlen=70;
 float t=0.90;
+
+void finduniq(ebasicarray<INDTYPE>& uniqind,earray<ebasicarray<INDTYPE> >& dupslist)
+{
+  ebasicstrhashof<long> duphash;
+  ebasicstrhashof<long>::iter it;
+  if (!ignoreUnique){
+    duphash.reserve(arr.size());
+    for (long i=0; i<arr.size(); ++i){
+      if (i%1000==0)
+        fprintf(stderr,"\r%li/%li",i,(long)arr.size());
+      it=duphash.get(arr.values(i));
+      if (it==duphash.end())
+        { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(ebasicarray<INDTYPE>(i)); }
+      else 
+        dupslist[it.value()].add(i);
+    }
+    fprintf(stderr,"\r%li\n",(long)arr.size());
+  }else{
+    uniqind.init(arr.size());
+    for (long i=0; i<uniqind.size(); ++i)
+      uniqind[i]=i;
+  }
+  cout << endl;
+}
+
 
 void actionMakeOtusMothur()
 {
@@ -168,6 +195,7 @@ void actionMakeReps()
 
   efile f;
   estr line;
+  estrarray parts;
   f.open(argv[2],"r");
   while (!f.eof()){
     f.readln(line);
@@ -177,12 +205,25 @@ void actionMakeReps()
       continue;
     }
     ldieif(otus.size()==0,"first entry not start of OTU or missing '>'");
-    ldieif(!seqind.exists(line),"sequence not found: "+line);
-    otus[otus.size()-1].add(seqind[line]);
+    parts=line.explode("\t");
+    ldieif(parts.size()==0,"array empty: "+line);
+    ldieif(!seqind.exists(parts[0]),"sequence not found: "+parts[0]);
+    otus[otus.size()-1].add(seqind[parts[0]]);
   }
 
   cerr << endl;
+
   ebasicarray<INDTYPE> uniqind;
+  earray<ebasicarray<INDTYPE> > dupslist;
+  finduniq(uniqind,dupslist);
+
+  eintarray uniqmask;
+  uniqmask.init(arr.size(),0);
+  for (long i=0; i<uniqind.size(); ++i)
+    uniqmask[uniqind[i]]=1;
+
+
+//  ebasicarray<INDTYPE> uniqind;
   taskman.createThread(nthreads);
 
   efloatarray avgdist;
@@ -193,7 +234,12 @@ void actionMakeReps()
       cout << uarr.values(otus[j][0]) << endl;
       continue;
     }
-    uniqind=otus[j];
+    uniqind.clear();
+    for (long l=0; l<otus[j].size(); ++l){
+      if (uniqmask[otus[j][l]]==1)
+        uniqind.add(otus[j][l]);
+    }
+//    uniqind=otus[j];
     avgdist.init(arr.size(),0.0);
     dists.clear();
   
@@ -221,6 +267,65 @@ void actionMakeReps()
   exit(0);
 }
 
+void actionMakePart()
+{
+  ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" -makepart <alignment> <cutoff>");
+
+  cout << "# loading seqs file: " << argv[1] << endl;
+  load_seqs_compressed(argv[1],arr,seqlen);
+
+  t=estr(argv[2]).f();
+
+  ebasicarray<INDTYPE> uniqind;
+  earray<ebasicarray<INDTYPE> > dupslist;
+  finduniq(uniqind,dupslist);
+  cout << "# unique seqs: " << uniqind.size() << endl;
+
+  ebasicarray<INDTYPE> otuid;
+  otuid.reserve(uniqind.size());
+  for (long i=0l; i<uniqind.size(); ++i)
+    otuid.add(i);
+
+  cout << "# computing partitions. threshold: " << t << endl;
+  if (partsTotal>(arr.size()-1l)*arr.size()/20l) partsTotal=(arr.size()-1l)*arr.size()/20l; // make fewer tasks if to few calculations per task
+//  partsTotal=1;
+  for (long i=0; i<partsTotal; ++i)
+    taskman.addTask(dfuncpart.value().calcfunc,evararray(mutex,uniqind,arr,otuid,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
+
+  taskman.createThread(nthreads);
+  taskman.wait();
+
+  cout << endl;
+
+  ebasicarray<INDTYPE> newotuid;
+  earray<ebasicarray<INDTYPE> > otus;
+  newotuid.init(otuid.size(),-1l);
+  long otucount=0;
+  for (long i=0; i<otuid.size(); ++i){
+    if (newotuid[otuid[i]]==-1l){
+      newotuid[otuid[i]]=otucount;
+      otus.add(ebasicarray<INDTYPE>());
+      ++otucount;
+    }
+    otuid[i]=newotuid[otuid[i]];
+    otus[otuid[i]].add(i);
+  }
+  cout << "# partitions: " << otus.size() << endl;
+
+  for (long i=0; i<otus.size(); ++i){
+    cout << otus[i].size() << ":";
+    for (long j=0; j<otus[i].size(); ++j){
+//      cout << " " << uniqind[otus[i][j]];
+      for (long k=0; k<dupslist[otus[i][j]].size(); ++k)
+        cout << " " << dupslist[otus[i][j]][k];
+    }
+    cout << endl;
+  }
+
+  exit(0);
+}
+
+
 int emain()
 { 
   bool cl=false;
@@ -232,6 +337,15 @@ int emain()
   epregister(al);
   epregister(cdist);
   epregisterFunc(help);
+
+  dfuncpart.choice=0;
+  dfuncpart.add("gap",edistfunc(part_calc_dists_u<estrarray,eseqdist,dist_compressed2>,dist_compressed2));
+  dfuncpart.add("nogap",edistfunc(part_calc_dists_u<estrarray,eseqdist,dist_nogap_compressed2>,dist_nogap_compressed2));
+  dfuncpart.add("gap2",edistfunc(part_calc_dists_u<estrarray,eseqdist,dist_compressed>,dist_compressed));
+  dfuncpart.add("nogap2",edistfunc(part_calc_dists_u<estrarray,eseqdist,dist_nogap_compressed>,dist_nogap_compressed));
+  dfuncpart.add("nogapsingle",edistfunc(part_calc_dists_u<estrarray,eseqdist,dist_nogapsingle_compressed>,dist_nogapsingle_compressed));
+  dfuncpart.add("tamura",edistfunc(part_calc_dists_u<estrarray,eseqdist,dist_tamura_compressed>,dist_tamura_compressed));
+  epregister(dfuncpart);
 
   dfunc.choice=0;
   dfunc.add("gap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed2>,dist_compressed2));
@@ -252,7 +366,6 @@ int emain()
   estr dfile;
   estr dupfile;
 
-  bool ignoreUnique=false;
   epregister(dupfile);
   epregister(ignoreUnique);
   epregister(t);
@@ -264,6 +377,7 @@ int emain()
   getParser()->actions.add("makereps",actionMakeReps);
   getParser()->actions.add("makeotus",actionMakeOtus);
   getParser()->actions.add("makeotus_mothur",actionMakeOtusMothur);
+  getParser()->actions.add("makepart",actionMakePart);
   eparseArgs(argvc,argv);
 
 //  cout << "# initializing identity lookup table" << endl;
@@ -316,28 +430,9 @@ int emain()
   ldieif(arr.size() > (2l<<31),"To cluster more than 2 million sequences please recompile hpc-clust with the --enable-longind flag.");
 #endif
 
-  ebasicstrhashof<long> duphash;
-  ebasicstrhashof<long>::iter it;
   ebasicarray<INDTYPE> uniqind;
   earray<ebasicarray<INDTYPE> > dupslist;
-  if (!ignoreUnique){
-    duphash.reserve(arr.size());
-    for (i=0; i<arr.size(); ++i){
-      if (i%1000==0)
-        fprintf(stderr,"\r%li/%li",i,(long)arr.size());
-      it=duphash.get(arr.values(i));
-      if (it==duphash.end())
-        { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(ebasicarray<INDTYPE>(i)); }
-      else 
-        dupslist[it.value()].add(i);
-    }
-    fprintf(stderr,"\r%li\n",(long)arr.size());
-  }else{
-    uniqind.init(arr.size());
-    for (i=0; i<uniqind.size(); ++i)
-      uniqind[i]=i;
-  }
-  cout << endl;
+  finduniq(uniqind,dupslist);
   cout << "# unique seqs: " << uniqind.size() << endl;
 
 
@@ -376,7 +471,7 @@ int emain()
 //  if ((arr.size()-1l)*arr.size()/2l/partsTotal > 10000l) partsTotal=(arr.size()-1l)*arr.size()/2l/10000l;  // make more tasks if too many calculations per task
   if (partsTotal>(arr.size()-1l)*arr.size()/20l) partsTotal=(arr.size()-1l)*arr.size()/20l; // make fewer tasks if to few calculations per task
 
-  cout << "partsTotal: " << partsTotal << endl;
+//  cout << "partsTotal: " << partsTotal << endl;
   cerr << endl; // needed for keeping track of the progress
 
   for (i=0; i<partsTotal; ++i)
