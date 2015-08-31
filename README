@@ -50,10 +50,18 @@ For bugs and more information contact: Joao F. Matias Rodrigues <joao.rodrigues@
 1. INSTALLATION
 =================================================
 
-i) Linux/Unix/MacOSX
+You can get the source code or binary packages at:
 
-To install HPC-CLUST on a linux, unix, or MacOSX simply type:
+http://meringlab.org/software/hpc-clust/
 
+or clone it using git using the command:
+
+git clone https://github.com/jfmrod/hpc-clust.git
+
+
+i) To compile on Linux/Unix/MacOSX type the following in the source directory
+
+./bootstrap     # this step is only needed if you cloned the repository, you will also need to install autotools/autoconf packages
 ./configure
 make
 make install
