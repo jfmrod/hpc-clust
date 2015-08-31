@@ -92,8 +92,9 @@ void eseqcluster::init(INDTYPE count,const estr& ofilename,const estr& seqsfile,
     }
   }
   cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
-  cout << "# initializing smatrix with: " << (long)(count)*(long)(count)/(long)(20000)<< " elements" << endl; 
-  smatrix.reserve((long)(count)*(long)(count)/(long)(20000));
+  INDTYPE ucount=dupslist.size()*dupstlist.size()/20000l/2l;
+  cout << "# initializing smatrix with: " << ucount << " elements" << endl; 
+  smatrix.reserve(ucount);
 //  cout << "# smatrix._hashitems = " << smatrix._hashitems << endl;
 }
 
