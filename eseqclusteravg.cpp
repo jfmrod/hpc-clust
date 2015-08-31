@@ -71,7 +71,7 @@ void eseqclusteravg::init(INDTYPE count,const estr& filename,const estr& seqsfil
     }
   }
   cout << "# initializing cluster with: "<< count<< " seqs" << endl; 
-  INDTYPE ucount=dupslist.size()*dupstlist.size()/20000l/2l;
+  INDTYPE ucount=dupslist.size()*dupslist.size()/20000l/2l;
   cout << "# initializing smatrix with: " << ucount << " elements" << endl; 
   smatrix.reserve(ucount);
 //  cout << "# smatrix._hashitems = " << smatrix._hashitems << endl;
