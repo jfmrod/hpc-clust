@@ -213,19 +213,21 @@ void actionMakeReps()
 
   cerr << endl;
 
-  ebasicarray<INDTYPE> uniqind;
+  ebasicarray<INDTYPE> tuniqind;
   earray<ebasicarray<INDTYPE> > dupslist;
-  finduniq(uniqind,dupslist);
+  finduniq(tuniqind,dupslist);
 
   eintarray uniqmask;
   uniqmask.init(arr.size(),0);
-  for (long i=0; i<uniqind.size(); ++i)
-    uniqmask[uniqind[i]]=1;
+  for (long i=0; i<tuniqind.size(); ++i)
+    uniqmask[tuniqind[i]]=dupslist[i].size();
 
 
 //  ebasicarray<INDTYPE> uniqind;
   taskman.createThread(nthreads);
 
+  ebasicarray<INDTYPE> uniqind;
+  const float t=0.0;
   efloatarray avgdist;
   for (long j=0; j<otus.size(); ++j){
 //    cout << "# computing distances for otu "<< j << " size: " << otus[j].size() <<  endl;
@@ -236,31 +238,47 @@ void actionMakeReps()
     }
     uniqind.clear();
     for (long l=0; l<otus[j].size(); ++l){
-      if (uniqmask[otus[j][l]]==1)
+      if (uniqmask[otus[j][l]]!=0)
         uniqind.add(otus[j][l]);
     }
 //    uniqind=otus[j];
+    ldieif(uniqind.size()==0,"empty OTU");
+
+    if (uniqind.size()==1){
+      cout << ">OTU" << j << " " << arr.keys(uniqind[0]) << " avg_id=1.0 otu_size=" << otus[j].size() << endl;
+      cout << uarr.values(uniqind[0]) << endl;
+      continue;
+    }
+    avgdist.clear();
     avgdist.init(arr.size(),0.0);
     dists.clear();
   
     partsTotal=10000;
     if (partsTotal>(uniqind.size()-1l)*uniqind.size()/20l) partsTotal=(uniqind.size()-1l)*uniqind.size()/20l; // make fewer tasks if to few calculations per task
     if (partsTotal<=0) partsTotal=1;
-
+    
     taskman.clear();
     for (long i=0; i<partsTotal; ++i)
-      taskman.addTask(dfunc.value().calcfunc,evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)0.0,(const int&)winlen));
+      taskman.addTask(dfunc.value().calcfunc,evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
     taskman.wait();
     for (long i=0; i<dists.size(); ++i){
-      avgdist[dists[i].x]+=dists[i].dist;
-      avgdist[dists[i].y]+=dists[i].dist;
+      eseqdist& d(dists[i]);
+      avgdist[d.x]+=d.dist*uniqmask[d.y];
+      avgdist[d.y]+=d.dist*uniqmask[d.x];
+//      cout << "# "<< arr.keys(d.x) << " " << arr.keys(d.y) << " " << d.dist << " " << uniqmask[d.x] << " " << uniqmask[d.y] << endl;
     }
-    long k=0;
-    for (long i=1; i<avgdist.size(); ++i)
-      if (avgdist[k]<avgdist[i]) k=i;
+    long k=uniqind[0];
+    for (long i=0; i<uniqind.size(); ++i){
+      long ti=uniqind[i];
+      avgdist[ti]+=uniqmask[ti]-1;
+      if (avgdist[k]<avgdist[ti]) {
+//        cout << "# " << arr.keys(ti) << " " << ti << " " << uniqmask[ti] << " " << avgdist[ti] << " " << counts[ti] << endl;
+        k=ti;
+      }
+    }
 //    cout << "OTU" << j << " " << otus[j].size() << " " << arr.keys(k) << " " << avgdist[k]/(otus[j].size()-1) << " " << dists.size() << endl;
-    cout << ">OTU" << j << " " << arr.keys(uniqind[k]) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
-    cout << uarr.values(uniqind[k]) << endl;
+    cout << ">OTU" << j << " " << arr.keys(k) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
+    cout << uarr.values(k) << endl;
   }
   cerr << endl;
 
