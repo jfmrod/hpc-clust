@@ -259,8 +259,8 @@ void actionMakeReps()
     for (long i=1; i<avgdist.size(); ++i)
       if (avgdist[k]<avgdist[i]) k=i;
 //    cout << "OTU" << j << " " << otus[j].size() << " " << arr.keys(k) << " " << avgdist[k]/(otus[j].size()-1) << " " << dists.size() << endl;
-    cout << ">OTU" << j << " " << arr.keys(k) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
-    cout << uarr.values(k) << endl;
+    cout << ">OTU" << j << " " << arr.keys(uniqind[k]) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
+    cout << uarr.values(uniqind[k]) << endl;
   }
   cerr << endl;
 
