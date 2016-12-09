@@ -520,12 +520,12 @@ void help()
 int emain()
 {
   dfunc.choice=0;
-  dfunc.add("gap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed2>,dist_compressed2));
-  dfunc.add("nogap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>,dist_nogap_compressed2));
-  dfunc.add("gap2",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>,dist_compressed));
-  dfunc.add("nogap2",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>,dist_nogap_compressed));
-  dfunc.add("nogapsingle",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>,dist_nogapsingle_compressed));
-  dfunc.add("tamura",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>,dist_tamura_compressed));
+  dfunc.add("gap",edistfunc(t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed2>,dist_compressed2));
+  dfunc.add("nogap",edistfunc(t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>,dist_nogap_compressed2));
+  dfunc.add("gap2",edistfunc(t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_compressed>,dist_compressed));
+  dfunc.add("nogap2",edistfunc(t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>,dist_nogap_compressed));
+  dfunc.add("nogapsingle",edistfunc(t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>,dist_nogapsingle_compressed));
+  dfunc.add("tamura",edistfunc(t_calc_dists_u<earray<estr>,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>,dist_tamura_compressed));
 
   epregisterClass(eoption<edistfunc>);
   epregisterClassMethod4(eoption<edistfunc>,operator=,int,(const estr& val),"=");
