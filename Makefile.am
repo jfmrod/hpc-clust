@@ -11,10 +11,12 @@ TESTS=tests/single-al.sh tests/single-sl.sh tests/mpi-sl.sh
 #man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
 dist_man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
 
-bin_PROGRAMS=hpc-clust $(MPIBIN)
+bin_PROGRAMS=hpc-clust $(MPIBIN) # denoiser
 
 LIBS=`eutils/eutils-config --libs`
 EXTRA_DIST=make-otus-mothur.sh make-otus.sh examples/aligned-archaea-seqs.sto manual/hpc-clust-manual.tex manual/hpc-clust-manual.pdf
+
+# denoiser_SOURCES=denoiser.cpp ekmerhashmap.h ekmerhashmap_dec.h
 
 hpc_clust_SOURCES=hpc-clust.cpp cluster-common.h cluster-common.cpp eseqcluster.h eseqcluster.cpp eseqclusterdata.h eseqclusterdata.cpp eseq.h eseq.cpp eseqclustercount.h eseqclustercount.cpp eseqclustersingle.h eseqclustersingle.cpp eseqclusteravg.h eseqclusteravg.cpp lookuptables.h lookuptables.cpp
 

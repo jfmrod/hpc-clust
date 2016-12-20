@@ -1,4 +1,4 @@
 #!/bin/bash
 
-autoreconf -fi
-aclocal -I m4 && autoconf && automake -a
+autoreconf -vfi -I m4
+#aclocal -I m4 && autoconf && automake -a

@@ -309,10 +309,10 @@ void eseqclusteravg::finalize()
       mergeComplete(lastdist);
     }
     double avgdist=0.0;
-    std::list<long> &arr(incluster[incmaxit->x]);
-    std::list<long> &arr2(incluster[incmaxit->y]);
-    for (std::list<long>::iterator i=arr.begin(); i!=arr.end(); ++i){
-      for (std::list<long>::iterator j=arr2.begin(); j!=arr2.end(); ++j){
+    std::list<INDTYPE> &arr(incluster[incmaxit->x]);
+    std::list<INDTYPE> &arr2(incluster[incmaxit->y]);
+    for (std::list<INDTYPE>::iterator i=arr.begin(); i!=arr.end(); ++i){
+      for (std::list<INDTYPE>::iterator j=arr2.begin(); j!=arr2.end(); ++j){
 //        cout << "dist: " << *i << "," << *j << ": " << fdist(*i,*j) << endl;
         avgdist+=fdist((*seqarr).values(*i),(*seqarr).values(*j),seqlen);
       }

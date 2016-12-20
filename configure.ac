@@ -102,9 +102,9 @@ fi
 AM_CONDITIONAL(HAVE_MPILIB, test "x$no_mpi" != "xyes" -a "x$with_mpi" != "xno")
 
 
-AC_ARG_ENABLE(longind,[AS_HELP_STRING([--enable-longind],[Use 64bit indices. Allows clustering more than 2million sequences but requires almost double the memory per stored distance.])],,enable_longind=yes)
+AC_ARG_ENABLE(longind,[AS_HELP_STRING([--enable-longind],[Use 64bit indices. Allows clustering more than 2million sequences but requires almost double the memory per stored distance.])],,enable_longind=no)
 if test "x$enable_longind" != "xno"; then
-  echo "Compiling support for more than 2 million sequences"
+  echo "Compiling support for more than 2 billion sequences"
   AC_DEFINE_UNQUOTED(USE_LONGIND,1,[define when using 64bit indices])
 fi
 
