@@ -191,7 +191,7 @@ void actionMakeReps()
   load_seqs_compressed(argv[1],arr,seqind,seqlen);
   load_seqs(argv[1],uarr);
 
-  earray<ebasicarray<INDTYPE> > otus;
+  estrarrayof<ebasicarray<INDTYPE> > otus;
 
   efile f;
   estr line;
@@ -201,7 +201,7 @@ void actionMakeReps()
     f.readln(line);
     if (line.len()==0 || line[0]=='#') continue;
     if (line[0]=='>'){
-      otus.add(ebasicarray<INDTYPE>());
+      otus.add(line,ebasicarray<INDTYPE>());
       continue;
     }
     ldieif(otus.size()==0,"first entry not start of OTU or missing '>'");
@@ -232,7 +232,7 @@ void actionMakeReps()
   for (long j=0; j<otus.size(); ++j){
 //    cout << "# computing distances for otu "<< j << " size: " << otus[j].size() <<  endl;
     if (otus[j].size()==1){
-      cout << ">OTU" << j << " " << arr.keys(otus[j][0]) << " avg_id=1.0 otu_size=1" << endl;
+      cout << otus.keys(j) << " " << arr.keys(otus[j][0]) << " avg_id=1.0 otu_size=1" << endl;
       cout << uarr.values(otus[j][0]) << endl;
       continue;
     }
@@ -245,7 +245,7 @@ void actionMakeReps()
     ldieif(uniqind.size()==0,"empty OTU");
 
     if (uniqind.size()==1){
-      cout << ">OTU" << j << " " << arr.keys(uniqind[0]) << " avg_id=1.0 otu_size=" << otus[j].size() << endl;
+      cout << otus.keys(j) << " " << arr.keys(uniqind[0]) << " avg_id=1.0 otu_size=" << otus[j].size() << endl;
       cout << uarr.values(uniqind[0]) << endl;
       continue;
     }
@@ -277,7 +277,7 @@ void actionMakeReps()
       }
     }
 //    cout << "OTU" << j << " " << otus[j].size() << " " << arr.keys(k) << " " << avgdist[k]/(otus[j].size()-1) << " " << dists.size() << endl;
-    cout << ">OTU" << j << " " << arr.keys(k) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
+    cout << otus.keys(j) << " " << arr.keys(k) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
     cout << uarr.values(k) << endl;
   }
   cerr << endl;
