@@ -12,19 +12,45 @@
 #include "cluster-common.h"
 #include "eseqclusteravg.h"
 
-eblockarray<eseqdist> dists;
+//eblockarray<eseqdist> dists;
 
 eseqcluster clcluster; // complete linkage
 eseqclustersingle slcluster; // single linkage
 eseqclusteravg alcluster; // avg linkage
 
-long partsFinished=0;
-long partsTotal=10000;
+typedef float (*t_dfunc)(const estr&,const estr&,int);
 
-estrarray arr;
+class edistfunc
+{
+ public:
+  efunc calcfunc;
+  t_dfunc calcfunc_single;
+  edistfunc(const efunc& _calcfunc,t_dfunc _calcfunc_single): calcfunc(_calcfunc),calcfunc_single(_calcfunc_single) {}
+  edistfunc(): calcfunc_single(0x00) {}
+};
+
+struct emtdata {
+  emutex m;
+  edistfunc dfunc;
+//  t_dfunc fdist;
+  estrarray arr;
+  ebasicarray<INDTYPE> uniqind;
+  eblockarray<eseqdist> dists;
+  int seqlen;
+  float thres;
+
+  long taskTotal;
+  long taskCurrent;
+  emtdata(): seqlen(0),thres(0.0),taskTotal(0),taskCurrent(0) {}
+} mtdata;
+
+//long partsFinished=0;
+//long partsTotal=10000;
+
+//estrarray arr;
 unsigned totaldists;
 
-int seqlen=0;
+//int seqlen=0;
 bool ignoreUnique=false;
 
 float radixKey(eblockarray<eseqdist>& dists,long int i)
@@ -32,17 +58,17 @@ float radixKey(eblockarray<eseqdist>& dists,long int i)
   return(dists[i].dist);
 }
 
-estr args2str(int argvc,char **argv)
+estr args2str()
 {
   estr tmpstr;
   int i;
-  for (i=0; i<argvc; ++i)
-    tmpstr+=estr(argv[i])+" ";
+  for (i=0; i<getParser().args.size(); ++i)
+    tmpstr+=getParser().args[i]+" ";
   tmpstr.del(-1);
   return(tmpstr);
 }
 
-emutex mutex;
+//emutex mutex;
 
 
 void help()
@@ -53,7 +79,7 @@ void help()
   printf("Matias Rodrigues JF, Mering C von. HPC-CLUST: Distributed hierarchical clustering for very large sets of nucleotide sequences. Bioinformatics. 2013.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("    %s [...] <-sl true|-cl true|-al true> alignedseqs.fa\n",efile(argv[0]).basename()._str);
+  printf("    %s [...] <-sl true|-cl true|-al true> alignedseqs.fa\n",efile(getParser().args[0]).basename()._str);
   printf("\n");
   printf("Clusters a set of multiple aligned sequences in fasta or stockholm format to a given threshold.\n");
   printf("Example: hpc-clust -nthreads 4 -t 0.8 -dfunc gap -sl true alignedseqs.fa\n"); 
@@ -71,6 +97,7 @@ void help()
   printf("\n");
 
   printf("After clustering:\n");
+  printf("%10s    %s\n","-makeotax <alignment> <mergelog> [threshold1] [threshold2] [...]","generate a hierarchical operational taxonomy at given thresholds");
   printf("%10s    %s\n","-makeotus <alignment> <mergelog> <threshold>","generate an OTU file at a given threshold");
   printf("%10s    %s\n","-makeotus_mothur <alignment> <mergelog> <threshold>","generate a MOTHUR compatible OTU file at a given threshold");
   printf("%10s    %s\n","-makereps <alignment> <otu>","generate a fasta file of OTU representatives. Sequences chosen have the minimum average distance to other sequences in the OTU.");
@@ -82,19 +109,9 @@ void help()
   exit(0);
 }
 
-typedef float (*t_dfunc)(const estr&,const estr&,int);
-
-class edistfunc
-{
- public:
-  efunc calcfunc;
-  t_dfunc calcfunc_single;
-  edistfunc(const efunc& _calcfunc,t_dfunc _calcfunc_single): calcfunc(_calcfunc),calcfunc_single(_calcfunc_single) {}
-};
-
 eoption<edistfunc> dfuncpart;
 eoption<edistfunc> dfunc;
-etaskman taskman;
+ethreads taskman;
 
 int nthreads=4;
 int winlen=70;
@@ -105,23 +122,36 @@ void finduniq(ebasicarray<INDTYPE>& uniqind,earray<ebasicarray<INDTYPE> >& dupsl
   ebasicstrhashof<long> duphash;
   ebasicstrhashof<long>::iter it;
   if (!ignoreUnique){
-    duphash.reserve(arr.size());
-    for (long i=0; i<arr.size(); ++i){
+    duphash.reserve(mtdata.arr.size());
+    for (long i=0; i<mtdata.arr.size(); ++i){
       if (i%1000==0)
-        fprintf(stderr,"\r%li/%li",i,(long)arr.size());
-      it=duphash.get(arr.values(i));
+        fprintf(stderr,"\r%li/%li",i,(long)mtdata.arr.size());
+      it=duphash.get(mtdata.arr.values(i));
       if (it==duphash.end())
-        { uniqind.add(i); duphash.add(arr.values(i),uniqind.size()-1); dupslist.add(ebasicarray<INDTYPE>(i)); }
+        { uniqind.add(i); duphash.add(mtdata.arr.values(i),uniqind.size()-1); dupslist.add(ebasicarray<INDTYPE>(i)); }
       else 
         dupslist[it.value()].add(i);
     }
-    fprintf(stderr,"\r%li\n",(long)arr.size());
+    fprintf(stderr,"\r%li\n",(long)mtdata.arr.size());
   }else{
-    uniqind.init(arr.size());
+    uniqind.init(mtdata.arr.size());
     for (long i=0; i<uniqind.size(); ++i)
       uniqind[i]=i;
   }
   cout << endl;
+}
+
+void taskComputeDist()
+{
+//   taskman.addTask(dfunc.value().calcfunc,evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
+//  calcfunc(mutex,uniqind,arr,dists,
+  while (1){
+    mtdata.m.lock();
+    if (mtdata.taskCurrent==mtdata.taskTotal) { mtdata.m.unlock(); return; }
+    mtdata.m.unlock();
+
+    mtdata.dfunc.calcfunc.call(evararray(evarRef(mtdata)));
+  }
 }
 
 
@@ -129,13 +159,13 @@ void actionMakeOtusMothur()
 {
   estrarray uarr;
   eseqclusterData cdata;
-  ldieif(argvc<4,"syntax: "+efile(argv[0]).basename()+" -makeotus_mothur <alignment> <mergelog> <cutoff>");
+  ldieif(getParser().args.size()<4,"syntax: "+efile(getParser().args[0]).basename()+" -makeotus_mothur <alignment> <mergelog> <cutoff>");
 
-  cout << "# loading seqs file: " << argv[1] << endl;
-  load_seqs(argv[1],uarr);
-  cdata.load(argv[2],uarr.size());
+  cout << "# loading seqs file: " << getParser().args[1] << endl;
+  load_seqs(getParser().args[1],uarr);
+  cdata.load(getParser().args[2],uarr.size());
 
-  float t=estr(argv[3]).f();
+  float t=estr(getParser().args[3]).f();
   earray<eintarray> otuarr;
   cdata.getOTU(t,otuarr,uarr.size());
 
@@ -156,17 +186,59 @@ void actionMakeOtusMothur()
   exit(0);
 }
 
+void actionMakeOtax()
+{
+  estrarray uarr;
+  eseqclusterData cdata;
+  ldieif(getParser().args.size()<4,"syntax: "+efile(getParser().args[0]).basename()+" -makeotax <alignment> <mergelog> [threshold1] [threshold2] [...]");
+
+  cout << "# loading seqs file: " << getParser().args[1] << endl;
+  load_seqs(getParser().args[1],uarr);
+  cdata.load(getParser().args[2],uarr.size());
+  earray<eintarray> seqot;
+  efloatarray thres;
+
+  seqot.init(uarr.size());
+
+  for (int l=3; l<getParser().args.size(); ++l){
+    thres.add(getParser().args[l].f());
+  }
+
+  for (int l=0; l<thres.size(); ++l){
+    float t=thres[l]; 
+    earray<eintarray> otuarr;
+    cdata.getOTU(t,otuarr,uarr.size());
+    for (long i=0; i<otuarr.size(); ++i){
+//      cout << ">OTU" << i << " otu_size="<< otuarr[i].size() << endl;
+      for (long j=0; j<otuarr[i].size(); ++j){
+//        cout << uarr.keys(otuarr[i][j]) << endl;
+        seqot[otuarr[i][j]].add(i);
+      }
+    }
+  }
+
+  estr otax;
+  for (int i=0; i<seqot.size(); ++i){
+    otax.clear();
+    for (int j=0; j<seqot[i].size(); ++j)
+      otax+=strprintf("%.0f_%i;",roundf(thres[j]*100.0),seqot[i][j]);
+    cout << uarr.keys(i) << "\t" << otax.substr(0,-2) << endl;
+  }
+
+  exit(0);
+}
+
 void actionMakeOtus()
 {
   estrarray uarr;
   eseqclusterData cdata;
-  ldieif(argvc<4,"syntax: "+efile(argv[0]).basename()+" -makeotus <alignment> <mergelog> <cutoff>");
+  ldieif(getParser().args.size()<4,"syntax: "+efile(getParser().args[0]).basename()+" -makeotus <alignment> <mergelog> <cutoff>");
 
-  cout << "# loading seqs file: " << argv[1] << endl;
-  load_seqs(argv[1],uarr);
-  cdata.load(argv[2],uarr.size());
+  cout << "# loading seqs file: " << getParser().args[1] << endl;
+  load_seqs(getParser().args[1],uarr);
+  cdata.load(getParser().args[2],uarr.size());
 
-  float t=estr(argv[3]).f();
+  float t=getParser().args[3].f();
   earray<eintarray> otuarr;
   cdata.getOTU(t,otuarr,uarr.size());
 
@@ -182,21 +254,21 @@ void actionMakeOtus()
 
 void actionMakeReps()
 {
-  ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" -makereps <alignment> <otu>");
+  ldieif(getParser().args.size()<3,"syntax: "+efile(getParser().args[0]).basename()+" -makereps <alignment> <otu>");
   estrhashof<INDTYPE> seqind;
 
   estrarray uarr;
 
-  cout << "# loading seqs file: " << argv[1] << endl;
-  load_seqs_compressed(argv[1],arr,seqind,seqlen);
-  load_seqs(argv[1],uarr);
+  cout << "# loading seqs file: " << getParser().args[1] << endl;
+  load_seqs_compressed(getParser().args[1],mtdata.arr,seqind,mtdata.seqlen);
+  load_seqs(getParser().args[1],uarr);
 
   estrarrayof<ebasicarray<INDTYPE> > otus;
 
   efile f;
   estr line;
   estrarray parts;
-  f.open(argv[2],"r");
+  f.open(getParser().args[2],"r");
   while (!f.eof()){
     f.readln(line);
     if (line.len()==0 || line[0]=='#') continue;
@@ -218,13 +290,13 @@ void actionMakeReps()
   finduniq(tuniqind,dupslist);
 
   eintarray uniqmask;
-  uniqmask.init(arr.size(),0);
+  uniqmask.init(mtdata.arr.size(),0);
   for (long i=0; i<tuniqind.size(); ++i)
     uniqmask[tuniqind[i]]=dupslist[i].size();
 
 
 //  ebasicarray<INDTYPE> uniqind;
-  taskman.createThread(nthreads);
+//  taskman.createThread(nthreads);
 
   ebasicarray<INDTYPE> uniqind;
   const float t=0.0;
@@ -232,7 +304,7 @@ void actionMakeReps()
   for (long j=0; j<otus.size(); ++j){
 //    cout << "# computing distances for otu "<< j << " size: " << otus[j].size() <<  endl;
     if (otus[j].size()==1){
-      cout << otus.keys(j) << " " << arr.keys(otus[j][0]) << " avg_id=1.0 otu_size=1" << endl;
+      cout << otus.keys(j) << " " << mtdata.arr.keys(otus[j][0]) << " avg_id=1.0 otu_size=1" << endl;
       cout << uarr.values(otus[j][0]) << endl;
       continue;
     }
@@ -245,31 +317,36 @@ void actionMakeReps()
     ldieif(uniqind.size()==0,"empty OTU");
 
     if (uniqind.size()==1){
-      cout << otus.keys(j) << " " << arr.keys(uniqind[0]) << " avg_id=1.0 otu_size=" << otus[j].size() << endl;
+      cout << otus.keys(j) << " " << mtdata.arr.keys(uniqind[0]) << " avg_id=1.0 otu_size=" << otus[j].size() << endl;
       cout << uarr.values(uniqind[0]) << endl;
       continue;
     }
     avgdist.clear();
-    avgdist.init(arr.size(),0.0);
-    dists.clear();
+    avgdist.init(mtdata.arr.size(),0.0);
+    mtdata.dists.clear();
   
-    partsTotal=10000;
-    if (partsTotal>(uniqind.size()-1l)*uniqind.size()/20l) partsTotal=(uniqind.size()-1l)*uniqind.size()/20l; // make fewer tasks if to few calculations per task
-    if (partsTotal<=0) partsTotal=1;
+    mtdata.taskCurrent=0;
+    mtdata.taskTotal=10000;
+    if (mtdata.taskTotal>(mtdata.uniqind.size()-1l)*mtdata.uniqind.size()/20l) mtdata.taskTotal=(mtdata.uniqind.size()-1l)*mtdata.uniqind.size()/20l; // make fewer tasks if to few calculations per task
+    if (mtdata.taskTotal<=0) mtdata.taskTotal=1;
     
-    taskman.clear();
+
+    taskman.run(taskComputeDist,evararray(),nthreads);
+/*    taskman.clear();
     for (long i=0; i<partsTotal; ++i)
       taskman.addTask(dfunc.value().calcfunc,evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
+*/
     taskman.wait();
-    for (long i=0; i<dists.size(); ++i){
-      eseqdist& d(dists[i]);
+
+    for (long i=0; i<mtdata.dists.size(); ++i){
+      eseqdist& d(mtdata.dists[i]);
       avgdist[d.x]+=d.dist*uniqmask[d.y];
       avgdist[d.y]+=d.dist*uniqmask[d.x];
 //      cout << "# "<< arr.keys(d.x) << " " << arr.keys(d.y) << " " << d.dist << " " << uniqmask[d.x] << " " << uniqmask[d.y] << endl;
     }
-    long k=uniqind[0];
-    for (long i=0; i<uniqind.size(); ++i){
-      long ti=uniqind[i];
+    long k=mtdata.uniqind[0];
+    for (long i=0; i<mtdata.uniqind.size(); ++i){
+      long ti=mtdata.uniqind[i];
       avgdist[ti]+=uniqmask[ti]-1;
       if (avgdist[k]<avgdist[ti]) {
 //        cout << "# " << arr.keys(ti) << " " << ti << " " << uniqmask[ti] << " " << avgdist[ti] << " " << counts[ti] << endl;
@@ -277,7 +354,7 @@ void actionMakeReps()
       }
     }
 //    cout << "OTU" << j << " " << otus[j].size() << " " << arr.keys(k) << " " << avgdist[k]/(otus[j].size()-1) << " " << dists.size() << endl;
-    cout << otus.keys(j) << " " << arr.keys(k) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
+    cout << otus.keys(j) << " " << mtdata.arr.keys(k) << " avg_id=" << avgdist[k]/(otus[j].size()-1) << " otu_size=" << otus[j].size() << endl;
     cout << uarr.values(k) << endl;
   }
   cerr << endl;
@@ -287,30 +364,39 @@ void actionMakeReps()
 
 void actionMakePart()
 {
-  ldieif(argvc<3,"syntax: "+efile(argv[0]).basename()+" -makepart <alignment> <cutoff>");
+  ldieif(getParser().args.size()<3,"syntax: "+efile(getParser().args[0]).basename()+" -makepart <alignment> <cutoff>");
 
-  cout << "# loading seqs file: " << argv[1] << endl;
-  load_seqs_compressed(argv[1],arr,seqlen);
+  cout << "# loading seqs file: " << getParser().args[1] << endl;
+  load_seqs_compressed(getParser().args[1],mtdata.arr,mtdata.seqlen);
 
-  t=estr(argv[2]).f();
+  t=getParser().args[2].f();
 
-  ebasicarray<INDTYPE> uniqind;
+//  ebasicarray<INDTYPE> uniqind;
   earray<ebasicarray<INDTYPE> > dupslist;
-  finduniq(uniqind,dupslist);
-  cout << "# unique seqs: " << uniqind.size() << endl;
+  finduniq(mtdata.uniqind,dupslist);
+  cout << "# unique seqs: " << mtdata.uniqind.size() << endl;
 
   ebasicarray<INDTYPE> otuid;
-  otuid.reserve(uniqind.size());
-  for (long i=0l; i<uniqind.size(); ++i)
+  otuid.reserve(mtdata.uniqind.size());
+  for (long i=0l; i<mtdata.uniqind.size(); ++i)
     otuid.add(i);
 
   cout << "# computing partitions. threshold: " << t << endl;
-  if (partsTotal>(arr.size()-1l)*arr.size()/20l) partsTotal=(arr.size()-1l)*arr.size()/20l; // make fewer tasks if to few calculations per task
+  mtdata.thres=t;
+  mtdata.dfunc=dfuncpart.value();
+  mtdata.taskCurrent=0;
+  mtdata.taskTotal=10000;
+  if (mtdata.taskTotal>(mtdata.arr.size()-1l)*mtdata.arr.size()/20l) mtdata.taskTotal=(mtdata.arr.size()-1l)*mtdata.arr.size()/20l; // make fewer tasks if to few calculations per task
 //  partsTotal=1;
+
+  taskman.run(taskComputeDist,evararray(),nthreads);
+/*
+
   for (long i=0; i<partsTotal; ++i)
     taskman.addTask(dfuncpart.value().calcfunc,evararray(mutex,uniqind,arr,otuid,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
 
   taskman.createThread(nthreads);
+*/
   taskman.wait();
 
   cout << endl;
@@ -366,15 +452,16 @@ int emain()
   epregister(dfuncpart);
 
   dfunc.choice=0;
-  dfunc.add("gap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed2>,dist_compressed2));
-  dfunc.add("nogap",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>,dist_nogap_compressed2));
-  dfunc.add("gap2",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_compressed>,dist_compressed));
-  dfunc.add("nogap2",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>,dist_nogap_compressed));
-  dfunc.add("nogapsingle",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>,dist_nogapsingle_compressed));
-  dfunc.add("tamura",edistfunc(t_calc_dists_u<estrarray,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>,dist_tamura_compressed));
+  dfunc.add("gap",edistfunc(newt_calc_dists_u<emtdata,eseqdist,eblockarray<eseqdist>,dist_compressed2>,dist_compressed2));
+  dfunc.add("nogap",edistfunc(newt_calc_dists_u<emtdata,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed2>,dist_nogap_compressed2));
+  dfunc.add("gap2",edistfunc(newt_calc_dists_u<emtdata,eseqdist,eblockarray<eseqdist>,dist_compressed>,dist_compressed));
+  dfunc.add("nogap2",edistfunc(newt_calc_dists_u<emtdata,eseqdist,eblockarray<eseqdist>,dist_nogap_compressed>,dist_nogap_compressed));
+  dfunc.add("nogapsingle",edistfunc(newt_calc_dists_u<emtdata,eseqdist,eblockarray<eseqdist>,dist_nogapsingle_compressed>,dist_nogapsingle_compressed));
+  dfunc.add("tamura",edistfunc(newt_calc_dists_u<emtdata,eseqdist,eblockarray<eseqdist>,dist_tamura_compressed>,dist_tamura_compressed));
 
-  epregisterClass(eoption<edistfunc>);
-  epregisterClassMethod4(eoption<edistfunc>,operator=,int,(const estr& val),"=");
+  epregisterClass(ebaseoption);
+  epregisterClassMethod4(ebaseoption,operator=,int,(const estr& val),"=");
+  epregisterClassInheritance(eoption<edistfunc>,ebaseoption);
 
   epregister(dfunc);
 
@@ -392,35 +479,36 @@ int emain()
   epregister(dfile);
   epregister(ignoreMemThres);
 
-  getParser()->actions.add("makereps",actionMakeReps);
-  getParser()->actions.add("makeotus",actionMakeOtus);
-  getParser()->actions.add("makeotus_mothur",actionMakeOtusMothur);
-  getParser()->actions.add("makepart",actionMakePart);
-  eparseArgs(argvc,argv);
+  getParser().actions.add("makereps",actionMakeReps);
+  getParser().actions.add("makeotax",actionMakeOtax);
+  getParser().actions.add("makeotus",actionMakeOtus);
+  getParser().actions.add("makeotus_mothur",actionMakeOtusMothur);
+  getParser().actions.add("makepart",actionMakePart);
+  eparseArgs();
 
 //  cout << "# initializing identity lookup table" << endl;
 //  initLookupTable();
 
-  if(argvc<2) {
-    cout << "syntax: "+efile(argv[0]).basename()+" <-sl true|-cl true|-al true> <seqali>" << endl;
-    cout << "\""+efile(argv[0]).basename()+ " --help\" for more help" << endl;
+  if(getParser().args.size()<2) {
+    cout << "syntax: "+efile(getParser().args[0]).basename()+" <-sl true|-cl true|-al true> <seqali>" << endl;
+    cout << "\""+efile(getParser().args[0]).basename()+ " --help\" for more help" << endl;
     exit(-1);
   }
   if(!cl && !sl && !al) {
-    cout << "syntax: "+efile(argv[0]).basename()+" <-sl true|-cl true|-al true> <seqali>" << endl;
+    cout << "syntax: "+efile(getParser().args[0]).basename()+" <-sl true|-cl true|-al true> <seqali>" << endl;
     cout << "please choose at least one clustering method <-sl true|-cl true|-al true>" << endl;
-    cout << "\""+efile(argv[0]).basename()+ " --help\" for more help" << endl;
+    cout << "\""+efile(getParser().args[0]).basename()+ " --help\" for more help" << endl;
     exit(-1);
   }
 
   cout << "# " << date() << endl;
-  cout << "# " << args2str(argvc,argv) << endl;
-  cout << "# system RAM: " << getSystem()->getTotalRam()/1024 << "Mb" << endl;
-  cout << "# free system RAM: " << (getSystem()->getFreeRam()+getSystem()->getBufferRam())/1024 << "Mb" << endl;
-  cout << "# process memory limit: " << ((getSystem()->getMemLimit()&0x3fffffffffffff)==0x3fffffffffffff?estr("unlimited"):estr(getSystem()->getMemLimit()/1024/1024)+"Mb") << endl;
+  cout << "# " << args2str() << endl;
+  cout << "# system RAM: " << getSystem().getTotalRam()/1024 << "Mb" << endl;
+  cout << "# free system RAM: " << (getSystem().getFreeRam()+getSystem().getBufferRam())/1024 << "Mb" << endl;
+  cout << "# process memory limit: " << ((getSystem().getMemLimit()&0x3fffffffffffff)==0x3fffffffffffff?estr("unlimited"):estr(getSystem().getMemLimit()/1024/1024)+"Mb") << endl;
 
-  warnMemThres=MIN(MIN(getSystem()->getTotalRam(),getSystem()->getMemLimit()/1024),getSystem()->getFreeRam()+getSystem()->getBufferRam())*0.6/1024;
-  exitMemThres=MIN(MIN(getSystem()->getTotalRam(),getSystem()->getMemLimit()/1024),getSystem()->getFreeRam()+getSystem()->getBufferRam())*0.65/1024;
+  warnMemThres=MIN(MIN(getSystem().getTotalRam(),getSystem().getMemLimit()/1024),getSystem().getFreeRam()+getSystem().getBufferRam())*0.6/1024;
+  exitMemThres=MIN(MIN(getSystem().getTotalRam(),getSystem().getMemLimit()/1024),getSystem().getFreeRam()+getSystem().getBufferRam())*0.65/1024;
 
   cout << "# warning memory threshold: " << warnMemThres << "Mb" << endl;
   cout << "# exit memory threshold: " << exitMemThres << "Mb" << endl;
@@ -428,7 +516,7 @@ int emain()
   cout << "# distance function: " << dfunc.key() << endl;
 
   if (ofile.len()==0)
-    ofile=argv[1];
+    ofile=getParser().args[1];
 
   epregisterClass(eseqdist);
   epregisterClassSerializeMethod(eseqdist);
@@ -442,16 +530,16 @@ int emain()
   epregisterClassSerializeMethod(ebasicarray<eseqdist>);
 
   long i,j;
-  cout << "# loading seqs file: " << argv[1] << endl;
-  load_seqs_compressed(argv[1],arr,seqlen);
+  cout << "# loading seqs file: " << getParser().args[1] << endl;
+  load_seqs_compressed(getParser().args[1],mtdata.arr,mtdata.seqlen);
 #ifndef HPC_CLUST_USE_LONGIND
-  ldieif(arr.size() > (2l<<31),"To cluster more than 2 million sequences please recompile hpc-clust with the --enable-longind flag.");
+  ldieif(mtdata.arr.size() > (2l<<31),"To cluster more than 2 billion sequences please recompile hpc-clust with the --enable-longind flag.");
 #endif
 
-  ebasicarray<INDTYPE> uniqind;
+//  ebasicarray<INDTYPE> uniqind;
   earray<ebasicarray<INDTYPE> > dupslist;
-  finduniq(uniqind,dupslist);
-  cout << "# unique seqs: " << uniqind.size() << endl;
+  finduniq(mtdata.uniqind,dupslist);
+  cout << "# unique seqs: " << mtdata.uniqind.size() << endl;
 
 
   if (dupfile.len()){
@@ -465,7 +553,7 @@ int emain()
     dupf.close();
   }
 
-  long maxdists=uniqind.size()*(uniqind.size()-1)/2;
+  long maxdists=mtdata.uniqind.size()*(mtdata.uniqind.size()-1)/2;
   long maxmem=maxdists*sizeof(eseqdist)/1024/1024;
   cout << "# maximum number of distance pairs: " << maxdists << " (" << maxmem << "Mb)" << endl;
 
@@ -487,31 +575,41 @@ int emain()
   efile df(dfile);
   cout << "# computing distances" << endl;
 //  if ((arr.size()-1l)*arr.size()/2l/partsTotal > 10000l) partsTotal=(arr.size()-1l)*arr.size()/2l/10000l;  // make more tasks if too many calculations per task
-  if (partsTotal>(arr.size()-1l)*arr.size()/20l) partsTotal=(arr.size()-1l)*arr.size()/20l; // make fewer tasks if to few calculations per task
+  mtdata.thres=t;
+  mtdata.dfunc=dfunc.value();
+  mtdata.taskCurrent=0;
+  mtdata.taskTotal=10000;
+  if (mtdata.taskTotal>(mtdata.uniqind.size()-1l)*mtdata.uniqind.size()/20l) mtdata.taskTotal=(mtdata.uniqind.size()-1l)*mtdata.uniqind.size()/20l; // make fewer tasks if to few calculations per task
+//  if (partsTotal>(arr.size()-1l)*arr.size()/20l) partsTotal=(arr.size()-1l)*arr.size()/20l; // make fewer tasks if to few calculations per task
 
 //  cout << "partsTotal: " << partsTotal << endl;
   cerr << endl; // needed for keeping track of the progress
 
+  mtdata.thres=t;
+  mtdata.dfunc=dfunc.value();
+/*
   for (i=0; i<partsTotal; ++i)
     taskman.addTask(dfunc.value().calcfunc,evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
 
   taskman.createThread(nthreads);
+*/
+
+  taskman.run(taskComputeDist,evararray(),nthreads);
   taskman.wait();
   cerr << endl;
 
   dtime=t1.lap()*0.001;
   cout << "# time calculating distances: " << dtime << endl;
-  cout << "# distances within threshold: " << dists.size() << endl;
+  cout << "# distances within threshold: " << mtdata.dists.size() << endl;
 
-  cout << "# number of tasks: " << taskman.tasks.size() << endl;
-  fradix256sort<eblockarray<eseqdist>,radixKey>(dists);
-  cout << "# number of tasks: " << taskman.tasks.size() << endl;
+//  fradix256sort<eblockarray<eseqdist>,radixKey>(dists);
+  heapsort(mtdata.dists);
   stime=t1.lap()*0.001;
 
   if (dfile.len()){
     cout << "# saving distances to file: "<<dfile << endl;
-    for (i=0; i<dists.size(); ++i)
-      df.write(estr(arr.keys(dists[i].x))+"\t"+arr.keys(dists[i].y)+"\t"+(1.0-dists[i].dist)+"\n");
+    for (i=0; i<mtdata.dists.size(); ++i)
+      df.write(estr(mtdata.arr.keys(mtdata.dists[i].x))+"\t"+mtdata.arr.keys(mtdata.dists[i].y)+"\t"+(1.0-mtdata.dists[i].dist)+"\n");
 /*
     for (i=0; i<dupslist.size(); ++i){
       for (j=1; j<dupslist[i].size(); ++j)
@@ -530,26 +628,26 @@ int emain()
 */
 //  } 
 
-  totaldists=dists.size();
+  totaldists=mtdata.dists.size();
   cout << "# time sorting distances: " << stime << endl;
 
   cout << "# initializing cluster"<<endl;
   if (cl)
-    clcluster.init(arr.size(),ofile+".cl",argv[1],dupslist);
+    clcluster.init(mtdata.arr.size(),ofile+".cl",getParser().args[1],dupslist);
   if (sl)
-    slcluster.init(arr.size(),ofile+".sl",argv[1],dupslist);
+    slcluster.init(mtdata.arr.size(),ofile+".sl",getParser().args[1],dupslist);
   if (al)
-    alcluster.init(arr.size(),ofile+".al",argv[1],dupslist,t,dfunc.value().calcfunc_single,arr,seqlen);
+    alcluster.init(mtdata.arr.size(),ofile+".al",getParser().args[1],dupslist,t,dfunc.value().calcfunc_single,mtdata.arr,mtdata.seqlen);
 
   cout << "# starting clustering"<<endl;
   t1.reset();
-  for (i=dists.size()-1; i>=0; --i){
+  for (i=mtdata.dists.size()-1; i>=0; --i){
     if (cl)
-      clcluster.add(dists[i]);
+      clcluster.add(mtdata.dists[i]);
     if (al)
-      alcluster.add(dists[i]);
+      alcluster.add(mtdata.dists[i]);
     if (sl)
-      slcluster.add(dists[i]);
+      slcluster.add(mtdata.dists[i]);
   }
   if (al)
     alcluster.finalize();
@@ -567,10 +665,11 @@ int emain()
     if (cl) fcl.open(ofile+".cl.dist","w");
     if (al) fal.open(ofile+".cl.dist","w");
 
-    for (i=dists.size()-1; i>=0; --i){
-      if (sl) fsl.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+slcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
-      if (cl) fcl.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+clcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
-      if (al) fal.write(estr(dists[i].x)+" "+dists[i].y+" "+dists[i].dist+" "+alcluster.clusterData.getMergeDistance(dists[i].x,dists[i].y)+"\n");
+    for (i=mtdata.dists.size()-1; i>=0; --i){
+      eseqdist& d(mtdata.dists[i]);
+      if (sl) fsl.write(estr(d.x)+" "+d.y+" "+d.dist+" "+slcluster.clusterData.getMergeDistance(d.x,d.y)+"\n");
+      if (cl) fcl.write(estr(d.x)+" "+d.y+" "+d.dist+" "+clcluster.clusterData.getMergeDistance(d.x,d.y)+"\n");
+      if (al) fal.write(estr(d.x)+" "+d.y+" "+d.dist+" "+alcluster.clusterData.getMergeDistance(d.x,d.y)+"\n");
     }
   }
   return(0);

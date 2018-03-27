@@ -75,6 +75,7 @@ inline unsigned char nuc_compress(unsigned char c){
    case 'V': return(0x0Du);
    case 'N': return(0x0Eu);
    case '-': return(0x0Fu);
+   case '.': return(0x0Fu);
   }
   ldie("unknown nucleotide: "+estr(c));
   return(0x0F);
@@ -1075,6 +1076,73 @@ int part_calc_dists_u(emutex& mutex,ebasicarray<INDTYPE>& uniqind,T& arr,ebasica
   if (isatty(2))
     fprintf(stderr,"\r# finished: %.1f%% %li %li %li %li",float(node+1)*100.0/tnodes,otucount,notucount,otuid.size(),curotuid.size());
   mutex.unlock();
+  return(0);
+}
+
+template <class MT,class M,class CDIST,float (*fdist)(const estr&,const estr&,int)>
+//,class M,class K,float (*fdist)(const estr&,const estr&,int)>
+int newt_calc_dists_u(MT& mtdata)
+//emutex& mutex,ebasicarray<INDTYPE>& uniqind,T& arr,K& dists,int seqlen,long int node,long int tnodes,float thres)
+{
+  long int i,i2,j;
+  long int start,end;
+//  cout << "newt_calc_dists" << endl;
+
+  mtdata.m.lock();
+  long int node=mtdata.taskCurrent;
+  long int tnodes=mtdata.taskTotal;
+  if (node==tnodes) { mtdata.m.unlock(); return(0); }
+  ++mtdata.taskCurrent;
+//  cout << mtdata.taskCurrent << endl;
+  mtdata.m.unlock();
+  
+
+  start=((long int)(node)*(long int)(mtdata.uniqind.size()-1l))/(long int)(2l*tnodes);
+  end=((long int)(node+1l)*(long int)(mtdata.uniqind.size()-1l))/(long int)(2l*tnodes);
+
+//  cout << "start: " << start << " end: " << end << " uniqind.size(): " << uniqind.size() << endl;
+
+  float tmpid,tmpid2,tmpid3;
+  CDIST tmpdists;
+
+  for (i=start; i<end; ++i){
+    for (j=i+1; j<mtdata.uniqind.size(); ++j){
+      tmpid=fdist(mtdata.arr[mtdata.uniqind[i]],mtdata.arr[mtdata.uniqind[j]],mtdata.seqlen);
+      if (tmpid>=mtdata.thres) tmpdists.add(M(mtdata.uniqind[i],mtdata.uniqind[j],tmpid));
+    }
+    i2=mtdata.uniqind.size()-i-2l;
+    for (j=i2+1l; j<mtdata.uniqind.size(); ++j){
+      tmpid=fdist(mtdata.arr[mtdata.uniqind[i2]],mtdata.arr[mtdata.uniqind[j]],mtdata.seqlen);
+      if (tmpid>=mtdata.thres) tmpdists.add(M(mtdata.uniqind[i2],mtdata.uniqind[j],tmpid));
+    }
+  }
+  if (node==tnodes-1l && mtdata.uniqind.size()%2==0){
+    i=mtdata.uniqind.size()/2-1l;
+    for (j=i+1l; j<mtdata.uniqind.size(); ++j){
+      tmpid=fdist(mtdata.arr[mtdata.uniqind[i]],mtdata.arr[mtdata.uniqind[j]],mtdata.seqlen);
+      if (tmpid>=mtdata.thres) tmpdists.add(M(mtdata.uniqind[i],mtdata.uniqind[j],tmpid));
+    }
+  }
+  mtdata.m.lock();
+  mtdata.dists+=tmpdists;
+  float memUsed=mtdata.dists.size()*sizeof(eseqdist)/1024/1024;
+  if (isatty(2))
+    fprintf(stderr,"\r# finished: %.1f%% dists: %li (%liMb)",float(node+1)*100.0/tnodes,(long)mtdata.dists.size(),(long)memUsed);
+  if (!warnedMemThres && memUsed >= warnMemThres){
+    warnedMemThres=true;
+    cout << "# WARNING: Exceeded warnMemThres ("<< warnMemThres <<"Mb) with " << mtdata.dists.size() << " ("<< memUsed <<"Mb) stored distance pairs" << endl;
+    cout << "#          hpc-clust will exit once it reaches the exitMemThres ("<< exitMemThres <<"Mb)" << endl;
+    cout << "#          in this event, increase the clustering threshold or provide fewer sequences for clustering." << endl;
+    cout << "#          Please refer to the documentation for further information and tips on improving the memory usage of hpc-clust." << endl;
+  }
+  if (memUsed >= exitMemThres && !ignoreMemThres){
+    cout << "# ERROR:   Exceeded exitMemThres ("<< exitMemThres <<"Mb) with " << mtdata.dists.size() << " ("<< memUsed <<"Mb) stored distance pairs" << endl;
+    cout << "#          Increase the clustering threshold or provide fewer sequences for clustering. You can force the program to ignore this threshold" << endl;
+    cout << "#          and continue running with the argume: -ignoreMemThres true. Note that your system may become unresponsive or even crash if it runs out of memory" << endl;
+    cout << "#          Please refer to the documentation for further information and tips on improving the memory usage of hpc-clust." << endl;
+    exit(-1);
+  }
+  mtdata.m.unlock();
   return(0);
 }
 

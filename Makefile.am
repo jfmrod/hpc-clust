@@ -13,7 +13,16 @@ dist_man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
 
 bin_PROGRAMS=hpc-clust $(MPIBIN) # denoiser
 
-LIBS=`eutils/eutils-config --libs`
+AM_CXXFLAGS=
+#LIBS=`eutils/eutils-config --libs`
+if !USE_SYSEUTILS
+  LDADD=libs/eutils/libeutils.la
+  AM_CXXFLAGS+= -I$(srcdir)/libs/eutils
+#  AM_CXXFLAGS+= -Ilibs
+endif
+
+
+
 EXTRA_DIST=make-otus-mothur.sh make-otus.sh examples/aligned-archaea-seqs.sto manual/hpc-clust-manual.tex manual/hpc-clust-manual.pdf
 
 # denoiser_SOURCES=denoiser.cpp ekmerhashmap.h ekmerhashmap_dec.h

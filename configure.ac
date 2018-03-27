@@ -15,6 +15,8 @@ CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 
 AC_CANONICAL_SYSTEM
 
+AX_CXX_COMPILE_STDCXX_11(,mandatory)
+
 case "${target_os}" in
   darwin*)
     echo ===========================================================
@@ -49,7 +51,21 @@ AC_CHECK_LIB(pthread,main)
 AM_CONFIG_HEADER(config.h)
 AX_PREFIX_CONFIG_H
 
-AC_CONFIG_SUBDIRS([eutils])
+AC_ARG_WITH(syseutils,[AS_HELP_STRING([--with-syseutils],[Use system installed eutils.])],,with_syseutils=no)
+if test "x$with_syseutils" = "xno"; then
+  AC_CONFIG_SUBDIRS([libs/eutils])
+else
+  AM_PATH_EUTILS
+  if test "x$no_eutils" = "xyes"; then
+    AC_MSG_ERROR([
+*** eutils library not found.
+*** You can use the eutils version included in this package by
+*** not using the --with-syseutils argument.])
+  fi
+  CXXFLAGS="${CXXFLAGS} ${EUTILS_CXXFLAGS}"
+  LIBS="${LIBS} ${EUTILS_LIBS}"
+fi
+AM_CONDITIONAL(USE_SYSEUTILS, test "x$with_syseutils" = "xyes")
 
 AC_ARG_WITH(mpi,[AS_HELP_STRING([--with-mpi@<:@=path@:>@],[Specify path to MPI library installation.])],,with_mpi=yes)
 if test "x$with_mpi" != "xyes" -a "x$with_mpi" != "xno"; then
