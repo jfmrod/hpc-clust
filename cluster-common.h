@@ -1093,7 +1093,7 @@ int newt_calc_dists_u(MT& mtdata)
   long int tnodes=mtdata.taskTotal;
   if (node==tnodes) { mtdata.m.unlock(); return(0); }
   ++mtdata.taskCurrent;
-//  cout << mtdata.taskCurrent << endl;
+//  cout << mtdata.taskCurrent << " " << mtdata.uniqind.size() << endl;
   mtdata.m.unlock();
   
 

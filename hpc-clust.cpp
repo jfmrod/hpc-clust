@@ -12,6 +12,9 @@
 #include "cluster-common.h"
 #include "eseqclusteravg.h"
 
+#include <algorithm>
+#include <parallel/algorithm>
+
 //eblockarray<eseqdist> dists;
 
 eseqcluster clcluster; // complete linkage
@@ -147,6 +150,7 @@ void taskComputeDist()
 //  calcfunc(mutex,uniqind,arr,dists,
   while (1){
     mtdata.m.lock();
+//    cerr << mtdata.taskCurrent << " " << mtdata.taskTotal << endl;
     if (mtdata.taskCurrent==mtdata.taskTotal) { mtdata.m.unlock(); return; }
     mtdata.m.unlock();
 
@@ -259,7 +263,7 @@ void actionMakeReps()
 
   estrarray uarr;
 
-  cout << "# loading seqs file: " << getParser().args[1] << endl;
+//  cout << "# loading seqs file: " << getParser().args[1] << endl;
   load_seqs_compressed(getParser().args[1],mtdata.arr,seqind,mtdata.seqlen);
   load_seqs(getParser().args[1],uarr);
 
@@ -269,6 +273,7 @@ void actionMakeReps()
   estr line;
   estrarray parts;
   f.open(getParser().args[2],"r");
+  int warncount=0;
   while (!f.eof()){
     f.readln(line);
     if (line.len()==0 || line[0]=='#') continue;
@@ -279,11 +284,12 @@ void actionMakeReps()
     ldieif(otus.size()==0,"first entry not start of OTU or missing '>'");
     parts=line.explode("\t");
     ldieif(parts.size()==0,"array empty: "+line);
-    ldieif(!seqind.exists(parts[0]),"sequence not found: "+parts[0]);
+    if (!seqind.exists(parts[0])) { ++warncount; continue; }
+//    ldieif(!seqind.exists(parts[0]),"sequence not found: "+parts[0]);
     otus[otus.size()-1].add(seqind[parts[0]]);
   }
+  lwarnif(warncount>0,"# missing sequences from otu file: "+estr(warncount));
 
-  cerr << endl;
 
   ebasicarray<INDTYPE> tuniqind;
   earray<ebasicarray<INDTYPE> > dupslist;
@@ -297,28 +303,31 @@ void actionMakeReps()
 
 //  ebasicarray<INDTYPE> uniqind;
 //  taskman.createThread(nthreads);
+  mtdata.thres=0.0;
+  mtdata.dfunc=dfunc.value();
 
-  ebasicarray<INDTYPE> uniqind;
+//  ebasicarray<INDTYPE> uniqind;
   const float t=0.0;
   efloatarray avgdist;
   for (long j=0; j<otus.size(); ++j){
-//    cout << "# computing distances for otu "<< j << " size: " << otus[j].size() <<  endl;
+//    cerr << "# computing distances for otu "<< j << " size: " << otus[j].size() <<  endl;
     if (otus[j].size()==1){
       cout << otus.keys(j) << " " << mtdata.arr.keys(otus[j][0]) << " avg_id=1.0 otu_size=1" << endl;
       cout << uarr.values(otus[j][0]) << endl;
       continue;
     }
-    uniqind.clear();
+    mtdata.uniqind.clear();
     for (long l=0; l<otus[j].size(); ++l){
       if (uniqmask[otus[j][l]]!=0)
-        uniqind.add(otus[j][l]);
+        mtdata.uniqind.add(otus[j][l]);
     }
+    if (mtdata.uniqind.size()==0) continue;
 //    uniqind=otus[j];
-    ldieif(uniqind.size()==0,"empty OTU");
+//    ldieif(uniqind.size()==0,"empty OTU");
 
-    if (uniqind.size()==1){
-      cout << otus.keys(j) << " " << mtdata.arr.keys(uniqind[0]) << " avg_id=1.0 otu_size=" << otus[j].size() << endl;
-      cout << uarr.values(uniqind[0]) << endl;
+    if (mtdata.uniqind.size()==1){
+      cout << otus.keys(j) << " " << mtdata.arr.keys(mtdata.uniqind[0]) << " avg_id=1.0 otu_size=" << otus[j].size() << endl;
+      cout << uarr.values(mtdata.uniqind[0]) << endl;
       continue;
     }
     avgdist.clear();
@@ -331,12 +340,14 @@ void actionMakeReps()
     if (mtdata.taskTotal<=0) mtdata.taskTotal=1;
     
 
+//    cerr << "# runnning tasks" << endl;
     taskman.run(taskComputeDist,evararray(),nthreads);
 /*    taskman.clear();
     for (long i=0; i<partsTotal; ++i)
       taskman.addTask(dfunc.value().calcfunc,evararray(mutex,uniqind,arr,dists,(const int&)seqlen,(const long int&)i,(const long int&)partsTotal,(const float&)t,(const int&)winlen));
 */
     taskman.wait();
+//    cerr << "# finished runnning tasks" << endl;
 
     for (long i=0; i<mtdata.dists.size(); ++i){
       eseqdist& d(mtdata.dists[i]);
@@ -603,7 +614,8 @@ int emain()
   cout << "# distances within threshold: " << mtdata.dists.size() << endl;
 
 //  fradix256sort<eblockarray<eseqdist>,radixKey>(dists);
-  heapsort(mtdata.dists);
+//  heapsort(mtdata.dists);
+  __gnu_parallel::sort(mtdata.dists.begin(),mtdata.dists.end());
   stime=t1.lap()*0.001;
 
   if (dfile.len()){

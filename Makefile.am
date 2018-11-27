@@ -3,9 +3,10 @@ DIST_SUBDIRS=$(subdirs)
 
 if HAVE_MPILIB
   MPIBIN=hpc-clust-mpi
+  MPITESTS=tests/mpi-sl.sh
 endif
 
-TESTS=tests/single-al.sh tests/single-sl.sh tests/mpi-sl.sh
+TESTS=tests/single-al.sh tests/single-sl.sh $(MPITESTS)
 
 
 #man_MANS=man/hpc-clust.1 man/hpc-clust-mpi.1
